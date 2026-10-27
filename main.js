@@ -143,6 +143,27 @@ ipcMain.handle("media:import", async (_e, paths) => {
 });
 ipcMain.handle("media:remove", async (_e, file) => { try { await fs.promises.unlink(path.join(mediaDir(), path.basename(file))); } catch {} return true; });
 
+// ---- Discord webhooks ----
+// Posting happens here, not in the page, so Discord's CORS rules don't apply and the page's CSP stays strict.
+ipcMain.handle("discord:send", async (_e, { url, payload, file }) => {
+  if (!/^https:\/\/(?:\w+\.)?(?:discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+/.test(url) && !process.env.CODEX_WEBHOOK_TEST) return { ok: false, status: 0, error: "That isn't a Discord webhook link" };
+  try {
+    let res;
+    if (file && file.dataURL) {
+      const [head, b64] = file.dataURL.split(",");
+      const type = (head.match(/data:([^;]+)/) || [])[1] || "image/png";
+      const form = new FormData();
+      form.append("payload_json", JSON.stringify(payload));
+      form.append("files[0]", new Blob([Buffer.from(b64, "base64")], { type }), file.name || "handout.png");
+      res = await net.fetch(url, { method: "POST", body: form });
+    } else {
+      res = await net.fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    }
+    if (res.status === 429) { const j = await res.json().catch(() => ({})); return { ok: false, status: 429, error: `Discord says slow down (${Math.ceil(j.retry_after || 1)}s)` }; }
+    return { ok: res.ok, status: res.status, error: res.ok ? "" : (await res.text()).slice(0, 200) };
+  } catch (e) { return { ok: false, status: 0, error: String(e.message || e) }; }
+});
+
 // ---- updates ----
 let updater = null;
 function setupUpdates() {

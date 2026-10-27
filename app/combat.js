@@ -3,6 +3,7 @@ import { $, $$, esc, h, icon, toast, uid, ls, debounce, rnd } from "./util.js";
 import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
 import { nextPlanned } from "./bestiary.js";
+import * as Discord from "./discord.js";
 
 export const CONDITIONS = ["Stunned", "Prone", "Bleeding", "Poisoned", "Blinded", "Frightened", "Grappled", "Burning", "Invisible", "Concentrating", "Hidden", "Slowed", "Hasted", "Marked", "Restrained", "Unconscious"];
 const KIND = { pc: { label: "Player", color: "#a8d3e4" }, ally: { label: "Ally", color: "#b8d8a8" }, foe: { label: "Foe", color: "#f39da8" } };
@@ -48,6 +49,7 @@ export function createCombat(el, App) {
          <div style="flex:1"></div>
          <label class="toggle"><input type="checkbox" id="cbStream" ${b.showOnStream ? "checked" : ""}> Turn order on stream</label>
          <label class="toggle"><input type="checkbox" id="cbSkip" ${b.autoSkip ? "checked" : ""}> Skip downed foes</label>
+         <button class="btn icon" id="cbPost" title="Post the turn order to Discord">${icon("discord")}</button>
          <button class="btn" id="cbEnd">End combat</button>`
       : `<div><div class="eyebrow">Combat</div><h2>${b.list.length ? "Ready to fight" : "No fight yet"}</h2></div><div style="flex:1"></div>
          <button class="btn" id="cbRollAll">${icon("dice")} Roll initiative for foes</button>
@@ -56,6 +58,7 @@ export function createCombat(el, App) {
     $("#cbPrev", box)?.addEventListener("click", () => next(-1));
     $("#cbStream", box)?.addEventListener("change", e => { b.showOnStream = e.target.checked; changed(false); });
     $("#cbSkip", box)?.addEventListener("change", e => { b.autoSkip = e.target.checked; save(); });
+    $("#cbPost", box)?.addEventListener("click", () => Discord.postCombat({ ...streamCombatState(), show: true }).then(ok => ok && toast("Turn order posted")));
     $("#cbEnd", box)?.addEventListener("click", () => App.confirm("End combat?", "Foes that are down are cleared from the list. Players and allies stay for the next fight.", "End combat", () => {
       b.active = false; b.list = b.list.filter(x => x.kind !== "foe" || Number(x.hp) > 0); b.list.forEach(x => x.conds = []); b.turn = 0; b.round = 1; log("Combat ended"); changed(); App.logBeat?.("combat", "The fight ends.", true);
     }));
@@ -73,6 +76,7 @@ export function createCombat(el, App) {
     const missing = b.list.filter(x => x.init === "" || x.init == null);
     if (missing.length) { toast(`Enter initiative for ${missing.map(x => x.name).join(", ")}`); render(); return; }
     sortCombat(b); b.active = true; b.round = 1; b.turn = 0; log("Combat started"); changed();
+    if (Discord.settings().autoRounds && Discord.connected()) Discord.postCombat(streamCombatState(), { quiet: true });
     App.logBeat?.("combat", `Fight: ${b.list.filter(x => x.kind === "foe").map(x => x.name).join(", ")}`, true);
   }
   function next(dir) {
@@ -87,10 +91,11 @@ export function createCombat(el, App) {
     let guard = b.list.length;
     do {
       b.turn += dir;
-      if (b.turn >= b.list.length) { b.turn = 0; b.round++; log(`Round ${b.round}`); }
+      if (b.turn >= b.list.length) { b.turn = 0; b.round++; log(`Round ${b.round}`); b._newRound = true; }
       if (b.turn < 0) { b.turn = b.list.length - 1; b.round = Math.max(1, b.round - 1); }
     } while (b.autoSkip && dir > 0 && --guard > 0 && b.list[b.turn].kind === "foe" && Number(b.list[b.turn].hp) <= 0 && Number(b.list[b.turn].max) > 0);
     st.sel = b.list[b.turn]?.id; changed();
+    if (b._newRound) { delete b._newRound; if (Discord.settings().autoRounds && Discord.connected()) Discord.postCombat(streamCombatState(), { quiet: true }); }
     setTimeout(() => $(".cb-row.current", el)?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 30);
   }
   function applyHp(x, raw) {

@@ -746,3 +746,5 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 :root[data-look="neon"] .stream-btn.live .dot, :root[data-look="neon"] .rail a.on::before { box-shadow: 0 0 12px var(--ember); }
 :root[data-look="neon"] .btn.primary { box-shadow: 0 0 18px color-mix(in srgb, var(--ember) 45%, transparent); }
 :root[data-look="neon"] .result-ov .rt { text-shadow: 0 0 24px var(--ember), 0 0 60px rgba(60,242,255,.4); }
+.dh-row { display: flex; gap: 8px; align-items: center; }
+.dh-row input[type=radio] { accent-color: var(--ember); width: 16px; height: 16px; }

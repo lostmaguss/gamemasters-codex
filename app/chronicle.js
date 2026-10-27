@@ -78,7 +78,7 @@ export function createChronicle(el, App) {
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
           <div class="mode-seg"><button data-m="write" class="${st.mode === "write" ? "on" : ""}">Write</button><button data-m="chapter" class="${st.mode === "chapter" ? "on" : ""}">Chapter</button></div>
-          <button class="btn sm" id="sDiscord">${icon("discord")} Copy for Discord</button>
+          <div class="row" style="gap:6px"><button class="btn sm" id="sDiscord">${icon("copy")} Copy for Discord</button><button class="btn sm" id="sPost" title="Post the recap to your Discord channel">${icon("discord")} Post</button></div>
           <button class="btn sm ghost danger" id="sDel">${icon("trash")} Delete</button>
         </div>
       </div>`;
@@ -108,6 +108,7 @@ export function createChronicle(el, App) {
     $("#sHours", sp).oninput = e => { s.hours = e.target.value; touch(); };
     $$("[data-m]", sp).forEach(b => b.onclick = () => { st.mode = b.dataset.m; renderSpread(); });
     $("#sDiscord", sp).onclick = () => copyText(discordText(s, c), "Recap copied. Paste it in Discord");
+    $("#sPost", sp).onclick = async () => { const t = discordText(s, c).split("\n"); const ok = await App.discord.postText(t[0].replace(/^#\s*/, ""), t.slice(1).join("\n").trim()); if (ok?.every?.(Boolean)) toast("Recap posted to Discord"); };
     $("#sDel", sp).onclick = () => App.confirm(`Delete session ${s.num}?`, "This chapter and everything logged in it is removed.", "Delete session", () => {
       C().sessions = S().filter(x => x.id !== s.id); st.sel = sorted().pop()?.id || null; save(); renderThread(); renderSpread();
     });

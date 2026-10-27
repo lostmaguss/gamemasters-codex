@@ -13,6 +13,7 @@ import { createBestiary } from "./bestiary.js";
 import { createSoundEngine } from "./sound.js";
 import { parseRoll, diceGroups, buildResult, breakdown, critLabel, shownTotal, DEFAULT_RULES } from "./roll.js";
 import { createCombat } from "./combat.js";
+import * as Discord from "./discord.js";
 import { rnd, ls } from "./util.js";
 import { setGenre } from "./gen.js";
 import { starterTables } from "./store.js";
@@ -95,6 +96,7 @@ export const App = {
   },
   recordRoll(r) {
     const c = C(); c.rolls.unshift(r); c.rolls.length = Math.min(c.rolls.length, 80); save();
+    if (!r.secret && Discord.settings(c).autoRolls && Discord.connected(c)) Discord.postRoll(r, { quiet: true });
     mounted.dice?.addLog?.(r);
   },
   logBeat(type, text, quiet) {
@@ -106,7 +108,11 @@ export const App = {
   // ---- handouts on the stream window ----
   onAir: null, _air: new Set(),
   onAirChange(fn) { App._air.add(fn); },
-  showHandout(hd) { App.onAir = hd; Stage.show(hd); App._air.forEach(f => f()); },
+  showHandout(hd) {
+    App.onAir = hd; Stage.show(hd); App._air.forEach(f => f());
+    if (Discord.settings().autoHandouts && Discord.connected()) Discord.postHandout(hd, { quiet: true });
+  },
+  discord: Discord,
   hideHandout() { App.onAir = null; Stage.hide(); App._air.forEach(f => f()); },
 };
 
@@ -160,7 +166,7 @@ function onStageResult(r) {
 
 function buildRail() {
   const rail = $("#rail");
-  rail.innerHTML = VIEWS.map((v, i) => `${v.group && i ? `<div class="rail-sep"></div>` : ""}<a href="#" data-v="${v.key}" title="${v.label} (Ctrl+${i + 1})">${icon(v.icon)}<span>${v.label}</span></a>`).join("") + `<div class="grow"></div>`;
+  rail.innerHTML = VIEWS.map((v, i) => `${v.group && i ? `<div class="rail-sep"></div>` : ""}<a href="#" data-v="${v.key}" title="${v.label} (Ctrl+${(i + 1) % 10})">${icon(v.icon)}<span>${v.label}</span></a>`).join("") + `<div class="grow"></div>`;
   $$("a", rail).forEach(a => a.onclick = e => { e.preventDefault(); show(a.dataset.v); });
 }
 function show(key, arg) {
@@ -271,6 +277,7 @@ function campaignMenu() {
     { text: "Rename campaign", icon: "type", run: () => renameModal(c) },
     { text: "Party & players", icon: "social", run: partyModal },
     { text: "Rules & genre", icon: "gear", run: rulesModal },
+    { text: Discord.connected() ? "Discord (connected)" : "Connect Discord…", icon: "discord", run: () => Discord.discordModal(App) },
     "-",
     { text: "Export backup…", icon: "save", run: async () => {
       const name = `${c.name.replace(/[^\w\- ]+/g, "").trim() || "campaign"}-${new Date().toISOString().slice(0, 10)}.json`;
@@ -327,7 +334,7 @@ function wireChrome() {
     { text: "Close stream window", icon: "x", run: Stage.close },
   ]) : Stage.open();
   addEventListener("keydown", e => {
-    if ((e.ctrlKey || e.metaKey) && /^[1-9]$/.test(e.key)) { e.preventDefault(); show(VIEWS[+e.key - 1].key); }
+    if ((e.ctrlKey || e.metaKey) && /^[0-9]$/.test(e.key)) { const v = VIEWS[(+e.key + 9) % 10]; if (v) { e.preventDefault(); show(v.key); } }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); flush(); toast("Saved"); }
   });
 }

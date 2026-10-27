@@ -123,7 +123,7 @@ export function createLive(el, App) {
       <div class="row" style="margin:12px 0"><button class="btn sm" id="hImg">${icon("image")} Image</button><button class="btn sm" id="hTxt">${icon("codex")} Letter or note</button><input type="file" id="hFile" accept="image/*" multiple hidden></div>
       <div class="hand-grid">${sorted.map(hd => `<div class="hand ${onAir?.id === hd.id ? "air" : ""}" data-id="${hd.id}">
         <button class="hand-face ${hd.type === "image" ? "img" : "txt s-" + (hd.style || "letter")}" ${hd.type === "image" ? `style="background-image:url(${hd.src})"` : ""}>${hd.type === "image" ? "" : `<span>${esc((hd.text || "").slice(0, 90))}</span>`}</button>
-        <div class="hand-meta"><b>${esc(hd.title || "Untitled")}</b>${ready.includes(hd.id) ? `<span class="eyebrow" style="color:var(--ember)">Tonight</span>` : ""}<span style="flex:1"></span><button class="tb" data-ed title="Edit">${icon("type")}</button><button class="tb" data-del title="Delete">${icon("trash")}</button></div></div>`).join("")
+        <div class="hand-meta"><b>${esc(hd.title || "Untitled")}</b>${ready.includes(hd.id) ? `<span class="eyebrow" style="color:var(--ember)">Tonight</span>` : ""}<span style="flex:1"></span><button class="tb" data-post title="Post to Discord">${icon("discord")}</button><button class="tb" data-ed title="Edit">${icon("type")}</button><button class="tb" data-del title="Delete">${icon("trash")}</button></div></div>`).join("")
         || `<p style="color:var(--faint);grid-column:1/-1">Maps, portraits, letters, wanted posters. Show them full-size on the stream window.</p>`}</div>`;
     $("#lvHide", box)?.addEventListener("click", () => { App.hideHandout(); });
     $("#hImg", box).onclick = () => $("#hFile", box).click();
@@ -132,6 +132,7 @@ export function createLive(el, App) {
     $$(".hand", box).forEach(d => {
       const hd = H.find(x => x.id === d.dataset.id);
       $(".hand-face", d).onclick = () => App.onAir?.id === hd.id ? App.hideHandout() : App.showHandout(hd);
+      $("[data-post]", d).onclick = () => App.discord.postHandout(hd).then(ok => ok && toast("Posted to Discord"));
       $("[data-ed]", d).onclick = () => hd.type === "image" ? rename(hd) : editText(hd);
       $("[data-del]", d).onclick = () => App.confirm(`Delete "${hd.title}"?`, "The handout is removed from the library.", "Delete", () => { C().handouts = H.filter(x => x !== hd); save(); renderHand(); });
     });

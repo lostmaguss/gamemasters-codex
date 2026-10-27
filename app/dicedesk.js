@@ -43,6 +43,7 @@ export function createDice(el, App) {
           <label class="f"><span>Surface</span><select id="dFelt">${Object.entries(FELTS).map(([k, t]) => `<option value="${k}" ${k === opt.felt ? "selected" : ""}>${t.label}</option>`).join("")}</select></label>
         </div>
         <label class="toggle" style="margin-top:10px"><input type="checkbox" id="dSound" ${opt.sound ? "checked" : ""}> Dice sounds</label>
+        <label class="toggle" style="margin-top:6px"><input type="checkbox" id="dDisc" ${App.discord.settings().autoRolls ? "checked" : ""}> Post public rolls to Discord</label>
       </div>
       <div>
         <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 class="side-h" style="margin:0">Roll log</h3><button class="btn sm ghost" id="lClr">Clear</button></div>
@@ -130,6 +131,7 @@ export function createDice(el, App) {
   $("#sTop", el).onchange = e => { opt.onTop = e.target.checked; ls.set("dice.onTop", opt.onTop); Stage.onTop(opt.onTop); };
   $("#dTheme", el).onchange = e => { opt.theme = e.target.value; ls.set("dice.theme", opt.theme); tray.setTheme(opt.theme); };
   $("#dFelt", el).onchange = e => { opt.felt = e.target.value; ls.set("dice.felt", opt.felt); tray.setFelt(opt.felt); };
+  $("#dDisc", el).onchange = e => { if (e.target.checked && !App.discord.connected()) { e.target.checked = false; App.discord.discordModal(App); return; } App.discord.settings().autoRolls = e.target.checked; save(); };
   $("#dSound", el).onchange = e => { opt.sound = e.target.checked; ls.set("dice.sound", opt.sound); setDiceSound(opt.sound); };
   function streamState(on) {
     $("#sState", el).textContent = on ? "Live" : "Closed"; $("#sState", el).style.color = on ? "var(--ember)" : "";

@@ -100,7 +100,7 @@ export function createTables(el, App) {
   function resultCard(r) {
     return `<div class="tb-res" data-rid="${r.id}"><div class="tb-res-h"><span class="badge mono">${r.num}<small>/d${r.die}</small></span><span class="eyebrow">${esc(r.name)}</span></div>
       <div class="tb-res-t">${r.html}</div>
-      <div class="tb-res-a"><button class="btn sm ghost" data-a="copy" title="Copy">${icon("copy")}</button><button class="btn sm ghost" data-a="pin" title="Pin to board">${icon("pin")}</button><button class="btn sm ghost" data-a="show" title="Show on stream">${icon("stream")}</button><button class="btn sm ghost" data-a="beat" title="Log in tonight's session">${icon("chronicle")}</button></div></div>`;
+      <div class="tb-res-a"><button class="btn sm ghost" data-a="copy" title="Copy">${icon("copy")}</button><button class="btn sm ghost" data-a="pin" title="Pin to board">${icon("pin")}</button><button class="btn sm ghost" data-a="show" title="Show on stream">${icon("stream")}</button><button class="btn sm ghost" data-a="beat" title="Log in tonight's session">${icon("chronicle")}</button><button class="btn sm ghost" data-a="discord" title="Post to Discord">${icon("discord")}</button></div></div>`;
   }
   function renderRoll() {
     const box = $("#tRoll", el), t = cur();
@@ -121,6 +121,7 @@ export function createTables(el, App) {
         if (a === "pin") App.pinToBoard({ type: "note", color: "sky", text: `${r.name} (${r.num}): ${r.text}` });
         if (a === "show") App.showHandout({ type: "text", style: "card", title: r.name, text: r.text });
         if (a === "beat") App.logBeat("discovery", `${r.name}: ${r.text}`);
+        if (a === "discord") App.discord.post({ embeds: [{ color: 0x5865f2, author: { name: `${r.name} · ${r.num}` }, description: r.text }] }).then(ok => ok && toast("Posted to Discord"));
       });
     });
   }

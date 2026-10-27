@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("codex", {
   removeMedia: file => ipcRenderer.invoke("media:remove", file),
   pathForFile: f => { try { return webUtils.getPathForFile(f); } catch { return null; } },
   version: () => ipcRenderer.invoke("app:version"),
+  discord: req => ipcRenderer.invoke("discord:send", req),
   update: {
     check: () => ipcRenderer.invoke("update:check"),
     install: () => ipcRenderer.send("update:install"),

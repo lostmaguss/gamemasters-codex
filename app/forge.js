@@ -83,9 +83,10 @@ export function createForge(el, App) {
       remember(); renderCard(false);
     });
     const hid = (g.hidden || []).map(k => `<button class="btn sm ghost" data-hf="${k}">${icon("reroll")} ${esc(g.fields[k][0])}</button>`).join("");
-    $("#fActs", el).innerHTML = `<button class="btn" id="aSave">${icon("save")} Save to Codex</button><button class="btn" id="aPin">${icon("pin")} Pin to board</button><button class="btn" id="aCopy">${icon("copy")} Copy</button>${hid}`;
+    $("#fActs", el).innerHTML = `<button class="btn" id="aSave">${icon("save")} Save to Codex</button><button class="btn" id="aPin">${icon("pin")} Pin to board</button><button class="btn" id="aCopy">${icon("copy")} Copy</button><button class="btn" id="aPost" title="Post this card to Discord">${icon("discord")} Post</button>${hid}`;
     $$("[data-hf]", el).forEach(b => b.onclick = () => { const k = b.dataset.hf; cur.fields[k] = g.fields[k][1](cur.ctx, cur.fields); if (k === "rarity") cur.fields.value = g.fields.value[1](cur.ctx, cur.fields); remember(); renderCard(false); });
     $("#aCopy", el).onclick = () => copyText(text());
+    $("#aPost", el).onclick = () => App.discord.postCard(cur.title, g.sub(cur.ctx, cur.fields), Object.entries(g.fields).filter(([k]) => !(g.hidden || []).includes(k) && !["secret", "hidden", "twist"].includes(k)).map(([k, [lab]]) => [lab, cur.fields[k]])).then(ok => ok && toast("Posted to Discord (secrets left out)"));
     $("#aSave", el).onclick = () => {
       const notes = c().notes; const ex = notes.find(n => n.forgeId === cur.id);
       const body = text(cur, false).replace(/^([^:\n]+): /gm, "**$1:** ");
