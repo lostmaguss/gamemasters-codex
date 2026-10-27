@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld("codex", {
     onRoll: fn => on("bot:roll", fn),
     reply: r => ipcRenderer.send("bot:result", r),
     config: c => ipcRenderer.send("bot:config", c),
+    dm: m => ipcRenderer.invoke("bot:dm", m),
     fake: req => ipcRenderer.invoke("bot:fake", req),
   },
   update: {

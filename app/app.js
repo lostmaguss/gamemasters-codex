@@ -435,6 +435,29 @@ function quickLog() {
   });
 }
 
+// ---- whispers: a private message to one player through the bot ----
+App.whisper = async (member, { text, title, image }) => {
+  if (!window.codex?.bot) return toast("Whispers work in the desktop app with the dice bot connected");
+  if (!member.discordId) return toast(`${member.character || member.player} hasn't used the bot yet. Ask them to type /me once, then try again`);
+  const file = image ? { dataURL: await toDataURL(image), name: "secret." + ((await toDataURL(image)).match(/data:image\/(\w+)/)?.[1] || "png").replace("jpeg", "jpg") } : null;
+  const r = await window.codex.bot.dm({ userId: member.discordId, content: text || "", title: title || "", file });
+  toast(r.ok ? `Whispered to ${member.character || member.player}` : `Whisper failed: ${r.error}`);
+  return r;
+};
+App.whisperPicker = (payload) => {
+  const party = C().party;
+  if (!party.length) return toast("Add your party first");
+  App.modal(`<h2>Whisper to…</h2><p style="margin:0;color:var(--dim)">Sent as a private Discord message from your dice bot. Only that player sees it.</p>
+    ${payload.ask ? `<label class="f"><span>Message</span><textarea id="wT" rows="4" placeholder="You notice the magistrate's hand is shaking."></textarea></label>` : ""}
+    <div class="chips">${party.map(m => `<button class="chip" data-w="${m.id}" style="border-color:${esc(m.color)}">${esc(m.character || m.player)}${m.discordId ? "" : " (not linked yet)"}</button>`).join("")}</div>`, (m, close) => {
+    $$("[data-w]", m).forEach(b => b.onclick = async () => {
+      const mem = party.find(x => x.id === b.dataset.w), text = payload.ask ? $("#wT", m).value.trim() : payload.text;
+      if (payload.ask && !text) return toast("Write the message first");
+      const r = await App.whisper(mem, { ...payload, text }); if (r?.ok) close();
+    });
+  });
+};
+
 // ---- player rolls from the Discord bot ----
 const botPending = new Set();
 function botReply(r) {
@@ -448,7 +471,9 @@ function wireBot() {
   B.onRoll(req => {
     const fail = error => B.reply({ id: req.id, ok: false, error });
     const c = C(), names = (req.names || [req.who]).map(n => String(n).toLowerCase());
-    const member = c.party.find(m => m.discord && names.includes(String(m.discord).trim().replace(/^@/, "").toLowerCase()));
+    const member = c.party.find(m => (req.userId && m.discordId === req.userId) || (m.discord && names.includes(String(m.discord).trim().replace(/^@/, "").toLowerCase())));
+    // remember the player's Discord account so whispers can reach them
+    if (member && req.userId && member.discordId !== req.userId) { member.discordId = req.userId; save(); }
     const unlinked = `I don't know which character you play. Ask the GM to put your Discord name (${req.who}) on your party sheet.`;
     if (req.cmd === "check") {
       if (!member) return fail(unlinked);

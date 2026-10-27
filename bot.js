@@ -31,7 +31,7 @@ function handle(i) {
   const t = setTimeout(() => { pending.delete(id); i.editReply({ content: "The GM's table didn't answer. Is Gamemaster's Codex open?" }).catch(() => {}); }, 30000);
   pending.set(id, { i, t });
   const args = { dice: i.options.getString("dice"), label: i.options.getString("for") || "", stat: i.options.getString?.("stat"), bonus: i.options.getInteger?.("bonus") };
-  return i.deferReply({ ephemeral: cmd === "me" }).then(() => desk && desk.webContents.send("bot:roll", { id, cmd, expr: args.dice, label: args.label, args, who, names }));
+  return i.deferReply({ ephemeral: cmd === "me" }).then(() => desk && desk.webContents.send("bot:roll", { id, cmd, expr: args.dice, label: args.label, args, who, names, userId: i.user?.id || null }));
 }
 async function register() {
   if (!client?.isReady?.()) return;
@@ -65,6 +65,19 @@ function setup(getDesk) {
   ipcMain.on("bot:start", (_e, token) => { desk = getDesk(); start(token); });
   ipcMain.on("bot:stop", () => stop());
   ipcMain.handle("bot:status", () => ({ ...status }));
+  // whispers: a direct message from the bot to one player
+  ipcMain.handle("bot:dm", async (_e, { userId, content, title, file }) => {
+    if (process.env.CODEX_BOT_TEST && userId === "test-user") return { ok: true, test: { content, title, file: file?.name } };
+    if (!client?.isReady?.()) return { ok: false, error: "The dice bot isn't connected." };
+    try {
+      const u = await client.users.fetch(userId);
+      const msg = { content: content ? content.slice(0, 1900) : undefined, embeds: title ? [{ title, color: 0xcfb2e2, description: content ? undefined : undefined }] : [] };
+      if (file?.dataURL) { msg.files = [{ attachment: Buffer.from(file.dataURL.split(",")[1], "base64"), name: file.name || "handout.png" }]; if (title) msg.embeds[0].image = { url: `attachment://${file.name || "handout.png"}` }; }
+      if (title && content) { msg.embeds[0].description = content.slice(0, 3900); delete msg.content; }
+      await u.send(msg);
+      return { ok: true };
+    } catch (e) { return { ok: false, error: /Cannot send messages/i.test(e.message) ? "That player doesn't accept DMs from server members. They can allow it in the server's Privacy Settings." : String(e.message || e) }; }
+  });
   ipcMain.on("bot:config", (_e, cfg) => { const next = (cfg.stats || []).filter(Boolean); if (JSON.stringify(next) !== JSON.stringify(stats)) { stats = next; register(); } });
   ipcMain.on("bot:result", (_e, { id, ok, error, embed }) => {
     const p = pending.get(id); if (!p) return;
@@ -75,7 +88,7 @@ function setup(getDesk) {
   if (process.env.CODEX_BOT_TEST) {
     ipcMain.handle("bot:fake", (_e, { cmd = "roll", dice, label, who, stat, bonus }) => new Promise(res => {
       desk = getDesk();
-      const i = { commandName: cmd, options: { getString: k => ({ dice, for: label, stat })[k] ?? null, getInteger: k => k === "bonus" ? bonus ?? null : null }, member: { displayName: who }, user: { username: who.toLowerCase() }, deferReply: async () => {}, editReply: async m => res(m) };
+      const i = { commandName: cmd, options: { getString: k => ({ dice, for: label, stat })[k] ?? null, getInteger: k => k === "bonus" ? bonus ?? null : null }, member: { displayName: who }, user: { username: who.toLowerCase(), id: "test-user" }, deferReply: async () => {}, editReply: async m => res(m) };
       handle(i);
     }));
   }

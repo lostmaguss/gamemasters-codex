@@ -22,6 +22,7 @@ export function openPalette(App, VIEWS) {
     cmd("New note in the Codex", "codex", () => App.go("codex", { title: "New page " + new Date().toLocaleTimeString() }), "page write");
     cmd("Rules & genre settings", "gear", () => App.rulesModal(), "settings crit initiative");
     cmd("Discord settings", "discord", () => App.discord.discordModal(App), "webhook");
+    cmd("Whisper to a player (Discord DM)", "lock", () => App.whisperPicker({ ask: true }), "secret private dm message");
     cmd("Stop all sounds", "sound", () => App.sound.send({ op: "stopAll", fade: 1 }), "silence mute");
     cmd("Take the handout off stream", "image", () => App.hideHandout(), "hide");
     ["npc", "place", "mission", "item"].forEach(k => cmd(`Generate ${k === "npc" ? "an NPC" : k === "item" ? "an item" : "a " + k}`, "forge", () => App.go("forge", { draw: k }), "forge random"));

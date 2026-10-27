@@ -45,8 +45,8 @@ export function createParty(el, App) {
         <button class="portrait" data-portrait title="Change portrait" style="${m.portrait ? `background-image:url(${m.portrait})` : ""}">${m.portrait ? "" : esc((m.character || m.player || "?")[0] || "?")}</button>
         <div class="who"><input class="cname" type="text" data-k="character" value="${esc(m.character)}" placeholder="Character name">
           <div class="row" style="gap:6px"><input type="text" data-k="role" value="${esc(m.role)}" placeholder="Class / role" style="flex:1"><input type="text" data-k="player" value="${esc(m.player)}" placeholder="Player" style="width:110px"></div>
-          <input type="text" data-k="discord" value="${esc(m.discord || "")}" placeholder="Discord name (for /check, /init, /me)" class="dc-in"></div>
-        <div class="pt-ops"><input type="color" data-k="color" value="${esc(m.color)}" title="Color"><button class="tb" data-rm title="Remove">${icon("trash")}</button></div>
+          <input type="text" data-k="discord" value="${esc(m.discord || "")}" placeholder="Discord name (for /check, /init, /me)" class="dc-in" title="${m.discordId ? "Linked: whispers reach this player" : "Not linked yet: the player uses any bot command once"}"></div>
+        <div class="pt-ops"><input type="color" data-k="color" value="${esc(m.color)}" title="Color"><button class="tb" data-wh title="${m.discordId ? "Whisper (private Discord message)" : "Whisper: they need to use the dice bot once first"}">${icon("lock")}</button><button class="tb" data-rm title="Remove">${icon("trash")}</button></div>
       </header>
       <div class="resources">${L.resources.map(n => { const x = r(n), cur = Number(x.cur), max = Number(x.max), pct = max ? Math.max(0, Math.min(100, cur / max * 100)) : 0;
         return `<div class="resrc" data-res="${esc(n)}"><div class="rh"><span>${esc(n)}</span><span class="mono"><input type="number" data-cur value="${esc(x.cur)}">/<input type="number" data-max value="${esc(x.max)}"></span></div><div class="bar"><i style="width:${pct}%"></i></div><div class="rb"><button data-d="-5">−5</button><button data-d="-1">−1</button><button data-d="1">+1</button><button data-d="5">+5</button></div></div>`; }).join("")}</div>
@@ -58,6 +58,10 @@ export function createParty(el, App) {
   }
   function bind(card, m, L) {
     $$("[data-k]", card).forEach(i => i.oninput = () => { m[i.dataset.k] = i.value; if (i.dataset.k === "color") card.style.setProperty("--mc", i.value); touch(); });
+    $("[data-wh]", card).onclick = () => App.modal(`<h2>Whisper to ${esc(m.character || m.player)}</h2><textarea id="wT" rows="5" placeholder="Only you notice the cold draft from behind the bookcase."></textarea><div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>${icon("lock")} Send privately</button></div>`, (mm, close) => {
+      $("[data-x]", mm).onclick = close;
+      $("[data-ok]", mm).onclick = async () => { const t = $("#wT", mm).value.trim(); if (!t) return toast("Write the message first"); const r = await App.whisper(m, { text: t }); if (r?.ok) close(); };
+    });
     $("[data-rm]", card).onclick = () => App.confirm(`Remove ${m.character || m.player || "this character"}?`, "Their sheet is deleted. Past sessions keep their history.", "Remove", () => { C().party = C().party.filter(x => x !== m); save(); render(); pushParty(); });
     $("[data-portrait]", card).onclick = () => { const f = h(`<input type="file" accept="image/*">`); f.onchange = async () => { if (f.files[0]) { m.portrait = await shrinkImage(f.files[0], 320); save(); render(); pushParty(); } }; f.click(); };
     $$(".resrc", card).forEach(rd => {

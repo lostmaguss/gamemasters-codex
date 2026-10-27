@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.16.0", title: "Whispers", items: ["Send a secret to one player as a private Discord message from your dice bot", "Whisper from a party sheet (lock icon), from any handout in Live, or Ctrl+K → Whisper", "Players are linked automatically the first time they use a bot command"] },
   { v: "1.15.0", title: "Improv kit", items: ["Live: one-click NPC, place, loot or names, with Introduce, Save and Log buttons", "Spotlight tracker in Live: tap a player when they shine; whoever's waited longest glows", "Spotlight taps fill the Chronicle's stars when the session ends", "Discord: optional 'Previously on…' post at session start and a summary at the end"] },
   { v: "1.14.0", title: "Faster saving", items: ["Pictures (handouts, board images, portraits, creature art) are now kept as files beside your save, so saving stays quick", "Your existing pictures were moved automatically", "Exported backups still carry every picture inside"] },
   { v: "1.13.0", title: "The bot knows your players", items: ["Put each player's Discord name on their party sheet", "/check Agility rolls their stat with your system's formula", "/init rolls their initiative straight into the combat tracker", "/me shows them their own sheet, privately"] },
