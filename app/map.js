@@ -182,7 +182,7 @@ export function createMap(el, App) {
     const data = await shrinkImage(file, 3000);
     const img = await loadImg(data);
     const m = { id: uid(), name: file.name.replace(/\.[^.]+$/, "") || "Map", w: img.naturalWidth, h: img.naturalHeight, grid: { show: true, size: Math.round(Math.min(img.naturalWidth, img.naturalHeight) / 20), ox: 0, oy: 0, color: "rgba(0,0,0,.35)" }, fog: null, fogOn: true, tokens: [], view: null };
-    if (window.codex?.saveMedia) m.file = await window.codex.saveMedia(data, "jpg"); else m.src = data;
+    m.src = data;
     maps().push(m); C().ui.map = m.id; save(); renderTabs(); renderSide(); await load(); m.view = fitView(m, W, H); render(); save();
   }
   function renderTabs() {
@@ -247,7 +247,7 @@ export function createMap(el, App) {
     $("#mName", b).oninput = e => { m.name = e.target.value; saveView(); renderTabs(); };
     $("#mFit", b).onclick = () => { m.view = fitView(m, W, H); render(); save(); pushState(); };
     $("#mDel", b).onclick = () => App.confirm(`Delete "${m.name}"?`, "The map, its fog and tokens are removed.", "Delete map", async () => {
-      C().maps = maps().filter(x => x !== m); if (m.file) await window.codex?.removeMedia(m.file); C().ui.map = maps()[0]?.id; save(); renderTabs(); renderSide(); load(); pushMap();
+      C().maps = maps().filter(x => x !== m); const f = m.file || (String(m.src).startsWith("codexmedia://") ? decodeURIComponent(m.src.split("/").pop()) : null); if (f) await window.codex?.removeMedia(f); C().ui.map = maps()[0]?.id; save(); renderTabs(); renderSide(); load(); pushMap();
     });
   }
   $("#mClearAreas", el).onclick = () => { const m = M(); if (m) { m.areas = []; save(); render(); pushState(); } };

@@ -22,7 +22,7 @@ import { unseen, newsHTML, NEWS } from "./whatsnew.js";
 import { BEATS } from "./chronicle.js";
 import { FX } from "./fx.js";
 import * as Discord from "./discord.js";
-import { rnd, ls } from "./util.js";
+import { rnd, ls, storeImage, toDataURL, mapStrings } from "./util.js";
 import { setGenre } from "./gen.js";
 import { starterTables } from "./store.js";
 
@@ -318,7 +318,9 @@ function campaignMenu() {
     "-",
     { text: "Export backup…", icon: "save", run: async () => {
       const name = `${c.name.replace(/[^\w\- ]+/g, "").trim() || "campaign"}-${new Date().toISOString().slice(0, 10)}.json`;
-      const txt = JSON.stringify({ version: 1, campaigns: [c], currentId: c.id }, null, 1);
+      // exports carry their images inside, so a backup works on any computer
+      const copy = await mapStrings(JSON.parse(JSON.stringify({ version: 1, campaigns: [c], currentId: c.id })), v => v.startsWith("codexmedia://media/") && !/\.(mp3|ogg|wav|m4a|flac|webm|opus)$/i.test(v) ? toDataURL(v).catch(() => v) : v);
+      const txt = JSON.stringify(copy, null, 1);
       if (window.codex) { const p = await window.codex.exportData(txt, name); if (p) toast("Backup saved"); }
       else toast("Export works in the desktop app");
     } },
@@ -512,6 +514,12 @@ async function checkUpdates() {
   try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
   buildRail(); wireChrome(); renderCampName(); ls.set("rules", C().rules);
   show(C().ui.view || "prep");
+  // one-time move of big embedded images out of the save file
+  if (window.codex?.saveMedia && !S.data.prefs.mediaMoved) {
+    let n = 0;
+    await mapStrings(S.data.campaigns, async v => { if (v.length > 20000 && v.startsWith("data:image")) { n++; return storeImage(v); } return v; });
+    S.data.prefs.mediaMoved = true; save(); if (n) console.info(`moved ${n} images to files`);
+  }
   // tell people what changed since they last opened the app
   const v = window.codex ? await window.codex.version() : NEWS[0].v;
   const seen = S.data.prefs.seenVersion;

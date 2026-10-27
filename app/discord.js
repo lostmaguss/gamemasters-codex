@@ -1,5 +1,5 @@
 // Discord: post rolls, handouts, turn order and recaps to a channel through a webhook.
-import { $, $$, esc, icon, toast, uid } from "./util.js";
+import { $, $$, esc, icon, toast, uid, toDataURL } from "./util.js";
 import { C, S, save } from "./store.js";
 import { breakdown, critLabel, shownTotal } from "./roll.js";
 
@@ -33,11 +33,12 @@ export function postRoll(r, opts) {
   if (r.secret) return;
   return post({ embeds: [rollEmbed(r)] }, opts);
 }
-export function postHandout(hd, opts) {
+export async function postHandout(hd, opts) {
   if (hd.type === "image") {
-    const ext = (hd.src.match(/data:image\/(\w+)/) || [, "png"])[1].replace("jpeg", "jpg");
+    const src = await toDataURL(hd.src);
+    const ext = (src.match(/data:image\/(\w+)/) || [, "png"])[1].replace("jpeg", "jpg");
     const name = `handout.${ext}`;
-    return post({ embeds: [{ color: COLOR.handout, title: hd.title || "Handout", image: { url: `attachment://${name}` } }] }, { ...opts, file: { dataURL: hd.src, name } });
+    return post({ embeds: [{ color: COLOR.handout, title: hd.title || "Handout", image: { url: `attachment://${name}` } }] }, { ...opts, file: { dataURL: src, name } });
   }
   return post({ embeds: [{ color: COLOR.handout, title: hd.title || "Handout", description: String(hd.text || "").slice(0, 4000) }] }, opts);
 }

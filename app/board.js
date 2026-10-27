@@ -1,5 +1,5 @@
 // Corkboard canvas: index cards on an infinite cork surface, tied together with yarn.
-import { $, $$, esc, h, icon, toast, uid } from "./util.js";
+import { $, $$, esc, h, icon, toast, uid, storeImage } from "./util.js";
 import { C, save } from "./store.js";
 
 const COLORS = ["paper", "mustard", "rose", "lichen", "sky", "plum", "ink"];
@@ -30,7 +30,7 @@ export function shrinkImage(file, max = 900) {
         const s = Math.min(1, max / Math.max(img.width, img.height));
         const cv = document.createElement("canvas"); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
         cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
-        res(cv.toDataURL("image/jpeg", .86));
+        storeImage(cv.toDataURL("image/jpeg", .86)).then(res, rej);
       };
       img.src = fr.result;
     };

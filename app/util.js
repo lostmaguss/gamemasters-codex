@@ -66,3 +66,21 @@ const ICONS = {
 export function icon(name, cls = "") {
   return `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[name] || ""}"/></svg>`;
 }
+
+// Big images live as files next to the save (desktop app); the campaign keeps a short codexmedia:// link.
+export async function storeImage(dataURL) {
+  if (!window.codex?.saveMedia || !String(dataURL).startsWith("data:image")) return dataURL;
+  const ext = dataURL.startsWith("data:image/png") ? "png" : dataURL.startsWith("data:image/webp") ? "webp" : "jpg";
+  return `codexmedia://media/${await window.codex.saveMedia(dataURL, ext)}`;
+}
+export async function toDataURL(src) {
+  if (!String(src).startsWith("codexmedia://")) return src;
+  const blob = await (await fetch(src)).blob();
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(blob); });
+}
+// Walk any object and swap strings; used for migration and exports.
+export async function mapStrings(obj, fn) {
+  if (Array.isArray(obj)) { for (let i = 0; i < obj.length; i++) obj[i] = typeof obj[i] === "string" ? await fn(obj[i]) : (obj[i] && typeof obj[i] === "object" ? await mapStrings(obj[i], fn) : obj[i]); return obj; }
+  for (const k in obj) { const v = obj[k]; if (typeof v === "string") obj[k] = await fn(v); else if (v && typeof v === "object") await mapStrings(v, fn); }
+  return obj;
+}

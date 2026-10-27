@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.14.0", title: "Faster saving", items: ["Pictures (handouts, board images, portraits, creature art) are now kept as files beside your save, so saving stays quick", "Your existing pictures were moved automatically", "Exported backups still carry every picture inside"] },
   { v: "1.13.0", title: "The bot knows your players", items: ["Put each player's Discord name on their party sheet", "/check Agility rolls their stat with your system's formula", "/init rolls their initiative straight into the combat tracker", "/me shows them their own sheet, privately"] },
   { v: "1.12.0", title: "Players roll from Discord", items: ["Experimental dice bot: players type /roll 1d20+5 in your server and the dice land on your stream window with their name", "The bot answers in Discord with the result, crits and all", "Set it up in the campaign menu → Discord (step-by-step guide inside)"] },
   { v: "1.11.0", title: "Tactical map tools", items: ["Measure distances on the map in cells and your own units", "Area templates (circle, cone, line) that players see on stream", "Pictures on Codex pages, used in name cards", "Party portraits on map tokens", "Roll the players' initiative from a sheet stat"] },
