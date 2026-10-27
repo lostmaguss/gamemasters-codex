@@ -117,7 +117,7 @@ export function createDice(el, App) {
     const expr = exprIn.value.trim(); try { parseRoll(expr); } catch (e) { err.textContent = e.message; return; }
     App.modal(`<h2>Save this roll</h2><label class="f"><span>Name</span><input type="text" id="pn" value="${esc(labelIn.value)}" placeholder="Longsword, Perception…"></label><div class="mono" style="color:var(--dim)">${esc(expr)}</div><div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
       const ok = () => { C().presets.push({ id: uid(), name: $("#pn", m).value.trim() || expr, expr }); save(); renderPresets(); close(); };
-      $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = ok; $("#pn", m).onkeydown = e => e.key === "Enter" && ok();
+      $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = ok; $("#pn", m).onkeydown = e => { if (e.key === "Enter") ok(); };
     });
   };
   function renderLog() {

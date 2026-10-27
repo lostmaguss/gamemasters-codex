@@ -143,7 +143,7 @@ export function createBoard(el, App) {
   function renameBoard(b) {
     App.modal(`<h2>Board name</h2><label class="f"><span>Name</span><input type="text" id="bn" value="${esc(b.name)}"></label><div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
       const ok = () => { b.name = $("#bn", m).value.trim() || "Board"; save(); close(); renderTabs(); };
-      $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = ok; $("#bn", m).onkeydown = e => e.key === "Enter" && ok(); $("#bn", m).select();
+      $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = ok; $("#bn", m).onkeydown = e => { if (e.key === "Enter") ok(); }; $("#bn", m).select();
     });
   }
   $("#bAdd", el).onclick = () => { const c = C(); const b = { id: uid(), name: `Board ${c.boards.length + 1}`, cards: [], links: [], view: { x: 0, y: 0, z: 1 } }; c.boards.push(b); c.ui.board = b.id; save(); render(); renameBoard(b); };

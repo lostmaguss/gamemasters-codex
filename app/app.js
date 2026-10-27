@@ -240,7 +240,7 @@ function renameModal(c) {
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
     $("[data-x]", m).onclick = close;
     const ok = () => { c.name = $("#mName", m).value.trim() || "Untitled campaign"; c.tagline = $("#mTag", m).value.trim(); save(); renderCampName(); close(); App.refreshAll(); };
-    $("[data-ok]", m).onclick = ok; $("#mName", m).onkeydown = e => e.key === "Enter" && ok();
+    $("[data-ok]", m).onclick = ok; $("#mName", m).onkeydown = e => { if (e.key === "Enter") ok(); }; $("#mName", m).select();
   });
 }
 export function partyModal() {

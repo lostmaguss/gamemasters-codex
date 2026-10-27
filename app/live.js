@@ -127,7 +127,7 @@ export function createLive(el, App) {
       if (!S.active.size) return toast("Start some ambience loops first, then save the mix");
       App.modal(`<h2>Save soundscape</h2><label class="f"><span>Name</span><input type="text" id="scN" placeholder="Tavern at night"></label><label class="toggle"><input type="checkbox" id="scF" checked> Include the current weather on stream</label><div class="foot"><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
         const ok = () => { (C().soundscapes ||= []).push({ id: uid(), name: $("#scN", m).value.trim() || "Soundscape", loops: [...S.active.values()].map(c => ({ key: c.key, sound: c.sound, vol: c.vol })), fx: $("#scF", m).checked ? { ...App.fx.state.on } : null }); save(); close(); renderSound(); };
-        $("[data-ok]", m).onclick = ok; $("#scN", m).onkeydown = e => e.key === "Enter" && ok();
+        $("[data-ok]", m).onclick = ok; $("#scN", m).onkeydown = e => { if (e.key === "Enter") ok(); };
       });
     };
     $$(".scape", box).forEach(ch => ch.onclick = e => {

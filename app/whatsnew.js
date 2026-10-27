@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.20.2", title: "Fixed: typing in name boxes", items: ["You can type and delete in the new campaign name again (and board, calendar event, reputation, saved roll and soundscape names)", "A new campaign's name is selected, so you can just start typing"] },
   { v: "1.20.1", title: "Fixed: the app didn't start", items: ["Installers since 1.12 were missing a file and crashed on launch with \"Cannot find module ./bot\". Sorry! Every release is now checked for this before it ships"] },
   { v: "1.20.0", title: "Party votes", items: ["Stream view → Party vote: ask the table a question with up to 10 options", "With the dice bot online, players vote with buttons in Discord and can change their minds", "At the table, tap + for each raised hand", "Live result bars on stream; closing reveals the winner (and logs it in a live session)", "Loot finds that repeat now stack into one entry"] },
   { v: "1.19.0", title: "Party stash", items: ["The Party view has a shared stash: money in your currency (gold, credits, eddies…), loot, and who carries what", "Forge loot or items and press To stash; the Live improv kit has it too", "Reveal a find on stream as a glowing loot card, with a sound", "Split the purse evenly into everyone's Inventory", "Players can type /stash in Discord to see it"] },

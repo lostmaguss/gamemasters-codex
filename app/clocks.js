@@ -67,7 +67,7 @@ export function createClocks(el, App) {
     $$("[data-d]", box).forEach(b => b.onclick = () => App.modal(`<h2>${b.dataset.d} ${esc(m.name)}</h2><label class="f"><span>Event</span><input type="text" id="evT" placeholder="Festival of the Drowned Bell"></label><div class="foot"><button class="btn ghost" data-today>Make this today</button><button class="btn primary" data-ok>Add event</button></div>`, (mm, close) => {
       $("[data-today]", mm).onclick = () => { K.day = +b.dataset.d; save(); close(); renderCal(); };
       const ok = () => { const t = $("#evT", mm).value.trim(); if (t) { K.events.push({ id: uid(), month: K.month, day: +b.dataset.d, title: t }); save(); } close(); renderCal(); };
-      $("[data-ok]", mm).onclick = ok; $("#evT", mm).onkeydown = e => e.key === "Enter" && ok();
+      $("[data-ok]", mm).onclick = ok; $("#evT", mm).onkeydown = e => { if (e.key === "Enter") ok(); };
     }));
     $$(".cal-ev li[data-e]", box).forEach(li => $(".x", li).onclick = () => { K.events = K.events.filter(e => e.id !== li.dataset.e); save(); renderCal(); });
     $("#calStamp", box).onclick = () => { const s = C().sessions.find(x => x.status === "live") || C().sessions.find(x => x.status === "planned"); if (!s) return toast("No session is running or planned"); s.ingame = `${K.day} ${m.name}, ${K.year} ${K.era || ""}`.trim(); save(); toast(`Session ${s.num}: ${s.ingame}`); };
@@ -97,7 +97,7 @@ export function createClocks(el, App) {
     $("#repAdd", box).onclick = () => App.modal(`<h2>Track reputation with…</h2>${factions.length ? `<div class="chips">${factions.map(n => `<button class="chip" data-n="${n.id}">${esc(n.title)}</button>`).join("")}</div>` : ""}<label class="f"><span>Or type a name</span><input type="text" id="rN" placeholder="The Salt Kings"></label><div class="foot"><button class="btn primary" data-ok>Add</button></div>`, (m, close) => {
       $$("[data-n]", m).forEach(b => b.onclick = () => { R.push({ id: uid(), note: b.dataset.n, v: 0 }); save(); close(); renderRep(); });
       const ok = () => { const v = $("#rN", m).value.trim(); if (v) { R.push({ id: uid(), name: v, v: 0 }); save(); } close(); renderRep(); };
-      $("[data-ok]", m).onclick = ok; $("#rN", m).onkeydown = e => e.key === "Enter" && ok();
+      $("[data-ok]", m).onclick = ok; $("#rN", m).onkeydown = e => { if (e.key === "Enter") ok(); };
     });
     $$(".rep-row", box).forEach(row => {
       const r = R.find(x => x.id === row.dataset.id);
