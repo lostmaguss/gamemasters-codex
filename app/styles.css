@@ -579,7 +579,7 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .plan-banner .btn { margin-left: auto; }
 
 /* ---------- LIVE ---------- */
-.live { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+.liveview { display: grid; grid-template-rows: auto 1fr; height: 100%; }
 .live-head { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--line-soft); background: var(--bg-2); flex-wrap: wrap; }
 .live-head h2 { font-size: 30px; }
 .lv-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 6px color-mix(in srgb, var(--good) 20%, transparent); animation: pulse 2s infinite; }
@@ -748,3 +748,28 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 :root[data-look="neon"] .result-ov .rt { text-shadow: 0 0 24px var(--ember), 0 0 60px rgba(60,242,255,.4); }
 .dh-row { display: flex; gap: 8px; align-items: center; }
 .dh-row input[type=radio] { accent-color: var(--ember); width: 16px; height: 16px; }
+
+/* ---------- MAP ---------- */
+.mapv { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+.map-bar .mode-seg button { display: inline-flex; align-items: center; gap: 6px; }
+.map-bar .mode-seg .ic { width: 15px; height: 15px; }
+.map-bar input[type=range] { width: 110px; accent-color: var(--ember); }
+.map-bar .toggle .ic { width: 15px; height: 15px; }
+.map-body { display: grid; grid-template-columns: 1fr 300px; min-height: 0; }
+.map-stage { position: relative; overflow: hidden; background: #0c0a0b; min-width: 0; }
+.map-stage canvas { display: block; touch-action: none; }
+.map-side { border-left: 1px solid var(--line-soft); background: var(--bg-2); overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 20px; }
+.map-side > * { flex-shrink: 0; }
+.map-side .sec-h h3 { font-size: 22px; }
+.tk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow: auto; }
+.tk-list li { display: grid; grid-template-columns: 14px 1fr 24px 24px; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.tk-list li:hover, .tk-list li.on { background: var(--surface-2); }
+.tk-list li.none { display: block; color: var(--faint); cursor: default; }
+.tk-list i { width: 12px; height: 12px; border-radius: 50%; }
+.tk-list span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-list .tb { border: 0; background: none; color: var(--faint); cursor: pointer; display: grid; place-items: center; border-radius: 4px; height: 22px; }
+.tk-list .tb:hover { color: var(--ink); background: var(--surface-3); }
+.tk-list .ic { width: 13px; height: 13px; }
+.tk-edit { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line-soft); border-radius: 8px; }
+.tk-edit .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.tk-edit .sw.on { border-color: var(--ink); }

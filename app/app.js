@@ -13,6 +13,7 @@ import { createBestiary } from "./bestiary.js";
 import { createSoundEngine } from "./sound.js";
 import { parseRoll, diceGroups, buildResult, breakdown, critLabel, shownTotal, DEFAULT_RULES } from "./roll.js";
 import { createCombat } from "./combat.js";
+import { createMap } from "./map.js";
 import * as Discord from "./discord.js";
 import { rnd, ls } from "./util.js";
 import { setGenre } from "./gen.js";
@@ -30,6 +31,7 @@ const VIEWS = [
   { key: "prep", label: "Prep", icon: "book", make: createPrep, group: "Session" },
   { key: "live", label: "Live", icon: "stream", make: createLive },
   { key: "combat", label: "Combat", icon: "combat", make: createCombat },
+  { key: "map", label: "Map", icon: "map", make: createMap },
   { key: "dice", label: "Dice", icon: "dice", make: createDice },
   { key: "forge", label: "Forge", icon: "forge", make: createForge, group: "Make" },
   { key: "tables", label: "Tables", icon: "tables", make: createTables },
@@ -335,6 +337,7 @@ function wireChrome() {
   ]) : Stage.open();
   addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && /^[0-9]$/.test(e.key)) { const v = VIEWS[(+e.key + 9) % 10]; if (v) { e.preventDefault(); show(v.key); } }
+    if ((e.ctrlKey || e.metaKey) && e.key === "-") { e.preventDefault(); show("chronicle"); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); flush(); toast("Saved"); }
   });
 }

@@ -24,7 +24,7 @@ export function streamCombatState(c = C()) {
   })) };
 }
 let pushT;
-export function pushCombat() { clearTimeout(pushT); pushT = setTimeout(() => Stage.overlay(streamCombatState()), 60); }
+export function pushCombat() { clearTimeout(pushT); pushT = setTimeout(() => { Stage.overlay(streamCombatState()); dispatchEvent(new Event("codex:combat")); }, 60); }
 
 function fromCreature(x, n, hp) {
   const max = parseInt(x.stats?.HP || x.hp) || 0;

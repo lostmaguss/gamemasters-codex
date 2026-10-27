@@ -1,6 +1,6 @@
 {
   "name": "gamemasters-codex",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Campaign desk for game masters: generators, corkboard, codex, chronicle and 3D dice.",
   "main": "main.js",
   "scripts": {

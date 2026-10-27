@@ -12,7 +12,7 @@ const fmt = ms => { const m = Math.floor(ms / 60000); return `${Math.floor(m / 6
 
 export function createLive(el, App) {
   const st = { beatType: "social", secret: ls.get("live.secret", true), tableOut: [] };
-  el.innerHTML = `<div class="live">
+  el.innerHTML = `<div class="liveview">
     <header class="live-head" id="lvHead"></header>
     <div class="live-grid">
       <section class="lv-col" id="lvSound"></section>

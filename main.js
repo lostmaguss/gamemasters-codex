@@ -141,6 +141,12 @@ ipcMain.handle("media:import", async (_e, paths) => {
   }
   return out;
 });
+ipcMain.handle("media:saveData", async (_e, { dataURL, ext }) => {
+  await fs.promises.mkdir(mediaDir(), { recursive: true });
+  const file = Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + "." + (ext || "jpg");
+  await fs.promises.writeFile(path.join(mediaDir(), file), Buffer.from(dataURL.split(",")[1], "base64"));
+  return file;
+});
 ipcMain.handle("media:remove", async (_e, file) => { try { await fs.promises.unlink(path.join(mediaDir(), path.basename(file))); } catch {} return true; });
 
 // ---- Discord webhooks ----

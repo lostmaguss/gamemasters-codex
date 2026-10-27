@@ -5,6 +5,7 @@ import { DiceTray, THEMES, FELTS, setDiceSound } from "./dice3d.js";
 import { dieIcon, createOverlay } from "./diceui.js";
 import { Stage } from "./bridge.js";
 import { createSoundEngine } from "./sound.js";
+import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprender.js";
 
 (async function () {
   const applyLook = l => { if (!l || l === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = l; };
@@ -52,7 +53,36 @@ import { createSoundEngine } from "./sound.js";
   });
   // overlays: the combat turn order (and later the map and scenes)
   const strip = $("#strip");
-  Stage.onOverlay(o => {
+  // battle map: drawn over the dice table while it's on stream; roll results still show on top
+  const mapc = $("#mapc"), mctx = mapc.getContext("2d"), fogTex = makeFogTexture();
+  const MS = { map: null, img: null, fog: null, tokens: [], follow: null, current: null };
+  let mraf = 0;
+  const mrender = () => { if (!mraf) mraf = requestAnimationFrame(mdraw); };
+  function mdraw() {
+    mraf = 0; if (!MS.map) return;
+    const dpr = devicePixelRatio || 1, W = mapc.clientWidth, H = mapc.clientHeight;
+    if (mapc.width !== Math.round(W * dpr)) { mapc.width = W * dpr; mapc.height = H * dpr; }
+    mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let view = fitView(MS.map, W, H, 10);
+    if (MS.follow) { const z = W / MS.follow.span; view = { z, x: W / 2 - MS.follow.cx * z, y: H / 2 - MS.follow.cy * z }; }
+    drawMap(mctx, W, H, { map: { ...MS.map, tokens: MS.tokens }, img: MS.img, fog: MS.fog, view, gm: false, current: MS.current, fogTex });
+  }
+  new ResizeObserver(mrender).observe(mapc);
+  Stage.onOverlay(async o => {
+    if (o.kind === "map") {
+      document.body.classList.toggle("has-map", !!o.show); mapc.hidden = !o.show;
+      if (!o.show) { MS.map = null; return; }
+      if (!MS.map || MS.map.id !== o.id || MS.src !== o.src) { MS.img = await loadImg(o.src); MS.src = o.src; MS.fog = null; }
+      MS.map = { id: o.id, w: o.w, h: o.h, grid: o.grid, fogOn: o.fogOn };
+      mrender(); return;
+    }
+    if (o.kind === "mapstate") {
+      if (MS.map && o.id !== MS.map.id) return;
+      MS.follow = o.follow; MS.current = o.current;
+      MS.tokens = await Promise.all((o.tokens || []).map(async t => ({ ...t, _img: t.img ? await loadImg(t.img) : null })));
+      if (o.fog) { const fi = await loadFresh(o.fog); MS.fog = fi; }
+      mrender(); return;
+    }
     if (o.kind !== "combat") return;
     document.body.classList.toggle("has-strip", !!o.show);
     if (!o.show) { strip.hidden = true; strip.innerHTML = ""; return; }
