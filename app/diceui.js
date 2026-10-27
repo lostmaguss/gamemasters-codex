@@ -21,7 +21,7 @@ export function createOverlay(host) {
     wait(label) { ov.hidden = false; ov.className = "result-ov wait"; ov.innerHTML = `<div class="rl">${esc(label)}</div><div class="rt">rolling…</div>`; },
     show(r) {
       ov.hidden = false; ov.className = "result-ov" + (r.crit ? " crit" : r.fumble ? " fumble" : "");
-      ov.innerHTML = `<div class="rl">${esc(r.label || r.expr)}${r.who ? ` <span style="opacity:.6;font-size:.8em">· ${esc(r.who)}</span>` : ""}</div><div class="rt">${shownTotal(r)}${r.successMode && r.single == null ? `<small class="succ">success${r.total === 1 ? "" : "es"}</small>` : ""}</div><div class="rb">${esc(breakdown(r))}</div><div class="banner ${r.success === true ? "ok" : r.success === false ? "no" : ""}">${esc(critLabel(r))}</div>`;
+      ov.innerHTML = `${r.who ? `<div class="rwho" style="--wc:${esc(r.color || "var(--ember)")}">${esc(r.who)}</div>` : ""}<div class="rl">${esc(r.label || r.expr)}</div><div class="rt">${shownTotal(r)}${r.successMode && r.single == null ? `<small class="succ">success${r.total === 1 ? "" : "es"}</small>` : ""}</div><div class="rb">${esc(breakdown(r))}</div><div class="banner ${r.success === true ? "ok" : r.success === false ? "no" : ""}">${esc(critLabel(r))}</div>`;
       void ov.offsetWidth; ov.classList.add("show");
       if (r.crit || r.fumble) { fl.className = "flash " + (r.crit ? "crit" : "fumble"); void fl.offsetWidth; fl.classList.add("go"); }
     },

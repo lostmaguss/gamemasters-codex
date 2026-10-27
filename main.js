@@ -185,16 +185,19 @@ ipcMain.handle("media:remove", async (_e, file) => { try { await fs.promises.unl
 
 // ---- Discord webhooks ----
 // Posting happens here, not in the page, so Discord's CORS rules don't apply and the page's CSP stays strict.
-ipcMain.handle("discord:send", async (_e, { url, payload, file }) => {
+ipcMain.handle("discord:send", async (_e, { url, payload, file, files }) => {
   if (!/^https:\/\/(?:\w+\.)?(?:discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+/.test(url) && !process.env.CODEX_WEBHOOK_TEST) return { ok: false, status: 0, error: "That isn't a Discord webhook link" };
   try {
     let res;
-    if (file && file.dataURL) {
-      const [head, b64] = file.dataURL.split(",");
-      const type = (head.match(/data:([^;]+)/) || [])[1] || "image/png";
+    const list = (files || (file ? [file] : [])).filter(f => f && f.dataURL);
+    if (list.length) {
       const form = new FormData();
       form.append("payload_json", JSON.stringify(payload));
-      form.append("files[0]", new Blob([Buffer.from(b64, "base64")], { type }), file.name || "handout.png");
+      list.slice(0, 10).forEach((f, i) => {
+        const [head, b64] = f.dataURL.split(",");
+        const type = (head.match(/data:([^;]+)/) || [])[1] || "image/png";
+        form.append(`files[${i}]`, new Blob([Buffer.from(b64, "base64")], { type }), f.name || `image${i}.png`);
+      });
       res = await net.fetch(url, { method: "POST", body: form });
     } else {
       res = await net.fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });

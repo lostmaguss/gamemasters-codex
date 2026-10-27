@@ -61,8 +61,7 @@ export function createLive(el, App) {
       const sp = s.plan.spot || {}, max = Math.max(0, ...Object.values(sp).map(x => x.n));
       if (max) { s.spotlight ||= {}; for (const [id, x] of Object.entries(sp)) s.spotlight[id] = Math.max(1, Math.round(x.n / max * 3)); }
       if (App.discord.settings().autoSessions && App.discord.connected()) {
-        const loot = (s.loot || []).filter(l => l.item).map(l => l.item);
-        App.discord.postText(`Session ${s.num} is over`, [`Played ${s.hours} hours.`, s.beats.filter(b => b.star && b.text).map(b => "⭐ " + b.text.replace(/\[\[|\]\]/g, "")).join("\n"), loot.length ? `**Loot:** ${loot.join(", ")}` : ""].filter(Boolean).join("\n\n"), { quiet: true });
+        App.discord.postRecap(s, { quiet: true });
       }
       App.sound.send({ op: "stopAll", fade: 2 }); save(); App.go("chronicle", { session: s.id }); toast("Session saved to the Chronicle");
     });

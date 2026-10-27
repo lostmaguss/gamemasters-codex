@@ -102,7 +102,9 @@ export const App = {
   // ---- rolls from anywhere: stream window when open (unless secret), otherwise right here ----
   roll(expr, label = "", { secret = false, who = "", id = uid(), onResult } = {}) {
     let terms; try { terms = parseRoll(expr); } catch (e) { toast(e.message); return; }
-    const req = { id, expr, label, who, rules: C().rules };
+    // a player's roll gets their sheet color on the dice
+    const pc = who && C().party.find(m => (m.character || m.player) === who);
+    const req = { id, expr, label, who, rules: C().rules, color: pc?.color || null };
     if (onResult) App._rollCbs.set(id, onResult);
     if (!secret && App.streamLive) { Stage.roll(req); rollToast({ ...req, pending: true }); return; }
     const vals = diceGroups(terms).map(g => Array.from({ length: g.count }, () => rnd(g.sides) + 1));
@@ -128,6 +130,8 @@ export const App = {
   onAirChange(fn) { App._air.add(fn); },
   showHandout(hd) {
     App.onAir = hd; Stage.show(hd); App._air.forEach(f => f());
+    // remember what was shown tonight, for the recap's pictures
+    const live = C().sessions.find(x => x.status === "live"); if (live && hd.id && !(live.shown ||= []).includes(hd.id)) { live.shown.push(hd.id); save(); }
     if (Discord.settings().autoHandouts && Discord.connected()) Discord.postHandout(hd, { quiet: true });
   },
   discord: Discord,

@@ -79,7 +79,7 @@ export function createParty(el, App) {
       const v = m.stats?.[b.dataset.stat]; const num = parseInt(v);
       if (isNaN(num)) return toast(`Give ${b.dataset.stat} a number first`);
       const expr = (L.roll || "1d20+{value}").replace(/\{value\}/g, num).replace(/\+-/g, "-");
-      App.roll(expr, `${m.character || m.player}: ${b.dataset.stat}`, { secret: e.shiftKey });
+      App.roll(expr, b.dataset.stat, { secret: e.shiftKey, who: m.character || m.player });
     });
     $$("[data-cond]", card).forEach(b => b.onclick = () => { m.conds.splice(+b.dataset.cond, 1); save(); render(); pushParty(); });
     $(".cond-in", card).onkeydown = e => { if (e.key === "Enter" && e.target.value.trim()) { (m.conds ||= []).push(e.target.value.trim()); save(); render(); pushParty(); } };

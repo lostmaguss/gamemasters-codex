@@ -94,6 +94,13 @@ export const THEMES = {
   hull:     { label: "Hull plate", face: "#3a4a56", face2: "#222d35", ink: "#39d0c0", rim: "#6f8796", rough: .5, metal: .4 },
   party:    { label: "Mixed set" },
 };
+// a player's own dice: their sheet color for the body, ink picked for contrast
+export function colorTheme(hex) {
+  const n = parseInt(String(hex || "").replace("#", ""), 16); if (isNaN(n)) return null;
+  const r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255, lum = (r * .299 + g * .587 + b * .114) / 255;
+  const mix = (k, t) => "#" + [r, g, b].map(v => Math.round(t === "d" ? v * k : v + (255 - v) * k).toString(16).padStart(2, "0")).join("");
+  return { label: "c:" + hex, face: hex, face2: mix(.6, "d"), ink: lum > .55 ? "#1d1418" : "#fff8f0", rim: mix(.55, "l"), rough: .32, metal: .06 };
+}
 const PARTY = { 4: "jade", 6: "bone", 8: "amethyst", 10: "ember", 12: "blood", 20: "obsidian", 100: "ember" };
 export const FELTS = {
   oxblood: { label: "Oxblood felt", color: "#4d1a21" },
@@ -151,7 +158,7 @@ function labelFor(type, value, variant) {
 }
 
 function buildDie(type, themeKey, variant) {
-  const T = THEMES[themeKey === "party" ? PARTY[variant === "tens" || variant === "units" ? 100 : type] : themeKey] || THEMES.ember;
+  const T = typeof themeKey === "object" && themeKey ? themeKey : THEMES[themeKey === "party" ? PARTY[variant === "tens" || variant === "units" ? 100 : type] : themeKey] || THEMES.ember;
   const def = DEFS[type];
   const pos = [], uv = [], mats = [], faceNormals = [];
   const geo = new THREE.BufferGeometry();
@@ -325,7 +332,8 @@ export class DiceTray {
     this.renderOnce();
   }
   // groups: [{sides, count}] -> Promise<number[][]> (values per group, in roll order)
-  roll(groups) {
+  roll(groups, { color } = {}) {
+    const theme = (color && colorTheme(color)) || this.theme;
     this.clear();
     const list = [];
     groups.forEach((g, gi) => {
@@ -339,7 +347,7 @@ export class DiceTray {
     const physical = list.filter(x => x.type).slice(0, 40);
     const fromLeft = Math.random() < .5, B = this.bounds;
     physical.forEach((x, i) => {
-      const d = buildDie(x.type, this.theme, x.variant);
+      const d = buildDie(x.type, theme, x.variant);
       const body = new CANNON.Body({ mass: 1, material: this.dieMat, shape: d.shape, linearDamping: .12, angularDamping: .12 });
       const row = i % 6, col = Math.floor(i / 6);
       body.position.set((fromLeft ? -1 : 1) * (B.w - 1.2 - col * 1.6), 3 + Math.random() * 2.5, (row - 2.5) * Math.min(1.7, B.d / 3.2) + Math.random() * .5);

@@ -1,4 +1,5 @@
 // Combat tracker: initiative, HP, conditions with round timers. The turn order shows on the stream window.
+import { rate, meterHTML, creatureDPR } from "./difficulty.js";
 import { $, $$, esc, h, icon, toast, uid, ls, debounce, rnd } from "./util.js";
 import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
@@ -34,6 +35,11 @@ function fromCreature(x, n, hp) {
 
 export function createCombat(el, App) {
   const st = { sel: null, secret: ls.get("cb.secret", true) };
+  // how dangerous the foes still standing are for this party
+  const threat = (b, live) => {
+    const c = C(), foes = b.list.filter(x => x.kind === "foe" && !(live && x.max && Number(x.hp) <= 0));
+    return meterHTML(rate(foes.map(x => ({ hp: Number(live ? x.hp : x.max) || Number(x.max) || 0, dpr: creatureDPR(c.bestiary.find(y => y.id === x.ref)) })), c.party), true);
+  };
   el.innerHTML = `<div class="combat"><header class="cb-head" id="cbHead"></header><div class="cb-grid"><section class="cb-list" id="cbList"></section><aside class="cb-side" id="cbSide"></aside></div></div>`;
   const cb = () => combat();
   const log = msg => { const L = cb().log; L.unshift({ t: Date.now(), r: cb().round, msg }); L.length = Math.min(L.length, 80); };
@@ -51,12 +57,12 @@ export function createCombat(el, App) {
          <div class="cb-now"><span class="eyebrow">Now acting</span><b>${esc(cur?.name || "—")}</b></div>
          <button class="btn icon" id="cbPrev" title="Previous turn">${icon("up")}</button>
          <button class="btn primary roll-btn" id="cbNext">Next turn <span class="mono" style="font-size:11px;opacity:.6">SPACE</span></button>
-         <div style="flex:1"></div>
+         <div style="flex:1"></div>${threat(b, true)}
          <label class="toggle"><input type="checkbox" id="cbStream" ${b.showOnStream ? "checked" : ""}> Turn order on stream</label>
          <label class="toggle"><input type="checkbox" id="cbSkip" ${b.autoSkip ? "checked" : ""}> Skip downed foes</label>
          <button class="btn icon" id="cbPost" title="Post the turn order to Discord">${icon("discord")}</button>
          <button class="btn" id="cbEnd">End combat</button>`
-      : `<div><div class="eyebrow">Combat</div><h2>${b.list.length ? "Ready to fight" : "No fight yet"}</h2></div><div style="flex:1"></div>
+      : `<div><div class="eyebrow">Combat</div><h2>${b.list.length ? "Ready to fight" : "No fight yet"}</h2></div>${threat(b)}<div style="flex:1"></div>
          ${C().party.length ? `<label class="toggle" title="Roll the players' initiative from a sheet stat"><input type="checkbox" id="cbPcRoll" ${b.pcStat ? "checked" : ""}> Roll for players with</label><select id="cbPcStat" style="width:auto;height:32px" ${b.pcStat ? "" : "disabled"}>${(C().sheet?.stats || ["Agility"]).map(x => `<option ${x === b.pcStat ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>` : ""}
          <button class="btn" id="cbRollAll">${icon("dice")} Roll initiative</button>
          <button class="btn primary roll-btn" id="cbStart" ${b.list.length ? "" : "disabled"}>Start combat</button>`;

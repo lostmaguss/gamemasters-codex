@@ -108,7 +108,7 @@ export function createChronicle(el, App) {
     $("#sHours", sp).oninput = e => { s.hours = e.target.value; touch(); };
     $$("[data-m]", sp).forEach(b => b.onclick = () => { st.mode = b.dataset.m; renderSpread(); });
     $("#sDiscord", sp).onclick = () => copyText(discordText(s, c), "Recap copied. Paste it in Discord");
-    $("#sPost", sp).onclick = async () => { const t = discordText(s, c).split("\n"); const ok = await App.discord.postText(t[0].replace(/^#\s*/, ""), t.slice(1).join("\n").trim()); if (ok?.every?.(Boolean)) toast("Recap posted to Discord"); };
+    $("#sPost", sp).onclick = async () => { if (await App.discord.postRecap(s)) toast(`Recap posted to Discord${s.shown?.length ? " with pictures" : ""}`); };
     $("#sDel", sp).onclick = () => App.confirm(`Delete session ${s.num}?`, "This chapter and everything logged in it is removed.", "Delete session", () => {
       C().sessions = S().filter(x => x.id !== s.id); st.sel = sorted().pop()?.id || null; save(); renderThread(); renderSpread();
     });

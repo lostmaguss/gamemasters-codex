@@ -26,14 +26,15 @@ import { createFx } from "./fx.js";
 
   function addHist(r) {
     const li = document.createElement("li"); li.className = r.crit ? "crit" : r.fumble ? "fumble" : "";
-    li.innerHTML = `<span></span><b></b>`; li.firstChild.textContent = r.label || r.expr; li.lastChild.textContent = r.total;
+    li.innerHTML = `<span></span><b></b>`; li.firstChild.textContent = (r.who ? r.who.split(" ")[0] + " · " : "") + (r.label || r.expr); li.lastChild.textContent = r.total;
+    if (r.color) li.style.borderLeftColor = r.color;
     hist.prepend(li); while (hist.children.length > 7) hist.lastChild.remove();
   }
   function roll(req) {
     busy = busy.then(async () => {
       let terms; try { terms = parseRoll(req.expr); } catch { return; }
       ov.hide();
-      const values = await tray.roll(diceGroups(terms));
+      const values = await tray.roll(diceGroups(terms), { color: req.color });
       const r = buildResult(req, terms, values);
       tray.mark(tray.physicalIndex().map(([gi, ri]) => markFor(r, gi, ri)));
       ov.show(r); addHist(r); Stage.sendResult(r);

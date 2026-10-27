@@ -34,7 +34,7 @@ export function diceGroups(terms) { return terms.filter(t => t.flat == null).map
 // Crit rules per campaign: which die counts, and whether high or low is good.
 export const DEFAULT_RULES = { critDie: 20, critMode: "high", initHigh: true };
 const hit = (v, t) => t.op === ">=" ? v >= t.n : t.op === "<=" ? v <= t.n : t.op === ">" ? v > t.n : v < t.n;
-export function buildResult({ id, expr, label, who, rules }, terms, values) {
+export function buildResult({ id, expr, label, who, rules, color }, terms, values) {
   rules = { ...DEFAULT_RULES, ...(rules || {}) };
   let total = 0, mod = 0, gi = 0, successMode = false; const groups = [];
   for (const t of terms) {
@@ -69,7 +69,7 @@ export function buildResult({ id, expr, label, who, rules }, terms, values) {
       crit = v === best; fumble = v === worst;
     }
   }
-  const r = { id, expr, label: label || "", who: who || "", groups, mod, total, at: Date.now(), crit, fumble, rules };
+  const r = { id, expr, label: label || "", who: who || "", color: color || null, groups, mod, total, at: Date.now(), crit, fumble, rules };
   if (successMode) {
     r.successMode = true;
     const one = groups.length === 1 && groups[0].rolls.length === 1 && !mod;

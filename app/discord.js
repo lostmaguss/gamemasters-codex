@@ -9,14 +9,14 @@ const hookFor = (c, id) => { const d = settings(c); return d.hooks.find(h => h.i
 export const connected = (c = C()) => !!hookFor(c);
 
 let queue = Promise.resolve();
-export function post(payload, { file, hook, quiet } = {}) {
+export function post(payload, { file, files, hook, quiet } = {}) {
   const c = C(), h = hookFor(c, hook);
   if (!h) { if (!quiet) toast("Connect a Discord channel first (campaign menu → Discord)"); return Promise.resolve(false); }
   if (!window.codex?.discord) { if (!quiet) toast("Posting to Discord works in the desktop app"); return Promise.resolve(false); }
   const body = { username: settings(c).name || c.name || "Gamemaster's Codex", allowed_mentions: { parse: [] }, ...payload };
   // one post at a time keeps Discord's rate limit happy and the order right
   queue = queue.then(async () => {
-    const r = await window.codex.discord({ url: h.url, payload: body, file });
+    const r = await window.codex.discord({ url: h.url, payload: body, file, files });
     if (!r.ok && !quiet) toast(`Discord: ${r.error || "post failed (" + r.status + ")"}`);
     await new Promise(res => setTimeout(res, 350));
     return r.ok;
@@ -52,6 +52,36 @@ export function postText(title, text, opts) {
   const parts = []; let rest = String(text || "");
   while (rest.length) { let cut = rest.length > 3900 ? rest.lastIndexOf("\n", 3900) : rest.length; if (cut < 1000) cut = Math.min(3900, rest.length); parts.push(rest.slice(0, cut)); rest = rest.slice(cut); }
   return Promise.all(parts.map((p, i) => post({ embeds: [{ color: COLOR.info, title: i ? `${title} (cont.)` : title, description: p }] }, opts)));
+}
+// the session's recap card: highlights, quotes, MVP, loot, decisions, cliffhanger,
+// with up to four of the pictures shown that night as a gallery
+export async function postRecap(s, opts = {}) {
+  const c = C(), strip = t => String(t || "").replace(/\[\[([^\]]+)\]\]/g, "$1");
+  const clip = (t, n) => { t = String(t); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
+  const field = (name, lines, n = 1000) => lines.length ? [{ name, value: clip(lines.join("\n"), n), inline: false }] : [];
+  const stars = (s.beats || []).filter(b => b.star && b.text).map(b => "⭐ " + strip(b.text));
+  const happened = stars.length ? stars : (s.beats || []).filter(b => b.text).slice(-5).map(b => "• " + strip(b.text));
+  const quotes = (s.quotes || []).filter(q => q.line).slice(0, 3).map(q => `> "${q.line}"\n> — ${q.who || "someone"}`);
+  const sp = Object.entries(s.spotlight || {}).sort((a, b) => b[1] - a[1]), top = sp[0]?.[1] || 0;
+  const mvps = s.mvp ? [c.party.find(m => m.id === s.mvp)].filter(Boolean) : top ? sp.filter(x => x[1] === top).map(([id]) => c.party.find(m => m.id === id)).filter(Boolean) : [];
+  const loot = (s.loot || []).filter(l => l.item).map(l => l.item + (l.to ? ` → ${l.to}` : ""));
+  const votes = (s.beats || []).filter(b => /^The party voted:/.test(b.text || "")).map(b => "🗳️ " + b.text.replace(/^The party voted:\s*/, ""));
+  const next = c.ui.cast?.next;
+  const imgs = [];
+  for (const id of (s.shown || []).slice(-4)) {
+    const hd = c.handouts.find(h => h.id === id); if (!hd || hd.type !== "image" || !hd.src) continue;
+    try { const src = await toDataURL(hd.src); const ext = (src.match(/data:image\/(\w+)/) || [, "png"])[1].replace("jpeg", "jpg"); imgs.push({ dataURL: src, name: `pic${imgs.length}.${ext}`, title: hd.title }); } catch {}
+  }
+  const url = "https://github.com/lostmaguss/gamemasters-codex"; // shared url groups the images into one gallery
+  const main = {
+    color: COLOR.crit, url, title: clip(`Session ${s.num}${s.title ? ": " + s.title : ""}`, 250),
+    description: clip([s.ingame && `*${s.ingame}*`, happened.length ? "" : strip(s.recap)].filter(Boolean).join("\n"), 2000) || undefined,
+    fields: [...field(stars.length ? "Highlights" : "What happened", happened), ...field("Said at the table", quotes), ...field("MVP", mvps.map(m => `🏆 ${m.character || m.player}`)), ...field("The party decided", votes), ...field("Loot", [loot.join(", ")].filter(Boolean)), ...field("Where we left off", s.cliff ? [`||${strip(s.cliff)}||`] : []), ...field("Next session", next ? [next] : [])],
+    footer: { text: [c.name, s.hours ? `${s.hours} h played` : ""].filter(Boolean).join(" · ") },
+  };
+  if (imgs[0]) main.image = { url: `attachment://${imgs[0].name}` };
+  const embeds = [main, ...imgs.slice(1).map(f => ({ url, image: { url: `attachment://${f.name}` } }))];
+  return post({ embeds }, { ...opts, files: imgs.map(({ dataURL, name }) => ({ dataURL, name })) });
 }
 export function postCard(title, sub, fields, opts) {
   return post({ embeds: [{ color: COLOR.info, title, description: sub ? `*${sub}*` : "", fields: fields.slice(0, 20).map(([name, value]) => ({ name, value: String(value).slice(0, 1000) || "—", inline: false })) }] }, opts);
