@@ -949,3 +949,4 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .rep-row .ic { width: 13px; height: 13px; }
 .apply { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--ember); background: color-mix(in srgb, var(--ember) 10%, var(--surface)); }
 .apply .chip { color: var(--ink); }
+.mstat.hp span { color: #fff; opacity: .9; }

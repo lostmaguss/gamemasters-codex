@@ -166,6 +166,9 @@ import { createFx } from "./fx.js";
   Stage.onClear(() => { tray.clear(); ov.hide(); });
   Stage.onClose(() => window.close());
   Stage.hello();
+  // table mode (fullscreen on a TV): no control bar or hints, Esc returns to a window
+  window.codex?.stage?.onTableMode?.(on => { document.body.classList.toggle("table-mode", on); });
+  addEventListener("keydown", e => { if (e.key === "Escape" && document.body.classList.contains("table-mode")) window.codex?.stage?.windowed(); });
 
   const q = $("#quick");
   q.innerHTML = [4, 6, 8, 10, 12, 20, 100].map(s => `<button class="dpick" data-s="${s}" title="Roll a d${s}">${dieIcon(s)}d${s}</button>`).join("");

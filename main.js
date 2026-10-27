@@ -1,6 +1,6 @@
 // Gamemaster's Codex — Electron main process.
 // Owns the two windows (the GM desk and the stream dice window) and the campaign file on disk.
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell, protocol, net } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell, protocol, net, screen } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { pathToFileURL } = require("url");
@@ -124,6 +124,16 @@ ipcMain.on("win:close", () => desk && desk.close());
 
 // ---- stream window ----
 ipcMain.on("stage:open", openStage);
+// table mode: the player display goes fullscreen on another screen (TV, projector)
+ipcMain.handle("stage:screens", () => screen.getAllDisplays().map(d => ({ id: d.id, label: d.label || `${d.size.width}×${d.size.height}`, primary: d.id === screen.getPrimaryDisplay().id })));
+ipcMain.handle("stage:toScreen", async (_e, id) => {
+  if (!stage || stage.isDestroyed()) { openStage(); await new Promise(r => stage.webContents.once("did-finish-load", r)); }
+  const d = screen.getAllDisplays().find(x => x.id === id) || screen.getAllDisplays().find(x => x.id !== screen.getPrimaryDisplay().id);
+  if (!d) return { ok: false, error: "Only one screen is connected." };
+  stage.setFullScreen(false); stage.setBounds(d.bounds); stage.setFullScreen(true); stage.webContents.send("stage:tableMode", true);
+  return { ok: true };
+});
+ipcMain.on("stage:windowed", () => { if (stage && !stage.isDestroyed()) { stage.setFullScreen(false); stage.setSize(1280, 760); stage.center(); stage.webContents.send("stage:tableMode", false); } });
 ipcMain.on("stage:close", () => stage && stage.close());
 ipcMain.handle("stage:isOpen", () => !!(stage && !stage.isDestroyed()));
 ipcMain.on("stage:ontop", (_e, on) => stage && stage.setAlwaysOnTop(!!on, "floating"));

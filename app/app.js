@@ -377,12 +377,25 @@ function wireChrome() {
   wireBot();
   Stage.onState(setLive);
   Stage.isOpen().then(setLive);
+  App.tableMode = async () => {
+    const api = window.codex?.stage; if (!api) return toast("Table mode works in the desktop app");
+    const list = await api.screens(), others = list.filter(d => !d.primary);
+    if (!others.length) return toast("Connect a TV or second monitor first, then try again");
+    const go = async id => { const r = await api.toScreen(id); toast(r.ok ? "Player display is on the second screen. Press Esc there, or use this menu, to bring it back" : r.error); };
+    if (others.length === 1) return go(others[0].id);
+    App.menu(sb, others.map(d => ({ text: `Show on ${d.label}`, icon: "stream", run: () => go(d.id) })));
+  };
   sb.onclick = () => App.streamLive ? App.menu(sb, [
+    { text: "Player display on second screen (TV)", icon: "fit", run: App.tableMode },
+    { text: "Back to a normal window", icon: "max", run: () => window.codex?.stage.windowed() },
     { text: "Bring stream window forward", icon: "stream", run: Stage.open },
     ...(App.onAir ? [{ text: "Take the handout down", icon: "image", run: App.hideHandout }] : []),
     { text: "Clear the table", icon: "trash", run: Stage.clear },
     { text: "Close stream window", icon: "x", run: Stage.close },
-  ]) : Stage.open();
+  ]) : App.menu(sb, [
+    { text: "Open stream window (for Discord)", icon: "stream", run: Stage.open },
+    { text: "Player display on second screen (TV at the table)", icon: "fit", run: App.tableMode },
+  ]);
   addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && /^[0-9]$/.test(e.key)) { const v = VIEWS[(+e.key + 9) % 10]; if (v) { e.preventDefault(); show(v.key); } }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(App, VIEWS); }

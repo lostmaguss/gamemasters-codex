@@ -33,6 +33,7 @@ export function createDice(el, App) {
         <div class="row" style="justify-content:space-between"><h3 class="side-h" style="margin:0">Stream window</h3><span class="eyebrow" id="sState">Closed</span></div>
         <p>A separate window with just the dice table. In Discord pick <b>Share Screen → Applications → Codex Dice</b>. Your notes stay private on this window.</p>
         <button class="btn primary" id="sOpen">${icon("stream")} Open stream window</button>
+        <button class="btn" id="sTv" title="For in-person games: the player display fills a TV or projector">${icon("fit")} Player display on a second screen</button>
         <label class="toggle"><input type="checkbox" id="sTo" ${opt.toStage ? "checked" : ""}> Throw on the stream window while it's open</label>
         <label class="toggle"><input type="checkbox" id="sTop" ${opt.onTop ? "checked" : ""}> Keep it above other windows</label>
       </div>
@@ -127,6 +128,7 @@ export function createDice(el, App) {
   $("#lClr", el).onclick = () => { C().rolls = []; save(); renderLog(); };
 
   $("#sOpen", el).onclick = () => Stage.open();
+  $("#sTv", el).onclick = () => App.tableMode?.();
   $("#sTo", el).onchange = e => { opt.toStage = e.target.checked; ls.set("dice.toStage", opt.toStage); };
   $("#sTop", el).onchange = e => { opt.onTop = e.target.checked; ls.set("dice.onTop", opt.onTop); Stage.onTop(opt.onTop); };
   $("#dTheme", el).onchange = e => { opt.theme = e.target.value; ls.set("dice.theme", opt.theme); tray.setTheme(opt.theme); };
