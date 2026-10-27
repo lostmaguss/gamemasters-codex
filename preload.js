@@ -17,6 +17,15 @@ contextBridge.exposeInMainWorld("codex", {
   version: () => ipcRenderer.invoke("app:version"),
   zoom: f => { if (f) webFrame.setZoomFactor(f); return webFrame.getZoomFactor(); },
   discord: req => ipcRenderer.invoke("discord:send", req),
+  bot: {
+    start: token => ipcRenderer.send("bot:start", token),
+    stop: () => ipcRenderer.send("bot:stop"),
+    status: () => ipcRenderer.invoke("bot:status"),
+    onStatus: fn => on("bot:status", fn),
+    onRoll: fn => on("bot:roll", fn),
+    reply: r => ipcRenderer.send("bot:result", r),
+    fake: req => ipcRenderer.invoke("bot:fake", req),
+  },
   update: {
     check: () => ipcRenderer.invoke("update:check"),
     install: () => ipcRenderer.send("update:install"),

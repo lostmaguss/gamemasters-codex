@@ -212,6 +212,9 @@ ipcMain.handle("update:check", async () => {
 ipcMain.on("update:install", () => updater && updater.quitAndInstall());
 ipcMain.handle("app:version", () => app.getVersion());
 
+const bot = require("./bot");
+bot.setup(() => desk);
+
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   protocol.handle("codexmedia", req => {
@@ -222,4 +225,4 @@ app.whenReady().then(() => {
   setupUpdates();
   app.on("activate", () => { if (!desk) createDesk(); });
 });
-app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
+app.on("window-all-closed", () => { bot.stop(); if (process.platform !== "darwin") app.quit(); });

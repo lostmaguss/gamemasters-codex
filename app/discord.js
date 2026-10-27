@@ -1,6 +1,6 @@
 // Discord: post rolls, handouts, turn order and recaps to a channel through a webhook.
 import { $, $$, esc, icon, toast, uid } from "./util.js";
-import { C, save } from "./store.js";
+import { C, S, save } from "./store.js";
 import { breakdown, critLabel, shownTotal } from "./roll.js";
 
 const COLOR = { roll: 0xff7a3d, crit: 0xffcf5a, fumble: 0xff5555, info: 0x5865f2, handout: 0xefe4cf, combat: 0xf39da8, ok: 0x6bd17d, no: 0xff6b6b };
@@ -24,11 +24,14 @@ export function post(payload, { file, hook, quiet } = {}) {
   return queue;
 }
 
-export function postRoll(r, opts) {
-  if (r.secret) return;
+export function rollEmbed(r) {
   const color = r.crit ? COLOR.crit : r.fumble ? COLOR.fumble : r.success === true ? COLOR.ok : r.success === false ? COLOR.no : COLOR.roll;
   const banner = critLabel(r);
-  return post({ embeds: [{ color, author: { name: r.label || r.expr }, title: `${shownTotal(r)}${r.successMode && r.single == null ? ` success${r.total === 1 ? "" : "es"}` : ""}${banner ? `  ·  ${banner}` : ""}`, description: "`" + breakdown(r) + "`" }] }, opts);
+  return { color, author: { name: [r.who, r.label || r.expr].filter(Boolean).join(" · ") }, title: `${shownTotal(r)}${r.successMode && r.single == null ? ` success${r.total === 1 ? "" : "es"}` : ""}${banner ? `  ·  ${banner}` : ""}`, description: "`" + breakdown(r) + "`" };
+}
+export function postRoll(r, opts) {
+  if (r.secret) return;
+  return post({ embeds: [rollEmbed(r)] }, opts);
 }
 export function postHandout(hd, opts) {
   if (hd.type === "image") {
@@ -65,8 +68,29 @@ export function discordModal(App) {
       <label class="toggle"><input type="checkbox" id="dhH" ${d.autoHandouts ? "checked" : ""}> Post handouts when I show them on stream</label>
       <label class="toggle"><input type="checkbox" id="dhC" ${d.autoRounds ? "checked" : ""}> Post the turn order at the start of each combat round</label>
     </div>
+    <div class="bot-box">
+      <div class="row" style="justify-content:space-between"><h3 style="font-size:22px">Player dice bot <span class="eyebrow">experimental</span></h3><span class="eyebrow" id="botState">Off</span></div>
+      <p style="margin:0;color:var(--dim);font-size:14px">Players type <code>/roll 1d20+5 Stealth</code> in your server; the dice land on your stream window with their name, and the bot replies with the result.</p>
+      <details><summary>How to make the bot (5 minutes, once)</summary><ol class="bot-steps">
+        <li>Open <b>discord.com/developers/applications</b> → <b>New Application</b>, name it (for example "Codex Dice").</li>
+        <li>Go to <b>Bot</b> → <b>Reset Token</b> → copy the token and paste it below. Keep it private, like a password.</li>
+        <li>Press <b>Connect</b>. When it says online, open the <b>invite link</b> that appears and add the bot to your server.</li>
+        <li>In Discord, type <code>/roll</code>. Rolls only work while this app is open.</li></ol></details>
+      <div class="row"><input type="password" id="botTok" placeholder="Bot token" value="${esc(S.data.prefs.bot?.token || "")}" style="flex:1" autocomplete="off"><button class="btn" id="botGo">Connect</button><button class="btn ghost" id="botOff">Disconnect</button></div>
+      <div id="botInv"></div>
+    </div>
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
     const rows = $("#dhRows", m);
+    const showBot = st => {
+      if (!$("#botState", m)) return;
+      $("#botState", m).textContent = st.state === "online" ? `Online as ${st.tag}${st.servers != null ? ` · ${st.servers} server${st.servers === 1 ? "" : "s"}` : ""}` : st.state === "connecting" ? "Connecting…" : st.state === "error" ? "Not connected" : "Off";
+      $("#botState", m).style.color = st.state === "online" ? "var(--good)" : st.state === "error" ? "var(--bad)" : "";
+      $("#botInv", m).innerHTML = (st.error ? `<p class="md-help" style="color:var(--bad);margin:0">${esc(st.error)}</p>` : "") + (st.warn ? `<p class="md-help" style="margin:0">${esc(st.warn)}</p>` : "") + (st.invite ? `<p class="md-help" style="margin:0">Invite link (open in your browser): <code class="sel">${esc(st.invite)}</code> <button class="btn sm" id="botCopy">Copy</button></p>` : "");
+      $("#botCopy", m)?.addEventListener("click", () => navigator.clipboard.writeText(st.invite).then(() => toast("Invite link copied"), () => toast("Select the link and copy it")));
+    };
+    if (window.codex?.bot) { window.codex.bot.status().then(showBot); App._botStatus = showBot; }
+    $("#botGo", m).onclick = () => { const t = $("#botTok", m).value.trim(); if (!t) return toast("Paste the bot token first"); if (!window.codex?.bot) return toast("The bot works in the desktop app"); S.data.prefs.bot = { token: t, on: true }; save(); window.codex.bot.start(t); };
+    $("#botOff", m).onclick = () => { S.data.prefs.bot = { ...(S.data.prefs.bot || {}), on: false }; save(); window.codex?.bot?.stop(); };
     let def = d.channel || draft[0]?.id;
     const draw = () => {
       rows.innerHTML = draft.length ? draft.map((h, i) => `<div class="dh-row" data-i="${i}"><input type="radio" name="dhDef" ${h.id === def ? "checked" : ""} title="Default channel"><input type="text" data-k="name" value="${esc(h.name)}" placeholder="#table" style="width:130px"><input type="text" data-k="url" value="${esc(h.url)}" placeholder="https://discord.com/api/webhooks/…" class="mono" style="flex:1;font-size:12px"><button class="btn sm" data-test>Test</button><button class="btn sm icon ghost danger" data-del>${icon("x")}</button></div>`).join("")

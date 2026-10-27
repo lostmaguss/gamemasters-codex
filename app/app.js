@@ -97,9 +97,9 @@ export const App = {
   refreshAll() { for (const k in mounted) if (k !== current) mounted[k].refresh?.(); mounted[current]?.refresh?.(); },
 
   // ---- rolls from anywhere: stream window when open (unless secret), otherwise right here ----
-  roll(expr, label = "", { secret = false } = {}) {
+  roll(expr, label = "", { secret = false, who = "", id = uid() } = {}) {
     let terms; try { terms = parseRoll(expr); } catch (e) { toast(e.message); return; }
-    const req = { id: uid(), expr, label, rules: C().rules };
+    const req = { id, expr, label, who, rules: C().rules };
     if (!secret && App.streamLive) { Stage.roll(req); rollToast({ ...req, pending: true }); return; }
     const vals = diceGroups(terms).map(g => Array.from({ length: g.count }, () => rnd(g.sides) + 1));
     const r = buildResult(req, terms, vals); r.secret = secret;
@@ -187,14 +187,14 @@ function rollToast(r) {
   let box = $("#rollToasts"); if (!box) { box = h(`<div id="rollToasts" class="roll-toasts"></div>`); document.body.append(box); }
   if (current === "dice" && !r.secret) return;
   const el = h(`<div class="rtoast ${r.crit ? "crit" : r.fumble ? "fumble" : ""} ${r.secret ? "secret" : ""}" data-id="${r.id}">
-    <div class="rt-l">${r.secret ? icon("lock") + " Secret · " : ""}${esc(r.label || r.expr)}</div>
+    <div class="rt-l">${r.secret ? icon("lock") + " Secret · " : ""}${r.who ? `<span style="color:var(--ember)">${esc(r.who)}</span> · ` : ""}${esc(r.label || r.expr)}</div>
     <div class="rt-v">${r.pending ? "…" : shownTotal(r)}</div><div class="rt-b mono">${r.pending ? "rolling on the stream window" : esc([critLabel(r), breakdown(r)].filter(Boolean).join(" · "))}</div></div>`);
   box.prepend(el); while (box.children.length > 4) box.lastChild.remove();
   el.onclick = () => el.remove();
   setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 400); }, r.pending ? 15000 : 7000);
 }
 function onStageResult(r) {
-  App.recordRoll(r);
+  App.recordRoll(r); botReply(r);
   const pend = document.querySelector(`.rtoast[data-id="${r.id}"]`); pend?.remove();
   if (current === "dice") mounted.dice?.showResult?.(r); else rollToast(r);
 }
@@ -366,6 +366,7 @@ function wireChrome() {
   App.fx.push();
   import("./combat.js").then(m => m.pushCombat());
   if (window.codex?.update) window.codex.update.onState(updateState);
+  wireBot();
   Stage.onState(setLive);
   Stage.isOpen().then(setLive);
   sb.onclick = () => App.streamLive ? App.menu(sb, [
@@ -428,6 +429,25 @@ function quickLog() {
     $("#qlX", m).focus();
     $("#qlX", m).onkeydown = e => { if (e.key === "Enter" && e.target.value.trim()) { s.beats.push({ id: uid(), type, text: e.target.value.trim(), star: $("#qlS", m).checked }); save(); close(); toast(`Logged in Session ${s.num}`); } };
   });
+}
+
+// ---- player rolls from the Discord bot ----
+const botPending = new Set();
+function botReply(r) {
+  if (!botPending.has(r.id)) return;
+  botPending.delete(r.id);
+  window.codex.bot.reply({ id: r.id, ok: true, embed: Discord.rollEmbed(r) });
+}
+function wireBot() {
+  const B = window.codex?.bot; if (!B) return;
+  B.onStatus(st => { App._botStatus?.(st); if (st.state === "online" && !App._botToasted) { App._botToasted = true; toast(`Dice bot online as ${st.tag}`); } });
+  B.onRoll(req => {
+    try { parseRoll(req.expr); } catch (e) { B.reply({ id: req.id, ok: false, error: `Couldn't read "${req.expr}": ${e.message}` }); return; }
+    botPending.add(req.id);
+    const r = App.roll(req.expr, req.label, { who: req.who, id: req.id });
+    if (r) botReply(r);
+  });
+  const p = S.data.prefs.bot; if (p?.token && p.on) B.start(p.token);
 }
 
 // ---- updates ----

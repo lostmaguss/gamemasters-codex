@@ -914,3 +914,8 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .help-grid dt { margin: 0; } .help-grid dd { margin: 0; color: var(--dim); }
 .help-grid kbd { font: 11.5px var(--mono); padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; white-space: nowrap; }
 .cx-img { float: right; width: 240px; max-width: 40%; margin: 6px 0 16px 24px; border-radius: 10px; box-shadow: 0 16px 30px rgba(0,0,0,.4); border: 3px solid var(--paper); transform: rotate(1.5deg); }
+.bot-box { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--bg-2); }
+.bot-box details summary { cursor: pointer; color: var(--ember-2); font-size: 14px; }
+.bot-steps { margin: 8px 0 0; padding-left: 20px; font-size: 13.5px; color: var(--dim); line-height: 1.6; }
+.bot-box code { font: 12px var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.bot-box code.sel { user-select: all; word-break: break-all; }
