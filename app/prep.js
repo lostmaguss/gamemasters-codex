@@ -11,6 +11,7 @@ export function startSession(App, s) {
   s.plan.startedAt = Date.now();
   if (!Object.keys(s.attendance || {}).length) s.attendance = Object.fromEntries(c.party.map(m => [m.id, true]));
   save(); App.go("live"); toast(`Session ${s.num} has started`);
+  if (App.discord?.settings().autoSessions && App.discord.connected()) App.discord.postText(`Session ${s.num}${s.title ? ": " + s.title : ""} begins`, (s.recap ? "**Previously on…**\n" + s.recap.replace(/\[\[|\]\]/g, "") : "Take your seats.") + (s.ingame ? `\n\n*${s.ingame}*` : ""), { quiet: true });
 }
 
 export function createPrep(el, App) {

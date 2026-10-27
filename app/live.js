@@ -7,6 +7,7 @@ import { rollTable } from "./tables.js";
 import { shrinkImage } from "./board.js";
 import { nextPlanned } from "./bestiary.js";
 import { startSession } from "./prep.js";
+import { GEN, NAMES, makeName } from "./gen.js";
 
 const fmt = ms => { const m = Math.floor(ms / 60000); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`; };
 
@@ -37,16 +38,32 @@ export function createLive(el, App) {
       return;
     }
     box.innerHTML = `<div class="lv-dot"></div><div><div class="eyebrow">Live · Session ${esc(s.num)}</div><h2>${esc(s.title || "Untitled session")}</h2></div>
-      <div class="lv-clock mono" id="lvClock">0:00</div><div style="flex:1"></div>
+      <div class="lv-clock mono" id="lvClock">0:00</div>
+      <div class="spotlight" title="Tap a player when they get the spotlight. The one who's waited longest glows.">${C().party.map(m => { const sp = (s.plan.spot ||= {})[m.id] || { n: 0, at: s.plan.startedAt || 0 }; return `<button class="sp" data-sp="${m.id}" style="--mc:${esc(m.color)}"><span>${esc((m.character || m.player || "?").split(" ")[0])}</span><b>${sp.n}</b></button>`; }).join("")}</div>
+      <div style="flex:1"></div>
       <div class="lv-log"><select id="lvBT" aria-label="Beat type">${Object.entries(BEATS).map(([k, b]) => `<option value="${k}" ${k === st.beatType ? "selected" : ""}>${b.label}</option>`).join("")}</select><input type="text" id="lvBeat" placeholder="Log what just happened, press Enter"></div>
       <button class="btn" id="lvEnd">End session</button>`;
     const tick = () => { const c = $("#lvClock", el); if (c) c.textContent = fmt(Date.now() - (s.plan?.startedAt || Date.now())); };
-    tick(); timer = setInterval(tick, 15000);
+    const markQuiet = () => {
+      const sp = s.plan.spot || {}, party = C().party; if (!party.length) return;
+      const oldest = party.map(m => [m.id, (sp[m.id] || {}).at || s.plan.startedAt || 0]).sort((a, b) => a[1] - b[1])[0];
+      $$(".sp", box).forEach(b => b.classList.toggle("quiet", b.dataset.sp === oldest[0] && Date.now() - oldest[1] > 10 * 60000));
+    };
+    $$(".sp", box).forEach(b => b.onclick = () => { const sp = (s.plan.spot ||= {}); const x = sp[b.dataset.sp] ||= { n: 0, at: 0 }; x.n++; x.at = Date.now(); save(); b.querySelector("b").textContent = x.n; markQuiet(); });
+    markQuiet();
+    tick(); timer = setInterval(() => { tick(); markQuiet(); }, 15000);
     $("#lvBT", box).onchange = e => st.beatType = e.target.value;
     $("#lvBeat", box).onkeydown = e => { if (e.key === "Enter" && e.target.value.trim()) { App.logBeat(st.beatType, e.target.value.trim()); e.target.value = ""; } };
     $("#lvEnd", box).onclick = () => App.confirm(`End session ${s.num}?`, "The time played is saved and the session moves to the Chronicle, where you can finish the write-up.", "End session", () => {
       const ms = Date.now() - (s.plan?.startedAt || Date.now());
       s.status = "played"; s.plan.endedAt = Date.now(); s.hours = Math.max(.5, Math.round(ms / 1800000) / 2);
+      // turn spotlight taps into the Chronicle's 0-3 stars
+      const sp = s.plan.spot || {}, max = Math.max(0, ...Object.values(sp).map(x => x.n));
+      if (max) { s.spotlight ||= {}; for (const [id, x] of Object.entries(sp)) s.spotlight[id] = Math.max(1, Math.round(x.n / max * 3)); }
+      if (App.discord.settings().autoSessions && App.discord.connected()) {
+        const loot = (s.loot || []).filter(l => l.item).map(l => l.item);
+        App.discord.postText(`Session ${s.num} is over`, [`Played ${s.hours} hours.`, s.beats.filter(b => b.star && b.text).map(b => "⭐ " + b.text.replace(/\[\[|\]\]/g, "")).join("\n"), loot.length ? `**Loot:** ${loot.join(", ")}` : ""].filter(Boolean).join("\n\n"), { quiet: true });
+      }
       App.sound.send({ op: "stopAll", fade: 2 }); save(); App.go("chronicle", { session: s.id }); toast("Session saved to the Chronicle");
     });
   }
@@ -192,10 +209,15 @@ export function createLive(el, App) {
     const tableBlock = `<section><div class="sec-h"><h3>Quick tables</h3><div class="line"></div></div>
       <div class="chips">${tables.map(t => `<button class="chip" data-tb="${t.id}">${esc(t.name)}</button>`).join("")}</div>
       <ul class="lv-tout">${st.tableOut.map(r => `<li><span class="eyebrow">${esc(r.name)} · ${r.num}</span>${r.html}</li>`).join("")}</ul></section>`;
+    const imp = st.improv;
+    const improv = `<section><div class="sec-h"><h3>Improvise</h3><div class="line"></div></div>
+      <div class="row" style="gap:6px"><button class="btn sm" data-imp="npc">${icon("social")} NPC</button><button class="btn sm" data-imp="place">${icon("explore")} Place</button><button class="btn sm" data-imp="loot">${icon("save")} Loot</button><button class="btn sm" data-imp="name">${icon("type")} 5 names</button></div>
+      ${imp ? `<div class="imp-card">${imp.names ? `<div class="chips">${imp.names.map(n => `<button class="chip" data-copy="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : `<b>${esc(imp.title)}</b><span class="eyebrow">${esc(imp.sub)}</span><ul>${imp.lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>
+        <div class="row" style="gap:6px"><button class="btn sm" data-imp-intro>${icon("stream")} Introduce</button><button class="btn sm ghost" data-imp-save>${icon("save")} Save to Codex</button><button class="btn sm ghost" data-imp-log>${icon("chronicle")} Log it</button></div>`}</div>` : ""}</section>`;
     const quick = `<section><div class="sec-h"><h3>Quick rolls</h3><div class="line"></div></div><div class="row" style="gap:6px">
       <label class="toggle" title="Secret rolls stay on your desk"><input type="checkbox" id="lvSec" ${st.secret ? "checked" : ""}> Secret</label>
       ${["1d20", "2d20kh1", "1d6", "1d100"].map(e => `<button class="btn sm" data-qr="${e}">${e === "2d20kh1" ? "Adv" : e}</button>`).join("")}</div></section>`;
-    if (!s) { box.innerHTML = quick + tableBlock + `<p style="color:var(--faint)">Plan a session in Prep and tonight's scenes, secrets and monsters appear here.</p>`; bindPlan(box, null); return; }
+    if (!s) { box.innerHTML = improv + quick + tableBlock + `<p style="color:var(--faint)">Plan a session in Prep and tonight's scenes, secrets and monsters appear here.</p>`; bindPlan(box, null); return; }
     const P = s.plan ||= { start: "", scenes: [], secrets: [], cast: [], encounters: [], treasure: [], handouts: [] };
     const check = (arr, key, cls = "") => `<ul class="checks lv-checks ${cls}">${arr.filter(t => t.text).map(t => `<li class="${t.done ? "done" : ""}" data-k="${key}" data-id="${t.id}"><input type="checkbox" ${t.done ? "checked" : ""}><span>${esc(t.text)}</span><span></span></li>`).join("") || `<li style="display:block;color:var(--faint)">None planned.</li>`}</ul>`;
     box.innerHTML = `${P.start ? `<section class="lv-start"><span class="eyebrow">Strong start</span><p>${esc(P.start)}</p></section>` : ""}
@@ -209,11 +231,23 @@ export function createLive(el, App) {
       <section><div class="sec-h"><h3>Scenes</h3><div class="line"></div></div>${check(P.scenes, "scenes")}</section>
       ${P.cast.length ? `<section><div class="sec-h"><h3>Cast</h3><div class="line"></div></div><div class="chips">${P.cast.map(id => { const n = c.notes.find(x => x.id === id); return n ? `<span class="chip cast-chip"><button class="lnk" data-note="${id}">${esc(n.title)}</button><button class="lnk" data-intro="${id}" title="Introduce on stream">${icon("social")}</button></span>` : ""; }).join("")}</div></section>` : ""}
       <section><div class="sec-h"><h3>Treasure</h3><div class="line"></div></div>${check(P.treasure, "treasure")}</section>
-      ${quick}${tableBlock}`;
+      ${improv}${quick}${tableBlock}`;
     bindPlan(box, s);
   }
   function bindPlan(box, s) {
     const c = C();
+    $$("[data-imp]", box).forEach(b => b.onclick = () => {
+      const k = b.dataset.imp;
+      if (k === "name") { st.improv = { names: Array.from({ length: 5 }, () => makeName(Object.keys(NAMES)[Math.floor(Math.random() * Object.keys(NAMES).length)])) }; renderPlan(); return; }
+      const g = GEN[k], o = {}; for (const x in g.opts) o[x] = "any";
+      const ctx = g.init(o), f = {}; for (const [kk, [, fn]] of Object.entries(g.fields)) f[kk] = fn(ctx, f);
+      const show = Object.entries(g.fields).filter(([kk]) => !(g.hidden || []).includes(kk)).slice(0, 4).map(([kk, [lab]]) => `${lab}: ${f[kk]}`);
+      st.improv = { kind: k, title: g.title(ctx), sub: g.sub(ctx, f), lines: show, cat: g.noteCat }; renderPlan();
+    });
+    $$("[data-copy]", box).forEach(b => b.onclick = () => navigator.clipboard.writeText(b.dataset.copy).then(() => toast(`Copied ${b.dataset.copy}`), () => {}));
+    $("[data-imp-intro]", box)?.addEventListener("click", () => App.lowerThird({ name: st.improv.title, sub: st.improv.sub, color: st.improv.kind === "npc" ? "#f39da8" : "#b8d8a8" }));
+    $("[data-imp-save]", box)?.addEventListener("click", () => { c.notes.unshift({ id: uid(), title: st.improv.title, cat: st.improv.cat, tags: "improvised", body: st.improv.sub + "\n\n" + st.improv.lines.map(l => l.replace(/^([^:]+): /, "**$1:** ")).join("\n"), updated: Date.now() }); save(); toast(`Saved to Codex · ${st.improv.cat}`); });
+    $("[data-imp-log]", box)?.addEventListener("click", () => App.logBeat(st.improv.kind === "npc" ? "social" : st.improv.kind === "loot" ? "loot" : "explore", `${st.improv.title} (${st.improv.sub})`));
     $("#lvSec", box).onchange = e => { st.secret = e.target.checked; ls.set("live.secret", st.secret); };
     $$("[data-qr]", box).forEach(b => b.onclick = () => App.roll(b.dataset.qr, b.textContent, { secret: st.secret }));
     $$("[data-tb]", box).forEach(b => b.onclick = () => { const r = rollTable(c, b.dataset.tb); st.tableOut.unshift({ name: r.table?.name, num: r.num, html: r.html, text: r.text }); st.tableOut.length = Math.min(st.tableOut.length, 4); renderPlan(); });

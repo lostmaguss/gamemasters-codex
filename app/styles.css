@@ -920,3 +920,17 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .bot-box code { font: 12px var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
 .bot-box code.sel { user-select: all; word-break: break-all; }
 .csheet .dc-in { padding: 3px 8px; font-size: 12px; color: var(--dim); }
+.spotlight { display: flex; gap: 4px; flex-wrap: wrap; }
+.sp { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line); border-left: 3px solid var(--mc); background: var(--surface); cursor: pointer; font-size: 13px; }
+.sp b { font: 600 12px var(--mono); color: var(--dim); }
+.sp:hover { border-color: var(--mc); }
+.sp.quiet { box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc) 45%, transparent); animation: pulse 2s infinite; }
+.imp-card { margin-top: 10px; padding: 12px 14px; border-radius: 10px; background: var(--paper); color: var(--card-ink); display: flex; flex-direction: column; gap: 4px; }
+.imp-card b { font: 700 22px/1.1 var(--display); }
+.imp-card .eyebrow { color: rgba(42,29,23,.6); }
+.imp-card ul { margin: 4px 0 6px; padding-left: 18px; font-size: 14px; }
+.imp-card .btn { background: rgba(42,29,23,.08); border-color: rgba(42,29,23,.25); color: var(--card-ink); }
+.imp-card .chip { color: var(--card-ink); border-color: rgba(42,29,23,.3); }
+.live-head { gap: 12px; }
+.lv-log { min-width: 240px; flex: 1 1 300px; }
+.live-head h2 { font-size: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }

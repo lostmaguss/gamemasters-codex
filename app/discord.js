@@ -68,6 +68,7 @@ export function discordModal(App) {
       <label class="toggle"><input type="checkbox" id="dhR" ${d.autoRolls ? "checked" : ""}> Post every public roll automatically</label>
       <label class="toggle"><input type="checkbox" id="dhH" ${d.autoHandouts ? "checked" : ""}> Post handouts when I show them on stream</label>
       <label class="toggle"><input type="checkbox" id="dhC" ${d.autoRounds ? "checked" : ""}> Post the turn order at the start of each combat round</label>
+      <label class="toggle"><input type="checkbox" id="dhS" ${d.autoSessions ? "checked" : ""}> Post "Previously on…" when a session starts, and a summary when it ends</label>
     </div>
     <div class="bot-box">
       <div class="row" style="justify-content:space-between"><h3 style="font-size:22px">Player dice bot <span class="eyebrow">experimental</span></h3><span class="eyebrow" id="botState">Off</span></div>
@@ -112,7 +113,7 @@ export function discordModal(App) {
     $("#dhAdd", m).onclick = () => { const h = { id: uid(), name: draft.length ? "" : "#table", url: "" }; draft.push(h); if (!def) def = h.id; draw(); $$(".dh-row input[data-k=url]", rows).pop()?.focus(); };
     $("[data-x]", m).onclick = close;
     $("[data-ok]", m).onclick = () => {
-      Object.assign(d, { hooks: draft.filter(h => h.url), channel: def, name: $("#dhName", m).value.trim(), autoRolls: $("#dhR", m).checked, autoHandouts: $("#dhH", m).checked, autoRounds: $("#dhC", m).checked });
+      Object.assign(d, { hooks: draft.filter(h => h.url), channel: def, name: $("#dhName", m).value.trim(), autoRolls: $("#dhR", m).checked, autoHandouts: $("#dhH", m).checked, autoRounds: $("#dhC", m).checked, autoSessions: $("#dhS", m).checked });
       if (!d.hooks.some(h => h.id === d.channel)) d.channel = d.hooks[0]?.id || null;
       save(); close(); toast(d.hooks.length ? "Discord settings saved" : "Discord disconnected"); App.refreshAll();
     };
