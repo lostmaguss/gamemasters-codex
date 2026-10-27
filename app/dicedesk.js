@@ -78,7 +78,7 @@ export function createDice(el, App) {
   async function roll(expr = exprIn.value, label = labelIn.value.trim(), secret = false) {
     err.textContent = "";
     let terms; try { terms = parseRoll(expr); } catch (e) { err.textContent = e.message; return; }
-    const req = { id: uid(), expr, label: secret ? (label || "Secret roll") : label, who: "" };
+    const req = { id: uid(), expr, label: secret ? (label || "Secret roll") : label, who: "", rules: C().rules };
     if (!secret && App.streamLive && opt.toStage) { st.pending = req.id; Stage.roll(req); ov.wait(label || expr); return; }
     ov.hide();
     const values = await tray.roll(diceGroups(terms));

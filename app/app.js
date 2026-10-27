@@ -11,12 +11,14 @@ import { createLive } from "./live.js";
 import { createTables } from "./tables.js";
 import { createBestiary } from "./bestiary.js";
 import { createSoundEngine } from "./sound.js";
-import { parseRoll, diceGroups, buildResult, breakdown } from "./roll.js";
+import { parseRoll, diceGroups, buildResult, breakdown, critLabel, shownTotal, DEFAULT_RULES } from "./roll.js";
+import { createCombat } from "./combat.js";
 import { rnd, ls } from "./util.js";
 
 const VIEWS = [
   { key: "prep", label: "Prep", icon: "book", make: createPrep, group: "Session" },
   { key: "live", label: "Live", icon: "stream", make: createLive },
+  { key: "combat", label: "Combat", icon: "combat", make: createCombat },
   { key: "dice", label: "Dice", icon: "dice", make: createDice },
   { key: "forge", label: "Forge", icon: "forge", make: createForge, group: "Make" },
   { key: "tables", label: "Tables", icon: "tables", make: createTables },
@@ -74,7 +76,7 @@ export const App = {
   // ---- rolls from anywhere: stream window when open (unless secret), otherwise right here ----
   roll(expr, label = "", { secret = false } = {}) {
     let terms; try { terms = parseRoll(expr); } catch (e) { toast(e.message); return; }
-    const req = { id: uid(), expr, label };
+    const req = { id: uid(), expr, label, rules: C().rules };
     if (!secret && App.streamLive) { Stage.roll(req); rollToast({ ...req, pending: true }); return; }
     const vals = diceGroups(terms).map(g => Array.from({ length: g.count }, () => rnd(g.sides) + 1));
     const r = buildResult(req, terms, vals); r.secret = secret;
@@ -135,7 +137,7 @@ function rollToast(r) {
   if (current === "dice" && !r.secret) return;
   const el = h(`<div class="rtoast ${r.crit ? "crit" : r.fumble ? "fumble" : ""} ${r.secret ? "secret" : ""}" data-id="${r.id}">
     <div class="rt-l">${r.secret ? icon("lock") + " Secret · " : ""}${esc(r.label || r.expr)}</div>
-    <div class="rt-v">${r.pending ? "…" : r.total}</div><div class="rt-b mono">${r.pending ? "rolling on the stream window" : esc(breakdown(r))}</div></div>`);
+    <div class="rt-v">${r.pending ? "…" : shownTotal(r)}</div><div class="rt-b mono">${r.pending ? "rolling on the stream window" : esc([critLabel(r), breakdown(r)].filter(Boolean).join(" · "))}</div></div>`);
   box.prepend(el); while (box.children.length > 4) box.lastChild.remove();
   el.onclick = () => el.remove();
   setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 400); }, r.pending ? 15000 : 7000);
@@ -207,6 +209,30 @@ export function partyModal() {
     draw();
   });
 }
+export function rulesModal() {
+  const c = C(); const R = { ...DEFAULT_RULES, ...(c.rules || {}) };
+  App.modal(`<h2>Rules & genre</h2>
+    <label class="f"><span>Genre</span><select id="rgG"><option value="fantasy">Fantasy</option><option value="scifi">Sci-fi</option><option value="cyberpunk">Cyberpunk</option></select></label>
+    <p class="md-help" style="margin:-6px 0 0">Changes what the Forge generates and which built-in sounds and starter tables you get.</p>
+    <div class="two">
+      <label class="f"><span>Critical die</span><select id="rgD"><option value="20">d20</option><option value="100">d100 (percentile)</option><option value="10">d10</option><option value="12">d12</option><option value="6">d6</option><option value="any">Any single die</option></select></label>
+      <label class="f"><span>What's good</span><select id="rgM"><option value="high">High rolls (max = critical, 1 = fumble)</option><option value="low">Low rolls (1 = critical, max = fumble)</option><option value="none">No criticals</option></select></label>
+    </div>
+    <label class="f"><span>Initiative order</span><select id="rgI"><option value="high">Highest goes first</option><option value="low">Lowest goes first</option></select></label>
+    <p class="md-help" style="margin:0">For roll-under systems, roll against a target: <code>1d100&lt;=45</code> shows Success or Failure. For dice pools, count hits: <code>8d6&gt;=5</code>.</p>
+    <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
+    $("#rgG", m).value = c.genre || "fantasy"; $("#rgD", m).value = String(R.critDie); $("#rgM", m).value = R.critMode; $("#rgI", m).value = R.initHigh ? "high" : "low";
+    $("[data-x]", m).onclick = close;
+    $("[data-ok]", m).onclick = () => {
+      const d = $("#rgD", m).value; const g = $("#rgG", m).value;
+      c.rules = { critDie: d === "any" ? "any" : Number(d), critMode: $("#rgM", m).value, initHigh: $("#rgI", m).value === "high" };
+      const changedGenre = (c.genre || "fantasy") !== g; c.genre = g;
+      save(); ls.set("rules", c.rules); close(); if (changedGenre) App.genreChanged?.(c); App.refreshAll(); toast("Rules saved");
+    };
+  });
+}
+App.rulesModal = rulesModal;
+
 function confirmModal(title, text, okText, run) {
   App.modal(`<h2>${esc(title)}</h2><p style="margin:0;color:var(--dim)">${esc(text)}</p><div class="foot"><button class="btn ghost" data-x>Keep it</button><button class="btn primary" data-ok style="background:var(--bad);border-color:var(--bad)">${esc(okText)}</button></div>`,
     (m, close) => { $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = () => { close(); run(); }; });
@@ -223,6 +249,7 @@ function campaignMenu() {
     "-",
     { text: "Rename campaign", icon: "type", run: () => renameModal(c) },
     { text: "Party & players", icon: "social", run: partyModal },
+    { text: "Rules & genre", icon: "gear", run: rulesModal },
     "-",
     { text: "Export backup…", icon: "save", run: async () => {
       const name = `${c.name.replace(/[^\w\- ]+/g, "").trim() || "campaign"}-${new Date().toISOString().slice(0, 10)}.json`;
@@ -268,6 +295,7 @@ function wireChrome() {
     if (!on && App.onAir) { App.onAir = null; App._air.forEach(f => f()); }
   };
   Stage.onResult(onStageResult);
+  import("./combat.js").then(m => m.pushCombat());
   if (window.codex?.update) window.codex.update.onState(updateState);
   Stage.onState(setLive);
   Stage.isOpen().then(setLive);
@@ -301,6 +329,6 @@ async function checkUpdates() {
 (async function boot() {
   await loadData();
   try { await Promise.all([document.fonts.load('700 40px "Grenze Gotisch"'), document.fonts.load('400 15px "IBM Plex Sans Condensed"')]); } catch {}
-  buildRail(); wireChrome(); renderCampName();
+  buildRail(); wireChrome(); renderCampName(); ls.set("rules", C().rules);
   show(C().ui.view || "prep");
 })();

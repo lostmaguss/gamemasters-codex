@@ -1,11 +1,12 @@
 // Talks to the stream dice window: Electron IPC in the app, BroadcastChannel when opened in a browser.
 const api = window.codex?.stage;
 let bc = null; try { bc = new BroadcastChannel("codex-stage"); } catch {}
-const subs = { result: [], state: [], roll: [], clear: [], close: [], sound: [], show: [], hide: [] };
+const subs = { result: [], state: [], roll: [], clear: [], close: [], sound: [], show: [], hide: [], overlay: [] };
+const lastOverlay = {};
 let browserOpen = false;
 if (!api && bc) bc.onmessage = e => {
   const { t, v } = e.data || {};
-  if (t === "hello") { browserOpen = true; subs.state.forEach(f => f(true)); }
+  if (t === "hello") { browserOpen = true; subs.state.forEach(f => f(true)); Object.values(lastOverlay).forEach(o => bc.postMessage({ t: "overlay", v: o })); }
   if (t === "bye") { browserOpen = false; subs.state.forEach(f => f(false)); }
   (subs[t] || []).forEach(f => f(v));
 };
@@ -18,6 +19,8 @@ export const Stage = {
   clear() { if (api) api.clear(); else bc?.postMessage({ t: "clear" }); },
   sound(cmd) { if (api) api.sound(cmd); else bc?.postMessage({ t: "sound", v: cmd }); },
   show(h) { if (api) api.show(h); else { if (!browserOpen) this.open(); setTimeout(() => bc?.postMessage({ t: "show", v: h }), browserOpen ? 0 : 1500); } },
+  overlay(o) { if (api) api.overlay(o); else { lastOverlay[o.kind] = o; bc?.postMessage({ t: "overlay", v: o }); } },
+  onOverlay(fn) { if (api) api.onOverlay(fn); else subs.overlay.push(fn); },
   hide() { if (api) api.hide(); else bc?.postMessage({ t: "hide" }); },
   onSound(fn) { if (api) api.onSound(fn); else subs.sound.push(fn); },
   onShow(fn) { if (api) api.onShow(fn); else subs.show.push(fn); },

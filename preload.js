@@ -33,6 +33,8 @@ contextBridge.exposeInMainWorld("codex", {
     sound: cmd => ipcRenderer.send("stage:sound", cmd),
     show: h => ipcRenderer.send("stage:show", h),
     hide: () => ipcRenderer.send("stage:hide"),
+    overlay: o => ipcRenderer.send("stage:overlay", o),
+    onOverlay: fn => on("stage:overlay", fn),
     onSound: fn => on("stage:sound", fn),
     onShow: fn => on("stage:show", fn),
     onHide: fn => on("stage:hide", fn),

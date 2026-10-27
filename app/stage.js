@@ -48,6 +48,22 @@ import { createSoundEngine } from "./sound.js";
     }
     ho.append(card); ho.hidden = false; void ho.offsetWidth; ho.classList.add("in");
   });
+  // overlays: the combat turn order (and later the map and scenes)
+  const strip = $("#strip");
+  Stage.onOverlay(o => {
+    if (o.kind !== "combat") return;
+    document.body.classList.toggle("has-strip", !!o.show);
+    if (!o.show) { strip.hidden = true; strip.innerHTML = ""; return; }
+    strip.hidden = false;
+    const cur = o.list.findIndex(x => x.current);
+    strip.innerHTML = `<div class="st-round"><span>Round</span><b>${o.round}</b></div><div class="st-list">${o.list.map((x, i) => {
+      const pct = x.max ? Math.max(0, Math.min(100, x.hp / x.max * 100)) : null;
+      return `<div class="st-c ${x.current ? "cur" : ""} ${x.status === "Down" ? "down" : ""} ${i < cur ? "done" : ""}" style="--kc:${x.color}">
+        <b></b>${pct != null ? `<div class="st-hp"><i style="width:${pct}%"></i></div>` : `<span class="st-s">${x.status}</span>`}${x.conds.length ? `<span class="st-k"></span>` : ""}</div>`; }).join("")}</div>`;
+    // names and conditions are set as text so nothing a GM types can break the page
+    $$(".st-c", strip).forEach((el, i) => { el.querySelector("b").textContent = o.list[i].name; const k = el.querySelector(".st-k"); if (k) k.textContent = o.list[i].conds.join(" · "); });
+    strip.querySelector(".cur")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  });
   Stage.onHide(() => { ho.classList.remove("in"); ho.classList.add("out"); setTimeout(() => { ho.hidden = true; ho.innerHTML = ""; }, 450); });
   Stage.onClear(() => { tray.clear(); ov.hide(); });
   Stage.onClose(() => window.close());
@@ -55,7 +71,7 @@ import { createSoundEngine } from "./sound.js";
 
   const q = $("#quick");
   q.innerHTML = [4, 6, 8, 10, 12, 20, 100].map(s => `<button class="dpick" data-s="${s}" title="Roll a d${s}">${dieIcon(s)}d${s}</button>`).join("");
-  $$("[data-s]", q).forEach(b => b.onclick = () => roll({ id: uid(), expr: "1d" + b.dataset.s, label: "" }));
+  $$("[data-s]", q).forEach(b => b.onclick = () => roll({ id: uid(), expr: "1d" + b.dataset.s, label: "", rules: ls.get("rules", null) }));
   const th = $("#theme"), fe = $("#felt");
   th.innerHTML = Object.entries(THEMES).map(([k, t]) => `<option value="${k}">${t.label}</option>`).join(""); th.value = ls.get("dice.theme", "ember");
   fe.innerHTML = Object.entries(FELTS).map(([k, t]) => `<option value="${k}">${t.label}</option>`).join(""); fe.value = ls.get("dice.felt", "oxblood");
@@ -74,7 +90,7 @@ import { createSoundEngine } from "./sound.js";
     if (e.target.closest("select")) return;
     if (e.key === "h" || e.key === "H") toggleClean();
     if (e.key === "f" || e.key === "F") full();
-    if (e.key === " " || e.key === "Enter") { e.preventDefault(); roll({ id: uid(), expr: "1d20", label: "" }); }
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); roll({ id: uid(), expr: "1d20", label: "", rules: ls.get("rules", null) }); }
   });
   // the control bar fades out when the mouse rests, so viewers see a clean table
   const bar = $("#bar"), hint = $("#hint"); let idle;

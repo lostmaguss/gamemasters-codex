@@ -15,6 +15,7 @@ export function blankCampaign(name = "New campaign") {
     ],
     tables: starterTables(), bestiary: [], sounds: [], handouts: [],
     statTemplate: ["HP", "Defense", "Speed", "Might", "Agility", "Wits", "Will"],
+    rules: { critDie: 20, critMode: "high", initHigh: true }, genre: "fantasy",
     ui: {},
   };
 }

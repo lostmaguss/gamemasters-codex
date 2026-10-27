@@ -161,7 +161,7 @@ export function createLive(el, App) {
     const check = (arr, key, cls = "") => `<ul class="checks lv-checks ${cls}">${arr.filter(t => t.text).map(t => `<li class="${t.done ? "done" : ""}" data-k="${key}" data-id="${t.id}"><input type="checkbox" ${t.done ? "checked" : ""}><span>${esc(t.text)}</span><span></span></li>`).join("") || `<li style="display:block;color:var(--faint)">None planned.</li>`}</ul>`;
     box.innerHTML = `${P.start ? `<section class="lv-start"><span class="eyebrow">Strong start</span><p>${esc(P.start)}</p></section>` : ""}
       <section><div class="sec-h"><h3>Secrets & clues</h3><div class="line"></div><span class="eyebrow">${P.secrets.filter(x => x.done).length}/${P.secrets.length} revealed</span></div>${check(P.secrets, "secrets", "secrets")}</section>
-      <section><div class="sec-h"><h3>Encounters</h3><div class="line"></div></div>
+      <section><div class="sec-h"><h3>Encounters</h3><div class="line"></div><button class="btn sm" id="lvFight">${icon("combat")} Open combat</button></div>
         ${P.encounters.map(e => { const x = c.bestiary.find(b => b.id === e.creature); if (!x) return ""; const max = parseInt(x.stats?.HP || x.hp) || 0;
           return `<div class="lv-enc" data-e="${e.id}"><div class="row" style="justify-content:space-between"><b class="lv-mname" data-open="${x.id}">${esc(x.name)}</b><span class="eyebrow">${esc(x.stats?.Defense ? "Def " + x.stats.Defense : x.kind || "")}</span></div>
             <div class="hp-row">${e.hp.map((v, i) => `<div class="hp ${v <= 0 ? "down" : v <= max / 2 ? "hurt" : ""}" data-i="${i}"><span>#${i + 1}</span><button data-d="-1">−</button><input type="number" value="${v}" aria-label="HP"><button data-d="1">+</button></div>`).join("")}</div>
@@ -194,6 +194,7 @@ export function createLive(el, App) {
       });
     });
     $$("[data-roll]", box).forEach(b => b.onclick = () => { const [xid, aid] = b.dataset.roll.split("|"); const x = c.bestiary.find(y => y.id === xid); const a = x.abilities.find(y => y.id === aid); App.roll(a.roll, `${x.name}: ${a.name}`, { secret: st.secret }); });
+    $("#lvFight", box)?.addEventListener("click", () => App.go("combat"));
     $$("[data-open]", box).forEach(b => b.onclick = () => App.go("bestiary", { creature: b.dataset.open }));
     $$("[data-note]", box).forEach(b => b.onclick = () => App.go("codex", { note: b.dataset.note }));
   }

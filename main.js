@@ -12,6 +12,8 @@ const UPDATE_REPO = { owner: "lostmaguss", repo: "gamemasters-codex" };
 protocol.registerSchemesAsPrivileged([{ scheme: "codexmedia", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }]);
 const mediaDir = () => path.join(app.getPath("userData"), "media");
 let pendingStage = [];
+// latest state of each stream overlay (combat strip, map, scene), replayed when the stream window (re)loads
+const overlays = {};
 // the stream window plays sound without waiting for a click inside it
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
@@ -55,6 +57,7 @@ function openStage() {
   stage.on("page-title-updated", e => e.preventDefault());
   stage.webContents.on("did-finish-load", () => {
     desk && desk.webContents.send("stage:state", true);
+    for (const v of Object.values(overlays)) stage.webContents.send("stage:overlay", v);
     for (const [ch, v] of pendingStage) stage.webContents.send(ch, v);
     pendingStage = [];
   });
@@ -113,6 +116,10 @@ ipcMain.on("stage:sound", (_e, cmd) => stage && stage.webContents.send("stage:so
 ipcMain.on("stage:show", (_e, h) => {
   if (stage && !stage.isDestroyed() && !stage.webContents.isLoading()) stage.webContents.send("stage:show", h);
   else { pendingStage.push(["stage:show", h]); openStage(); }
+});
+ipcMain.on("stage:overlay", (_e, o) => {
+  overlays[o.kind] = o;
+  if (stage && !stage.isDestroyed() && !stage.webContents.isLoading()) stage.webContents.send("stage:overlay", o);
 });
 ipcMain.on("stage:hide", () => stage && stage.webContents.send("stage:hide"));
 
