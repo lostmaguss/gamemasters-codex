@@ -200,6 +200,7 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .bcard [contenteditable="plaintext-only"], .bcard [contenteditable="true"] { background: rgba(255,255,255,.35); cursor: text; user-select: text; border-radius: 2px; }
 .bcard .bkind { position: absolute; top: 6px; left: 10px; font: 600 9.5px var(--body); letter-spacing: .14em; text-transform: uppercase; opacity: .55; }
 .bcard.t-heading { background: var(--paper); padding: 14px 18px 12px; clip-path: polygon(0 6%, 4% 0, 30% 5%, 60% 0, 96% 4%, 100% 0, 99% 94%, 70% 100%, 40% 95%, 8% 100%, 0 93%); }
+.bcard.t-heading .pin { top: 7px; }
 .bcard.t-heading .bt { font-size: 34px; margin: 0; }
 .bcard.t-image { padding: 10px 10px 30px; background: #f7f2e8; }
 .bcard.t-image img { display: block; width: 100%; pointer-events: none; }

@@ -241,9 +241,13 @@ export function createBoard(el, App) {
   }
 
   // ---------- pointer ----------
+  // strings sit above the cards and start at the pins, so look through them for a pin or card
+  const under = (x, y, sel) => document.elementsFromPoint(x, y).find(el => el.closest?.(sel))?.closest(sel);
   view.addEventListener("pointerdown", e => {
     if (e.target.closest(".bc-tools")) return;
-    const cardEl = e.target.closest(".bcard");
+    const pinEl = e.target.closest("[data-link]") && under(e.clientX, e.clientY, ".pin");
+    const tgt = pinEl || e.target;
+    const cardEl = tgt.closest(".bcard");
     const editing = e.target.closest("[contenteditable='plaintext-only']");
     if (editing) return;
     view.focus({ preventScroll: true });
@@ -255,7 +259,7 @@ export function createBoard(el, App) {
       view.classList.add("panning"); view.setPointerCapture(e.pointerId); return;
     }
     const k = b.cards.find(x => x.id === cardEl.dataset.id); if (!k) return;
-    if (e.target.classList.contains("pin")) {
+    if (tgt.classList.contains("pin")) {
       st.mode = { t: "link", from: k }; view.classList.add("linking"); view.setPointerCapture(e.pointerId); e.preventDefault(); return;
     }
     const maxZ = Math.max(1, ...b.cards.map(x => x.z || 1));
@@ -281,7 +285,7 @@ export function createBoard(el, App) {
     const m = st.mode; if (!m) return; st.mode = null;
     view.classList.remove("panning", "linking");
     if (m.t === "link") {
-      const target = document.elementFromPoint(e.clientX, e.clientY)?.closest(".bcard");
+      const target = under(e.clientX, e.clientY, ".bcard");
       const b = B();
       if (target && target.dataset.id !== m.from.id) {
         const exists = b.links.find(l => (l.a === m.from.id && l.b === target.dataset.id) || (l.b === m.from.id && l.a === target.dataset.id));

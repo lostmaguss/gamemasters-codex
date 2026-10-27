@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.18.1", title: "Board fixes", items: ["You can now tie string from a heading card's pin", "Grabbing a pin that already has string on it starts a new string instead of selecting the old one"] },
   { v: "1.18.0", title: "Table mode for in-person games", items: ["Put the player display fullscreen on a TV or projector with one click (Stream window button, or the Dice view)", "Dice, maps with fog, handouts, turn order, scenes and weather show there; your laptop stays private", "Esc on the TV, or 'Back to a normal window', returns it to a window for Discord"] },
   { v: "1.17.0", title: "Faster fights & reputation", items: ["Combat: roll a monster's damage, then tap who takes it (or half)", "Reputation: track how factions and people see the party, from Sworn enemies to Devoted (Clocks view)", "Ctrl+K now finds scenes and quotes inside your sessions"] },
   { v: "1.16.0", title: "Whispers", items: ["Send a secret to one player as a private Discord message from your dice bot", "Whisper from a party sheet (lock icon), from any handout in Live, or Ctrl+K → Whisper", "Players are linked automatically the first time they use a bot command"] },
