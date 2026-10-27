@@ -90,6 +90,7 @@ import { createFx } from "./fx.js";
     if (o.kind === "timer") { showTimer(o); return; }
     if (o.kind === "scene") { showScene(o); return; }
     if (o.kind === "lower") { showLower(o); return; }
+    if (o.kind === "loot") { showLoot(o); return; }
     if (o.kind === "clocks") {
       const cb = $("#clockbar"); cb.hidden = !o.show; if (!o.show) return;
       cb.innerHTML = o.list.map(k => `<div class="ck" style="color:${k.color}">${clockSVG(k.segs, k.filled, k.color, 64)}<b></b></div>`).join("");
@@ -151,6 +152,15 @@ import { createFx } from "./fx.js";
     const b = timerEl.querySelector("b");
     const tick = () => { const ms = o.endsAt - Date.now(); if (ms <= 0) { b.textContent = "0:00"; timerEl.className = "sttimer done"; clearInterval(timerT); setTimeout(() => timerEl.hidden = true, 8000); return; } const s = Math.ceil(ms / 1000); b.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; timerEl.classList.toggle("low", s <= 10); };
     tick(); timerT = setInterval(tick, 200);
+  }
+  const lootEl = $("#loot"); let lootT = 0;
+  function showLoot(o) {
+    clearTimeout(lootT);
+    lootEl.innerHTML = `<div class="lo-glow"></div><div class="lo-card"><small></small><b></b><span class="lo-note"></span><span class="lo-val"></span></div>`;
+    $("small", lootEl).textContent = o.eyebrow || "Loot"; $("b", lootEl).textContent = o.name;
+    $(".lo-note", lootEl).textContent = o.note || ""; $(".lo-val", lootEl).textContent = o.value || "";
+    lootEl.hidden = false; lootEl.className = "loot"; void lootEl.offsetWidth; lootEl.classList.add("in");
+    lootT = setTimeout(() => { lootEl.classList.add("out"); setTimeout(() => lootEl.hidden = true, 500); }, (o.secs || 9) * 1000);
   }
   const lowerEl = $("#lower"); let lowerT = 0;
   function showLower(o) {

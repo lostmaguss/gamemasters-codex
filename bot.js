@@ -19,6 +19,7 @@ const COMMANDS = () => {
     new SlashCommandBuilder().setName("init").setDescription("Roll your initiative into the GM's combat tracker")
       .addStringOption(o => o.setName("dice").setDescription("Leave empty to use the table's rule").setRequired(false)),
     new SlashCommandBuilder().setName("me").setDescription("See your character sheet (only you see it)"),
+    new SlashCommandBuilder().setName("stash").setDescription("See the party's money and loot"),
   ].map(c => c.toJSON());
 };
 const tell = () => desk && !desk.isDestroyed() && desk.webContents.send("bot:status", { ...status, invite: appId ? `https://discord.com/oauth2/authorize?client_id=${appId}&scope=bot%20applications.commands&permissions=2048` : null });
@@ -50,7 +51,7 @@ async function start(token) {
     for (const g of c.guilds.cache.values()) await g.commands.set(COMMANDS()).catch(e => { status = { ...status, warn: `Couldn't add /roll to ${g.name}: ${e.message}` }; tell(); });
   });
   client.on(Events.GuildCreate, g => { g.commands.set(COMMANDS()).catch(() => {}); status.servers = client.guilds.cache.size; tell(); });
-  client.on(Events.InteractionCreate, i => { if (i.isChatInputCommand?.() && ["roll", "r", "check", "init", "me"].includes(i.commandName)) handle(i).catch(() => {}); });
+  client.on(Events.InteractionCreate, i => { if (i.isChatInputCommand?.() && ["roll", "r", "check", "init", "me", "stash"].includes(i.commandName)) handle(i).catch(() => {}); });
   client.on(Events.Error, e => { status = { state: "error", error: String(e.message || e) }; tell(); });
   try { await client.login(token); }
   catch (e) {

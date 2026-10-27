@@ -1,3 +1,4 @@
+import { stashSummary, UNIT as STASH_UNIT } from "./stash.js";
 import { $, $$, esc, h, icon, toast, uid } from "./util.js";
 import { S, C, loadData, save, flush, onSaved, blankCampaign } from "./store.js";
 import { Stage } from "./bridge.js";
@@ -291,6 +292,7 @@ export function rulesModal() {
 }
 App.rulesModal = rulesModal;
 App.genreChanged = c => {
+  if (c.stash && ["gold", "credits", "eddies"].includes(c.stash.unit)) c.stash.unit = STASH_UNIT[c.genre] || c.stash.unit;
   const have = new Set(c.tables.map(t => t.name.toLowerCase() + "|" + (t.folder || "")));
   const add = starterTables(c.genre).filter(t => !have.has(t.name.toLowerCase() + "|" + (t.folder || "")));
   c.tables.push(...add);
@@ -513,6 +515,11 @@ function wireBot() {
       const r = App.roll(expr, "Initiative", { who: member.character || req.who, id: req.id });
       const apply = res => { x.init = res.total; x.tie = Math.random(); import("./combat.js").then(m => { if (!cb.active) m.sortCombat(cb); save(); m.pushCombat(); mounted.combat?.refresh?.(); }); const order = cb.list.indexOf(x) + 1; B.reply({ id: req.id, ok: true, embed: { ...Discord.rollEmbed(res), footer: { text: `Initiative set${cb.active ? "" : ` · you're #${order} of ${cb.list.length}`}` } } }); };
       if (r) apply(r); else App._initWait = { id: req.id, apply };
+      return;
+    }
+    if (req.cmd === "stash") {
+      const s = stashSummary(c);
+      B.reply({ id: req.id, ok: true, embed: { color: 0xf0c35a, title: `${c.name}: party stash`, description: `**${s.money}**\n\n${s.items.length ? s.items.map(x => `• ${x}`).join("\n").slice(0, 3800) : "*No loot yet.*"}` } });
       return;
     }
     if (req.cmd === "me") {

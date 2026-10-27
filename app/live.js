@@ -214,7 +214,7 @@ export function createLive(el, App) {
     const improv = `<section><div class="sec-h"><h3>Improvise</h3><div class="line"></div></div>
       <div class="row" style="gap:6px"><button class="btn sm" data-imp="npc">${icon("social")} NPC</button><button class="btn sm" data-imp="place">${icon("explore")} Place</button><button class="btn sm" data-imp="loot">${icon("save")} Loot</button><button class="btn sm" data-imp="name">${icon("type")} 5 names</button></div>
       ${imp ? `<div class="imp-card">${imp.names ? `<div class="chips">${imp.names.map(n => `<button class="chip" data-copy="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : `<b>${esc(imp.title)}</b><span class="eyebrow">${esc(imp.sub)}</span><ul>${imp.lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>
-        <div class="row" style="gap:6px"><button class="btn sm" data-imp-intro>${icon("stream")} Introduce</button><button class="btn sm ghost" data-imp-save>${icon("save")} Save to Codex</button><button class="btn sm ghost" data-imp-log>${icon("chronicle")} Log it</button></div>`}</div>` : ""}</section>`;
+        <div class="row" style="gap:6px"><button class="btn sm" data-imp-intro>${icon("stream")} Introduce</button><button class="btn sm ghost" data-imp-save>${icon("save")} Save to Codex</button>${st.improv.kind === "loot" ? `<button class="btn sm ghost" data-imp-stash>${icon("loot")} To stash</button>` : ""}<button class="btn sm ghost" data-imp-log>${icon("chronicle")} Log it</button></div>`}</div>` : ""}</section>`;
     const quick = `<section><div class="sec-h"><h3>Quick rolls</h3><div class="line"></div></div><div class="row" style="gap:6px">
       <label class="toggle" title="Secret rolls stay on your desk"><input type="checkbox" id="lvSec" ${st.secret ? "checked" : ""}> Secret</label>
       ${["1d20", "2d20kh1", "1d6", "1d100"].map(e => `<button class="btn sm" data-qr="${e}">${e === "2d20kh1" ? "Adv" : e}</button>`).join("")}</div></section>`;
@@ -243,11 +243,12 @@ export function createLive(el, App) {
       const g = GEN[k], o = {}; for (const x in g.opts) o[x] = "any";
       const ctx = g.init(o), f = {}; for (const [kk, [, fn]] of Object.entries(g.fields)) f[kk] = fn(ctx, f);
       const show = Object.entries(g.fields).filter(([kk]) => !(g.hidden || []).includes(kk)).slice(0, 4).map(([kk, [lab]]) => `${lab}: ${f[kk]}`);
-      st.improv = { kind: k, title: g.title(ctx), sub: g.sub(ctx, f), lines: show, cat: g.noteCat }; renderPlan();
+      st.improv = { kind: k, title: g.title(ctx), sub: g.sub(ctx, f), lines: show, cat: g.noteCat, card: { kind: k, title: g.title(ctx), ctx, fields: f } }; st.improv.card.title = st.improv.title; renderPlan();
     });
     $$("[data-copy]", box).forEach(b => b.onclick = () => navigator.clipboard.writeText(b.dataset.copy).then(() => toast(`Copied ${b.dataset.copy}`), () => {}));
     $("[data-imp-intro]", box)?.addEventListener("click", () => App.lowerThird({ name: st.improv.title, sub: st.improv.sub, color: st.improv.kind === "npc" ? "#f39da8" : "#b8d8a8" }));
     $("[data-imp-save]", box)?.addEventListener("click", () => { c.notes.unshift({ id: uid(), title: st.improv.title, cat: st.improv.cat, tags: "improvised", body: st.improv.sub + "\n\n" + st.improv.lines.map(l => l.replace(/^([^:]+): /, "**$1:** ")).join("\n"), updated: Date.now() }); save(); toast(`Saved to Codex · ${st.improv.cat}`); });
+    $("[data-imp-stash]", box)?.addEventListener("click", () => import("./stash.js").then(({ addToStash, fromForgeCard }) => { const got = addToStash(fromForgeCard(st.improv.card, GEN.loot)); toast(`To the stash: ${got.join(", ")}`); App.refreshAll(); }));
     $("[data-imp-log]", box)?.addEventListener("click", () => App.logBeat(st.improv.kind === "npc" ? "social" : st.improv.kind === "loot" ? "loot" : "explore", `${st.improv.title} (${st.improv.sub})`));
     $("#lvSec", box).onchange = e => { st.secret = e.target.checked; ls.set("live.secret", st.secret); };
     $$("[data-qr]", box).forEach(b => b.onclick = () => App.roll(b.dataset.qr, b.textContent, { secret: st.secret }));

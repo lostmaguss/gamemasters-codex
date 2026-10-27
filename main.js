@@ -57,7 +57,7 @@ function openStage() {
   stage.on("page-title-updated", e => e.preventDefault());
   stage.webContents.on("did-finish-load", () => {
     desk && desk.webContents.send("stage:state", true);
-    for (const v of Object.values(overlays)) stage.webContents.send("stage:overlay", v);
+    for (const v of Object.values(overlays)) if (!v.secs || Date.now() - v._at < v.secs * 1000) stage.webContents.send("stage:overlay", v); // one-shots (name cards, loot) only while still fresh
     for (const [ch, v] of pendingStage) stage.webContents.send(ch, v);
     pendingStage = [];
   });
@@ -147,7 +147,7 @@ ipcMain.on("stage:show", (_e, h) => {
   else { pendingStage.push(["stage:show", h]); openStage(); }
 });
 ipcMain.on("stage:overlay", (_e, o) => {
-  overlays[o.kind] = o;
+  overlays[o.kind] = o.secs ? { ...o, _at: Date.now() } : o;
   if (stage && !stage.isDestroyed() && !stage.webContents.isLoading()) stage.webContents.send("stage:overlay", o);
 });
 ipcMain.on("stage:hide", () => stage && stage.webContents.send("stage:hide"));

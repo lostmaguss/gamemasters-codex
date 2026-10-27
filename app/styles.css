@@ -780,6 +780,25 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .pt-head { display: flex; align-items: center; gap: 14px; padding: 16px 24px; border-bottom: 1px solid var(--line-soft); background: var(--bg-2); flex-wrap: wrap; }
 .pt-head h2 { font-size: 34px; }
 .pt-head .toggle .ic { width: 15px; height: 15px; }
+.pt-body { display: grid; grid-template-columns: 1fr 340px; min-height: 0; }
+.pt-stash { overflow: auto; border-left: 1px solid var(--line-soft); background: var(--bg-2); padding: 16px 16px 40px; display: flex; flex-direction: column; gap: 10px; }
+.pt-stash > * { flex-shrink: 0; }
+.sh-h { display: flex; align-items: center; justify-content: space-between; } .sh-h h3 { font-size: 24px; margin: 0; }
+.sh-money { display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line-soft); }
+.sh-money b { font-size: 34px; color: var(--crit); font-variant-numeric: tabular-nums; } .sh-money.neg b { color: var(--bad); } .sh-money span { color: var(--dim); font-size: 15px; }
+.sh-mrow { display: flex; gap: 6px; } .sh-mrow input { min-width: 0; } #shAmt { width: 96px; flex: none; } #shWhy { flex: 1; }
+.sh-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sh-items li[data-i] { display: grid; grid-template-columns: 46px 1fr; gap: 4px 8px; padding: 8px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-soft); }
+.sh-q { width: 46px; text-align: center; padding: 4px 2px; }
+.sh-n { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sh-n input { background: transparent; border-color: transparent; padding: 2px 4px; } .sh-n input:focus { border-color: var(--line); }
+.sh-name { font-weight: 600; } .sh-note { font-size: 13px; color: var(--dim); }
+.sh-who { grid-column: 1 / 2; font-size: 12px; padding: 2px; width: 46px; }
+.sh-items li[data-i] .sh-who { grid-column: 2; width: auto; justify-self: start; }
+.sh-ops { grid-column: 2; display: flex; gap: 2px; justify-self: end; margin-top: -30px; }
+.sh-empty { color: var(--faint); font-size: 14px; }
+.sh-log summary { cursor: pointer; color: var(--dim); } .sh-log ul { list-style: none; padding: 0; margin: 6px 0 0; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 1100px) { .pt-body { grid-template-columns: 1fr; } .pt-stash { border-left: 0; border-top: 1px solid var(--line-soft); } }
 .pt-grid { overflow: auto; padding: 20px 24px 60px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-content: start; }
 .csheet { background: var(--surface); border: 1px solid var(--line-soft); border-top: 4px solid var(--mc); border-radius: 14px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
 .csheet header { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; }

@@ -86,9 +86,10 @@ export function createForge(el, App) {
     });
     const hid = (g.hidden || []).map(k => `<button class="btn sm ghost" data-hf="${k}">${icon("reroll")} ${esc(g.fields[k][0])}</button>`).join("");
     const encBtn = cur.kind === "encounter" && cur.ctx.creature ? `<button class="btn" id="aFight">${icon("combat")} Add to tonight's encounters</button>` : "";
-    $("#fActs", el).innerHTML = `${encBtn}<button class="btn" id="aSave">${icon("save")} Save to Codex</button><button class="btn" id="aPin">${icon("pin")} Pin to board</button><button class="btn" id="aCopy">${icon("copy")} Copy</button><button class="btn" id="aPost" title="Post this card to Discord">${icon("discord")} Post</button>${hid}`;
+    $("#fActs", el).innerHTML = `${encBtn}${["loot", "item"].includes(cur.kind) ? `<button class="btn" id="aStash" title="Add the coin and things to the party stash">${icon("loot")} To stash</button>` : ""}<button class="btn" id="aSave">${icon("save")} Save to Codex</button><button class="btn" id="aPin">${icon("pin")} Pin to board</button><button class="btn" id="aCopy">${icon("copy")} Copy</button><button class="btn" id="aPost" title="Post this card to Discord">${icon("discord")} Post</button>${hid}`;
     $$("[data-hf]", el).forEach(b => b.onclick = () => { const k = b.dataset.hf; cur.fields[k] = g.fields[k][1](cur.ctx, cur.fields); if (k === "rarity") cur.fields.value = g.fields.value[1](cur.ctx, cur.fields); remember(); renderCard(false); });
     $("#aCopy", el).onclick = () => copyText(text());
+    $("#aStash", el)?.addEventListener("click", () => import("./stash.js").then(({ addToStash, fromForgeCard }) => { const got = addToStash(fromForgeCard(cur, g)); toast(got.length ? `To the stash: ${got.join(", ")}` : "Nothing to stash"); App.refreshAll(); }));
     $("#aFight", el)?.addEventListener("click", () => import("./bestiary.js").then(({ nextPlanned }) => {
       const c = C(), s = nextPlanned(c), x = c.bestiary.find(y => y.id === cur.ctx.creature); if (!x) return;
       const n = parseInt((cur.title.match(/×(\d+)/) || [, 1])[1]), hp = parseInt(x.stats?.HP || x.hp) || 0;

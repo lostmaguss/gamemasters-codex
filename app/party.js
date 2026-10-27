@@ -3,6 +3,7 @@ import { $, $$, esc, h, icon, toast, uid, debounce, ls } from "./util.js";
 import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
 import { shrinkImage } from "./board.js";
+import { renderStash } from "./stash.js";
 
 const PALETTE = ["#ef7f8f", "#c39bd3", "#a7cf9e", "#8fc3d9", "#f0c35a", "#ff9a66", "#e2e2e2"];
 export function sheetLayout(c = C()) {
@@ -22,7 +23,7 @@ let pt; export function pushParty() { clearTimeout(pt); pt = setTimeout(() => St
 
 export function createParty(el, App) {
   const st = { sel: C().ui.member || null };
-  el.innerHTML = `<div class="party"><header class="pt-head" id="ptHead"></header><div class="pt-grid" id="ptGrid"></div></div>`;
+  el.innerHTML = `<div class="party"><header class="pt-head" id="ptHead"></header><div class="pt-body"><div class="pt-grid" id="ptGrid"></div><aside class="pt-stash" id="ptStash"></aside></div></div>`;
   const touch = debounce(() => { save(); pushParty(); }, 300);
 
   function render() {
@@ -33,6 +34,7 @@ export function createParty(el, App) {
     $("#ptStream", el).onchange = e => { c.ui.partyOnStream = e.target.checked; save(); pushParty(); };
     $("#ptLayout", el).onclick = layoutModal;
     $("#ptAdd", el).onclick = () => { const m = { id: uid(), player: "", character: "", role: "", color: PALETTE[c.party.length % PALETTE.length] }; c.party.push(m); st.sel = m.id; save(); render(); setTimeout(() => $(`[data-m="${m.id}"] [data-k=character]`, el)?.focus(), 30); };
+    renderStash($("#ptStash", el), App);
     const grid = $("#ptGrid", el);
     if (!c.party.length) { grid.innerHTML = `<div class="empty"><h3>Who's at the table?</h3><p>Add each player's character. Set the sheet layout to your system's stats and resources, and stat rolls become one click.</p></div>`; return; }
     grid.innerHTML = c.party.map(m => sheet(m, L)).join("");

@@ -14,7 +14,7 @@ A desktop companion for game masters who run their games on Discord: prep, run t
 | **Map** | Battle maps with a grid, tokens, fog of war you paint away, measuring, area templates. |
 | **Dice** | Physics-driven 3D dice, saved rolls, secret rolls. |
 | **Stream** | Full-screen scenes (starting soon, chapter title, recap, break, end card), name cards, countdown, atmosphere. |
-| **Party** | Character sheets laid out the way your system works; stat rolls follow your formula. |
+| **Party** | Character sheets laid out the way your system works; stat rolls follow your formula. Party stash for shared money and loot, with a ledger. |
 | **Forge** | Generators: NPCs, places, missions, items, loot, encounters, all genre-aware. |
 | **Tables** | Your own random tables with dice inside rows and tables that roll other tables. |
 | **Bestiary** | Creatures with your own stat layout; abilities become one-click rolls. |
@@ -50,6 +50,7 @@ Players roll from Discord and the dice land on your stream window with their nam
 | `/check Agility` | Rolls that player's stat with your sheet's formula |
 | `/init` | Rolls their initiative straight into your combat tracker |
 | `/me` | Shows them their own sheet, privately |
+| `/stash` | Shows the party's money and loot |
 
 The bot only answers while the app is open.
 
