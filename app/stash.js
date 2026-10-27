@@ -31,7 +31,9 @@ export function fromForgeCard(cur, g) {
   } else if (cur.kind === "item") {
     items.push({ name: cur.title, note: g.sub(cur.ctx, f), value: f.value || "" });
   }
-  return { money, items, from: cur.title };
+  const merged = [];
+  for (const it of items) { const same = merged.find(x => x.name === it.name); if (same) same.qty = (same.qty || 1) + 1; else merged.push({ ...it }); }
+  return { money, items: merged, from: cur.title };
 }
 export function revealLoot(it, App) {
   const c = C();
