@@ -1,0 +1,46 @@
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
+const on = (ch, fn) => { const h = (_e, v) => fn(v); ipcRenderer.on(ch, h); return () => ipcRenderer.removeListener(ch, h); };
+
+contextBridge.exposeInMainWorld("codex", {
+  platform: process.platform,
+  load: () => ipcRenderer.invoke("data:load"),
+  save: text => ipcRenderer.invoke("data:save", text),
+  exportData: (text, name) => ipcRenderer.invoke("data:export", { text, name }),
+  importData: () => ipcRenderer.invoke("data:import"),
+  openFolder: () => ipcRenderer.invoke("data:folder"),
+  importMedia: paths => ipcRenderer.invoke("media:import", paths),
+  removeMedia: file => ipcRenderer.invoke("media:remove", file),
+  pathForFile: f => { try { return webUtils.getPathForFile(f); } catch { return null; } },
+  version: () => ipcRenderer.invoke("app:version"),
+  update: {
+    check: () => ipcRenderer.invoke("update:check"),
+    install: () => ipcRenderer.send("update:install"),
+    onState: fn => on("update:state", fn),
+  },
+  win: {
+    min: () => ipcRenderer.send("win:min"),
+    max: () => ipcRenderer.send("win:max"),
+    close: () => ipcRenderer.send("win:close"),
+    onState: fn => on("win:state", fn),
+  },
+  stage: {
+    open: () => ipcRenderer.send("stage:open"),
+    close: () => ipcRenderer.send("stage:close"),
+    isOpen: () => ipcRenderer.invoke("stage:isOpen"),
+    onTop: v => ipcRenderer.send("stage:ontop", v),
+    roll: req => ipcRenderer.send("stage:roll", req),
+    clear: () => ipcRenderer.send("stage:clear"),
+    sound: cmd => ipcRenderer.send("stage:sound", cmd),
+    show: h => ipcRenderer.send("stage:show", h),
+    hide: () => ipcRenderer.send("stage:hide"),
+    onSound: fn => on("stage:sound", fn),
+    onShow: fn => on("stage:show", fn),
+    onHide: fn => on("stage:hide", fn),
+    onState: fn => on("stage:state", fn),
+    onResult: fn => on("stage:result", fn),
+    // used inside the stream window
+    onRoll: fn => on("stage:roll", fn),
+    onClear: fn => on("stage:clear", fn),
+    sendResult: res => ipcRenderer.send("stage:result", res),
+  },
+});

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Codex Dice (stream)</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'; connect-src 'self' codexmedia:; media-src 'self' codexmedia: blob: data:">
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { background: #120e10; }
+  .stage { position: fixed; inset: 0; }
+  .stage .tray-host { position: absolute; inset: 0; }
+  .stage .result-ov { top: 4vh; }
+  .stage .result-ov .rt { font-size: clamp(90px, 18vh, 220px); }
+  .stage .result-ov .rl { font-size: clamp(22px, 3.6vh, 40px); }
+  .stage .result-ov .rb { font-size: clamp(13px, 1.8vh, 20px); }
+  .stage .die-tag { font-size: clamp(20px, 3vh, 34px); }
+  .hist { position: absolute; right: 18px; top: 18px; width: 250px; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; z-index: 4; }
+  .hist li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 12px; border-radius: 8px; background: rgba(18,14,16,.72); backdrop-filter: blur(4px); border-left: 3px solid rgba(255,122,61,.6); font-size: 15px; animation: slide .3s ease-out both; }
+  .hist li:nth-child(n+2) { opacity: .72; } .hist li:nth-child(n+5) { opacity: .45; }
+  .hist li span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--dim); }
+  .hist li b { font: 700 22px/1 var(--display); }
+  .hist li.crit { border-left-color: var(--crit); } .hist li.crit b { color: var(--crit); }
+  .hist li.fumble { border-left-color: var(--bad); } .hist li.fumble b { color: var(--bad); }
+  @keyframes slide { from { transform: translateX(20px); opacity: 0; } }
+  .bar { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 5; display: flex; gap: 6px; align-items: center; background: rgba(26,21,23,.92); border: 1px solid var(--line); border-radius: 14px; padding: 8px; transition: opacity .3s, transform .3s; box-shadow: 0 12px 30px rgba(0,0,0,.5); }
+  .bar.away { opacity: 0; transform: translate(-50%, 20px); pointer-events: none; }
+  .bar .dpick { width: 58px; height: 56px; }
+  .bar select { width: auto; height: 34px; }
+  .hint { position: absolute; left: 18px; bottom: 18px; color: rgba(255,255,255,.35); font-size: 12px; z-index: 4; transition: opacity .3s; }
+  body.clean .hist, body.clean .hint { display: none; }
+  .handout { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 5vh 5vw; background: rgba(10,7,8,.0); transition: background .45s; perspective: 1800px; }
+  .handout.in { background: rgba(10,7,8,.72); }
+  .handout.out { background: rgba(10,7,8,0); }
+  .handout > div { max-width: 100%; max-height: 100%; transform-origin: 50% 0; opacity: 0; transform: rotateX(-70deg) translateY(-40px); transition: transform .6s cubic-bezier(.2,.9,.3,1.1), opacity .35s; }
+  .handout.in > div { opacity: 1; transform: rotate(-1.2deg); }
+  .handout.out > div { opacity: 0; transform: translateY(40px) scale(.96); }
+  .ho-img { background: #f7f2e8; padding: 14px 14px 0; box-shadow: 0 40px 80px rgba(0,0,0,.6); display: flex; flex-direction: column; }
+  .ho-img img { display: block; max-width: 86vw; max-height: 78vh; object-fit: contain; }
+  .ho-cap { font: 400 clamp(20px, 3vh, 34px) var(--hand); color: #2a1d17; text-align: center; padding: 10px 0 14px; }
+  .ho-img:not(:has(.ho-cap)) { padding-bottom: 14px; }
+  .ho-txt { width: min(820px, 86vw); max-height: 86vh; overflow: hidden; color: #2a1d17; padding: 6vh 6vh; box-shadow: 0 40px 80px rgba(0,0,0,.6); }
+  .ho-txt h2 { font: 700 clamp(30px, 5vh, 56px)/1.05 var(--display); margin-bottom: 3vh; text-align: center; }
+  .ho-body { white-space: pre-wrap; font: 400 clamp(20px, 3.3vh, 34px)/1.5 var(--hand); }
+  .ho-txt.s-letter { background: #efe3c8 linear-gradient(180deg, rgba(255,255,255,.35), transparent 30%); }
+  .ho-txt.s-letter .ho-body { font-style: italic; }
+  .ho-txt.s-letter h2 { font-family: var(--hand); font-weight: 400; font-style: italic; }
+  .ho-txt.s-parchment { background: radial-gradient(ellipse at center, #e9d6a8 0%, #d7b97a 70%, #a9824a 100%); clip-path: polygon(0 2%, 6% 0, 20% 1.5%, 40% 0, 60% 1.2%, 82% 0, 100% 1.8%, 99% 30%, 100% 60%, 98.5% 100%, 70% 98.6%, 45% 100%, 20% 98.4%, 0 100%, 1.2% 60%, 0 30%); }
+  .ho-txt.s-card { background: #f6f0e2 repeating-linear-gradient(180deg, transparent 0 5vh, rgba(80,120,170,.25) 5vh calc(5vh + 1px)); }
+  .ho-txt.s-card .ho-body { font-family: var(--body); line-height: 5vh; }
+  .ho-txt.s-plain { background: transparent; box-shadow: none; color: #fff; text-align: center; }
+  .ho-txt.s-plain h2 { font-size: clamp(50px, 10vh, 120px); text-shadow: 0 6px 30px rgba(0,0,0,.6); }
+  .ho-txt.s-plain .ho-body { font-family: var(--display); text-shadow: 0 3px 12px rgba(0,0,0,.6); }
+</style>
+</head>
+<body>
+<div class="stage" id="stage"><div class="tray-host" id="tray"></div><ul class="hist" id="hist"></ul><div class="handout" id="handout" hidden></div></div>
+<div class="bar" id="bar">
+  <div class="dgrid" id="quick" style="display:flex;gap:6px"></div>
+  <div class="tool-sep"></div>
+  <select id="theme" aria-label="Dice"></select>
+  <select id="felt" aria-label="Surface"></select>
+  <button class="btn icon" id="clean" title="Hide history (H)">H</button>
+  <button class="btn icon" id="full" title="Fullscreen (F)">⛶</button>
+</div>
+<div class="hint" id="hint">Click a die to roll it · rolls from your desk land here · H hides history · F fullscreen</div>
+<script type="module" src="stage.js"></script>
+</body>
+</html>

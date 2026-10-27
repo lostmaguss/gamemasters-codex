@@ -1,0 +1,79 @@
+{
+  "name": "gamemasters-codex",
+  "version": "1.1.1",
+  "description": "Campaign desk for game masters: generators, corkboard, codex, chronicle and 3D dice.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-packager . \"Gamemasters Codex\" --platform=win32 --arch=x64 --out=dist --overwrite --asar --ignore=^/dist --ignore=^/README.txt --app-copyright=\"Gamemaster's Codex\"",
+    "dist": "electron-builder --win nsis"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@fontsource/grenze-gotisch": "^5.3.0",
+    "@fontsource/ibm-plex-sans-condensed": "^5.3.0",
+    "@fontsource/im-fell-english": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "cannon-es": "^0.20.0",
+    "electron-updater": "^6.3.9",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@electron/packager": "^18.3.6",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "productName": "Gamemasters Codex",
+  "build": {
+    "appId": "com.gamemasters.codex",
+    "productName": "Gamemasters Codex",
+    "copyright": "Gamemaster's Codex",
+    "directories": {
+      "output": "dist-installer",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "app/**/*",
+      "build/icon.png",
+      "package.json",
+      "node_modules/**/*",
+      "!node_modules/three/{examples,src,docs,editor,manual}/**",
+      "!node_modules/three/build/three.{cjs,webgpu,tsl}*",
+      "!node_modules/cannon-es/{src,examples,docs}/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Gamemaster's Codex",
+      "artifactName": "GamemastersCodex-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "lostmaguss",
+        "repo": "gamemasters-codex",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lostmaguss/gamemasters-codex.git"
+  }
+}

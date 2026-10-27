@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gamemaster's Codex</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'; connect-src 'self' codexmedia:; media-src 'self' codexmedia: blob: data:">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="app">
+  <header class="titlebar">
+    <div class="mark">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,4 92,27 92,73 50,96 8,73 8,27" fill="#ff7a3d"/><polygon points="50,25 75,67 25,67" fill="none" stroke="#2a1206" stroke-width="7" stroke-linejoin="round"/></svg>
+      Codex
+    </div>
+    <button class="camp-btn" id="campBtn" title="Campaigns"><b id="campName">…</b><svg class="ic" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <div class="tb-spacer"></div>
+    <button class="upd-pill" id="updPill" hidden></button>
+    <span class="save-state no-drag" id="saveState">Saved</span>
+    <button class="stream-btn" id="streamBtn" title="Open the dice window you share on Discord"><span class="dot"></span><span id="streamLbl">Stream window</span></button>
+    <div class="winctl" id="winctl">
+      <button id="wMin" title="Minimize"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+      <button id="wMax" title="Maximize"><svg class="ic" viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/></svg></button>
+      <button id="wClose" class="close" title="Close"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </header>
+  <nav class="rail" id="rail"></nav>
+  <main class="view" id="views"></main>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
