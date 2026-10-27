@@ -279,13 +279,29 @@ export function createSoundEngine() {
     if (fade && ctx) { fadeTo(p.out, .0001, fade); setTimeout(() => { p.cleanup(); p.out.disconnect(); }, fade * 1000 + 60); }
     else { p.cleanup(); try { p.out.disconnect(); } catch {} }
   }
+  // music: a playlist that plays your tracks in order (or shuffled) with a short crossfade
+  const music = { list: [], i: 0, vol: .6, shuffle: false, playing: false };
+  function playTrack() {
+    if (!music.list.length) return;
+    const url = music.list[music.i % music.list.length];
+    play({ key: "music", sound: { url }, loop: false, vol: music.vol, fade: 1.5 });
+    const p = playing.get("music");
+    if (p) { const prev = p.cleanup; p.cleanup = () => { prev(); }; }
+    // the engine's own 'ended' handling stops the key; when it does, move on
+    clearInterval(music.watch);
+    music.watch = setInterval(() => { if (music.playing && !music.pending && !playing.has("music")) { music.i = music.shuffle ? Math.floor(Math.random() * music.list.length) : music.i + 1; playTrack(); } }, 700);
+  }
   function run(cmd) {
     try {
+      if (cmd.op === "music") { music.list = cmd.tracks || []; music.shuffle = !!cmd.shuffle; music.vol = cmd.vol ?? music.vol; music.i = cmd.shuffle ? Math.floor(Math.random() * music.list.length) : 0; music.playing = true; ensure(); playTrack(); return; }
+      if (cmd.op === "musicNext") { if (!music.playing || music.pending) return; music.pending = true; music.i = music.shuffle ? Math.floor(Math.random() * music.list.length) : music.i + 1; stop({ key: "music", fade: 1 }); setTimeout(() => { music.pending = false; playTrack(); }, 400); return; }
+      if (cmd.op === "musicStop") { music.playing = false; clearInterval(music.watch); stop({ key: "music", fade: 1.5 }); return; }
+      if (cmd.op === "musicVol") { music.vol = cmd.vol; const p = playing.get("music"); if (p && ctx) fadeTo(p.out, cmd.vol, .1); return; }
       if (cmd.op === "play") play(cmd);
       else if (cmd.op === "stop") stop(cmd);
       else if (cmd.op === "vol") { const p = playing.get(cmd.key); if (p && ctx) fadeTo(p.out, cmd.vol, .08); }
       else if (cmd.op === "master") { masterVol = cmd.vol; if (master) fadeTo(master, cmd.vol, .08); }
-      else if (cmd.op === "stopAll") [...playing.keys()].forEach(k => stop({ key: k, fade: cmd.fade || 0 }));
+      else if (cmd.op === "stopAll") { [...playing.keys()].filter(k => k !== "music").forEach(k => stop({ key: k, fade: cmd.fade || 0 })); }
     } catch (e) { console.warn("sound", e); }
   }
   return { run, isPlaying: k => playing.has(k) };

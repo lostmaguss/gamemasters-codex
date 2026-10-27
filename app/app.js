@@ -332,6 +332,7 @@ function campaignMenu() {
     } },
     ...(window.codex ? [{ text: "Restore a backup…", icon: "clock", run: restoreModal }, { text: "Open save folder", icon: "book", run: () => window.codex.openFolder() }, { text: "Check for updates", icon: "reroll", run: checkUpdates }] : []),
     { text: "What's new", icon: "star", run: () => showNews(NEWS) },
+    { text: "Keyboard shortcuts (F1)", icon: "type", run: helpSheet },
     { text: `Interface size: ${Math.round((S.data.prefs.zoom || 1) * 100)}% (Ctrl + / −)`, icon: "fit", run: () => { S.data.prefs.zoom = 1.1; zoomBy(-.1); } },
     "-",
     { text: "Delete this campaign", icon: "trash", run: () => {
@@ -377,6 +378,7 @@ function wireChrome() {
     if ((e.ctrlKey || e.metaKey) && /^[0-9]$/.test(e.key)) { const v = VIEWS[(+e.key + 9) % 10]; if (v) { e.preventDefault(); show(v.key); } }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(App, VIEWS); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") { e.preventDefault(); quickLog(); }
+    if (e.key === "F1") { e.preventDefault(); helpSheet(); }
     if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+" || e.key === "-")) { e.preventDefault(); zoomBy(e.key === "-" ? -.1 : .1); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); flush(); toast("Saved"); }
   });
@@ -399,6 +401,17 @@ async function restoreModal() {
     }));
   });
 }
+function helpSheet() {
+  const rows = [["Anywhere", [["Ctrl+K", "Search everything, run commands, type a roll"], ["Ctrl+L", "Log what just happened (live session)"], ["Ctrl+1…9, Ctrl+0", "Jump to a section"], ["Ctrl+S", "Save now"], ["Ctrl + / Ctrl −", "Bigger / smaller interface"], ["F1", "This sheet"]]],
+    ["Dice", [["Enter", "Throw"], ["Shift+Enter", "Secret roll"], ["Shift-click a die", "Throw it right away"], ["Right-click a die", "Take it out of the pool"], ["2d20kh1 · 4d6dl1", "Keep highest / drop lowest"], ["3d6! · 4d6r1 · 4dF", "Exploding · reroll 1s · Fate"], ["1d100<=45 · 8d6>=5", "Roll-under target · count hits"]]],
+    ["Combat", [["Space", "Next turn (or start)"], ["7 · +5 · =20 in HP box", "Damage · heal · set"]]],
+    ["Map", [["M R H B", "Move · Reveal · Hide · Box"], ["Right-drag", "Pan"], ["Delete", "Remove the selected token"]]],
+    ["Board", [["Double-click", "New note"], ["Drag a pin onto a card", "Tie yarn"], ["N · Ctrl+D · Delete", "New note · duplicate · delete"], ["Paste / drop an image", "Pin it"]]],
+    ["Forge & Tables", [["Space", "Draw a card (Forge)"], ["R", "Roll the open table"]]],
+    ["Stream window", [["H", "Hide roll history"], ["F", "Fullscreen"], ["Space", "Roll a d20"]]]];
+  App.modal(`<h2>Shortcuts</h2><div class="help-grid">${rows.map(([t, list]) => `<section><h3>${t}</h3><dl>${list.map(([k, d]) => `<dt><kbd>${esc(k)}</kbd></dt><dd>${esc(d)}</dd>`).join("")}</dl></section>`).join("")}</div><div class="foot"><button class="btn primary" data-ok>Got it</button></div>`, (m, close) => { $("[data-ok]", m).onclick = close; m.style.width = "min(900px, 100%)"; });
+}
+App.help = helpSheet;
 function zoomBy(d) {
   const cur = S.data.prefs.zoom || 1, z = Math.round(Math.max(.7, Math.min(1.5, cur + d)) * 10) / 10;
   S.data.prefs.zoom = z; save();

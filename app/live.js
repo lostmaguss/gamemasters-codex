@@ -53,6 +53,7 @@ export function createLive(el, App) {
 
   // ---------- sound ----------
   function sounds(cat) {
+    if (cat === "music") return C().sounds.filter(x => x.cat === "music");
     const g = C().genre || "fantasy", all = ls.get("live.allSounds", false);
     const built = BUILTIN[cat].filter(x => all || !x.genre || x.genre.split(" ").includes(g)).sort((a, b) => (b.genre || "").includes(g) - (a.genre || "").includes(g));
     return [...C().sounds.filter(x => x.cat === cat).map(x => ({ ...x, user: true })), ...built];
@@ -72,6 +73,9 @@ export function createLive(el, App) {
         <input type="range" min="0" max="1" step=".01" value="${vol(x.id)}" aria-label="${esc(x.name)} volume">${x.user ? `<button class="rm" title="Remove sound">${icon("x")}</button>` : ""}</div>`).join("")}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Effects · click to fire</div>
       <div class="sfx-grid">${sounds("sfx").map(x => `<button class="sfx" data-id="${x.id}">${esc(x.name)}${x.user ? `<span class="rm" title="Remove">${icon("x")}</span>` : ""}</button>`).join("")}</div>
+      <div class="eyebrow" style="margin:16px 0 8px">Music · your own tracks, one after another</div>
+      ${(() => { const tracks = C().sounds.filter(x => x.cat === "music"); return tracks.length ? `<div class="music"><div class="row" style="gap:6px"><button class="btn sm ${App.sound.music ? "on" : ""}" id="muPlay">${icon("sound")} ${App.sound.music ? "Playing" : "Play"}</button><button class="btn sm" id="muShuf">Shuffle</button><button class="btn sm" id="muNext" ${App.sound.music ? "" : "disabled"}>Next</button><button class="btn sm ghost" id="muStop" ${App.sound.music ? "" : "disabled"}>Stop</button><input type="range" id="muVol" min="0" max="1" step=".01" value="${ls.get("music.vol", .5)}" title="Music volume"></div>
+        <ul class="mu-list">${tracks.map(t => `<li data-id="${t.id}"><span>${esc(t.name)}</span><button class="rm" title="Remove">${icon("x")}</button></li>`).join("")}</ul></div>` : `<p class="lv-note" style="margin-top:0">Add music files below and pick "Music track".</p>`; })()}
       <div class="eyebrow" style="margin:16px 0 8px">Weather on stream</div><div id="lvFx"></div>
       <label class="toggle" style="margin-top:12px"><input type="checkbox" id="lvAll" ${ls.get("live.allSounds", false) ? "checked" : ""}> Show built-in sounds from every genre</label>
       <div class="drop" id="lvDrop">${icon("plus")} <span><b>Add your own sounds</b><br>Drop mp3/ogg/wav files here or click to pick</span></div>`;
@@ -94,6 +98,14 @@ export function createLive(el, App) {
       S.send({ op: "play", key: x.id + ":" + uid(), sound: srcOf(x), loop: false, vol: .9 });
       b.classList.remove("hit"); void b.offsetWidth; b.classList.add("hit");
     });
+    const tracks = C().sounds.filter(x => x.cat === "music");
+    const startMusic = shuffle => { S.send({ op: "music", tracks: tracks.map(t => `codexmedia://media/${encodeURIComponent(t.file)}`), shuffle, vol: ls.get("music.vol", .5) }); S.music = true; renderSound(); };
+    $("#muPlay", box)?.addEventListener("click", () => startMusic(false));
+    $("#muShuf", box)?.addEventListener("click", () => startMusic(true));
+    $("#muNext", box)?.addEventListener("click", () => S.send({ op: "musicNext" }));
+    $("#muStop", box)?.addEventListener("click", () => { S.send({ op: "musicStop" }); S.music = false; renderSound(); });
+    $("#muVol", box)?.addEventListener("input", e => { ls.set("music.vol", +e.target.value); S.send({ op: "musicVol", vol: +e.target.value }); });
+    $$(".mu-list li", box).forEach(li => $(".rm", li).onclick = () => removeSound(C().sounds.find(x => x.id === li.dataset.id)));
     $("#lvScSave", box).onclick = () => {
       if (!S.active.size) return toast("Start some ambience loops first, then save the mix");
       App.modal(`<h2>Save soundscape</h2><label class="f"><span>Name</span><input type="text" id="scN" placeholder="Tavern at night"></label><label class="toggle"><input type="checkbox" id="scF" checked> Include the current weather on stream</label><div class="foot"><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
@@ -121,8 +133,8 @@ export function createLive(el, App) {
   async function importSounds(paths) {
     if (!window.codex) return toast("Adding sound files works in the desktop app");
     const got = await window.codex.importMedia(paths); if (!got.length) return;
-    App.modal(`<h2>New sounds</h2><p style="margin:0;color:var(--dim)">Loops play until you stop them. Effects play once.</p>
-      <div style="display:flex;flex-direction:column;gap:8px">${got.map((g, i) => `<div class="row"><input type="text" data-i="${i}" value="${esc(g.name)}" style="flex:1"><select data-c="${i}" style="width:150px"><option value="ambience">Ambience loop</option><option value="sfx">One-shot effect</option></select></div>`).join("")}</div>
+    App.modal(`<h2>New sounds</h2><p style="margin:0;color:var(--dim)">Loops play until you stop them. Effects play once. Music tracks play one after another.</p>
+      <div style="display:flex;flex-direction:column;gap:8px">${got.map((g, i) => `<div class="row"><input type="text" data-i="${i}" value="${esc(g.name)}" style="flex:1"><select data-c="${i}" style="width:150px"><option value="ambience">Ambience loop</option><option value="sfx">One-shot effect</option><option value="music">Music track</option></select></div>`).join("")}</div>
       <div class="foot"><button class="btn primary" data-ok>Add ${got.length} sound${got.length > 1 ? "s" : ""}</button></div>`, (m, close) => {
       $("[data-ok]", m).onclick = () => { got.forEach((g, i) => C().sounds.push({ id: "u:" + uid(), name: $(`[data-i="${i}"]`, m).value.trim() || g.name, file: g.file, cat: $(`[data-c="${i}"]`, m).value })); save(); close(); renderSound(); };
     });

@@ -7,6 +7,8 @@ const KIND_META = {
   place: { icon: "explore", color: "lichen", blurb: "Where it happens" },
   mission: { icon: "travel", color: "mustard", blurb: "Jobs with a twist" },
   item: { icon: "loot", color: "plum", blurb: "Loot with a past" },
+  loot: { icon: "save", color: "sky", blurb: "Hoards and stashes" },
+  encounter: { icon: "combat", color: "paper", blurb: "Trouble on the road" },
 };
 
 export function createForge(el, App) {
@@ -83,9 +85,15 @@ export function createForge(el, App) {
       remember(); renderCard(false);
     });
     const hid = (g.hidden || []).map(k => `<button class="btn sm ghost" data-hf="${k}">${icon("reroll")} ${esc(g.fields[k][0])}</button>`).join("");
-    $("#fActs", el).innerHTML = `<button class="btn" id="aSave">${icon("save")} Save to Codex</button><button class="btn" id="aPin">${icon("pin")} Pin to board</button><button class="btn" id="aCopy">${icon("copy")} Copy</button><button class="btn" id="aPost" title="Post this card to Discord">${icon("discord")} Post</button>${hid}`;
+    const encBtn = cur.kind === "encounter" && cur.ctx.creature ? `<button class="btn" id="aFight">${icon("combat")} Add to tonight's encounters</button>` : "";
+    $("#fActs", el).innerHTML = `${encBtn}<button class="btn" id="aSave">${icon("save")} Save to Codex</button><button class="btn" id="aPin">${icon("pin")} Pin to board</button><button class="btn" id="aCopy">${icon("copy")} Copy</button><button class="btn" id="aPost" title="Post this card to Discord">${icon("discord")} Post</button>${hid}`;
     $$("[data-hf]", el).forEach(b => b.onclick = () => { const k = b.dataset.hf; cur.fields[k] = g.fields[k][1](cur.ctx, cur.fields); if (k === "rarity") cur.fields.value = g.fields.value[1](cur.ctx, cur.fields); remember(); renderCard(false); });
     $("#aCopy", el).onclick = () => copyText(text());
+    $("#aFight", el)?.addEventListener("click", () => import("./bestiary.js").then(({ nextPlanned }) => {
+      const c = C(), s = nextPlanned(c), x = c.bestiary.find(y => y.id === cur.ctx.creature); if (!x) return;
+      const n = parseInt((cur.title.match(/×(\d+)/) || [, 1])[1]), hp = parseInt(x.stats?.HP || x.hp) || 0;
+      s.plan.encounters.push({ id: uid(), creature: x.id, count: n, hp: Array(n).fill(hp) }); save(); toast(`Added ${n} × ${x.name} to Session ${s.num}`);
+    }));
     $("#aPost", el).onclick = () => App.discord.postCard(cur.title, g.sub(cur.ctx, cur.fields), Object.entries(g.fields).filter(([k]) => !(g.hidden || []).includes(k) && !["secret", "hidden", "twist"].includes(k)).map(([k, [lab]]) => [lab, cur.fields[k]])).then(ok => ok && toast("Posted to Discord (secrets left out)"));
     $("#aSave", el).onclick = () => {
       const notes = c().notes; const ex = notes.find(n => n.forgeId === cur.id);

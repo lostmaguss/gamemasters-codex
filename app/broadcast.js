@@ -39,6 +39,9 @@ export function createBroadcast(el, App) {
           <label class="f" style="flex:1;min-width:180px"><span>Next session (end card)</span><input type="text" id="bcNext" value="${esc(S.next)}" placeholder="Friday 21:00"></label>
         </div>
         <p class="md-help">Scenes cover the whole stream window. Your sounds keep playing, so start an ambience loop under "Starting soon".</p>
+        <div class="sec-h" style="margin-top:22px"><h3>Countdown on stream</h3><div class="line"></div></div>
+        <div class="lt-form" style="grid-template-columns:1fr 90px auto auto"><input type="text" id="tmL" placeholder="The ritual completes" value="${esc(S.timerLabel || "")}"><input type="number" id="tmM" min="0.25" step="0.25" value="${S.timerMin || 3}" title="Minutes"><button class="btn primary" id="tmGo">${icon("clock")} Start</button><button class="btn" id="tmX">Stop</button></div>
+        <p class="md-help">A ticking clock at the top of the stream window. It flashes when time runs out.</p>
         <div class="sec-h" style="margin-top:22px"><h3>Atmosphere</h3><div class="line"></div></div>
         <div id="bcFx"></div>
         <p class="md-help">Weather and mood over the table and map. Storm flashes also fire whenever you play Thunder or Explosion.</p>
@@ -55,6 +58,8 @@ export function createBroadcast(el, App) {
       ...c.notes.filter(n => ["NPCs", "Locations", "Factions"].includes(n.cat)).map(n => ({ name: n.title, sub: n.tags || n.cat, color: n.cat === "NPCs" ? "#f39da8" : n.cat === "Locations" ? "#b8d8a8" : "#a8d3e4" })),
       ...c.bestiary.map(x => ({ name: x.name, sub: x.kind, color: "#ff6b6b", portrait: x.img }))];
     App.fx.controls($("#bcFx", el));
+    $("#tmGo", el).onclick = () => { S.timerLabel = $("#tmL", el).value.trim(); S.timerMin = Math.max(.25, +$("#tmM", el).value || 3); save(); Stage.overlay({ kind: "timer", show: true, label: S.timerLabel, endsAt: Date.now() + S.timerMin * 60000 }); if (!App.streamLive) Stage.open(); toast("Countdown started"); };
+    $("#tmX", el).onclick = () => Stage.overlay({ kind: "timer", show: false });
     $$("[data-scene]", el).forEach(b => b.onclick = () => onAirScene === b.dataset.scene ? clear() : show(b.dataset.scene));
     $("#bcSoon", el).onchange = e => { S.soonMin = Math.max(1, +e.target.value || 10); save(); };
     $("#bcBrb", el).onchange = e => { S.brbMin = Math.max(1, +e.target.value || 10); save(); };

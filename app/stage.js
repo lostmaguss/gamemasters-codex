@@ -87,6 +87,7 @@ import { createFx } from "./fx.js";
       mrender(); return;
     }
     if (o.kind === "fx") { fx.set(o); return; }
+    if (o.kind === "timer") { showTimer(o); return; }
     if (o.kind === "scene") { showScene(o); return; }
     if (o.kind === "lower") { showLower(o); return; }
     if (o.kind === "clocks") {
@@ -140,6 +141,16 @@ import { createFx } from "./fx.js";
       const tick = () => { const ms = o.endsAt - Date.now(); if (ms <= 0) { cnt.textContent = o.type === "soon" ? "Starting now" : "Back now"; cnt.style.fontSize = "clamp(40px, 9vh, 110px)"; clearInterval(sceneTimer); return; } const s = Math.ceil(ms / 1000); cnt.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
       tick(); sceneTimer = setInterval(tick, 250);
     }
+  }
+  const timerEl = $("#sttimer"); let timerT = 0;
+  function showTimer(o) {
+    clearInterval(timerT);
+    if (!o.show) { timerEl.hidden = true; return; }
+    timerEl.hidden = false; timerEl.className = "sttimer"; timerEl.innerHTML = `<span></span><b></b>`;
+    timerEl.querySelector("span").textContent = o.label || ""; if (!o.label) timerEl.querySelector("span").remove();
+    const b = timerEl.querySelector("b");
+    const tick = () => { const ms = o.endsAt - Date.now(); if (ms <= 0) { b.textContent = "0:00"; timerEl.className = "sttimer done"; clearInterval(timerT); setTimeout(() => timerEl.hidden = true, 8000); return; } const s = Math.ceil(ms / 1000); b.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; timerEl.classList.toggle("low", s <= 10); };
+    tick(); timerT = setInterval(tick, 200);
   }
   const lowerEl = $("#lower"); let lowerT = 0;
   function showLower(o) {

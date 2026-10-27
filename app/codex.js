@@ -71,7 +71,7 @@ export function createCodex(el, App) {
     const page = $("#cxPage", el), n = cur();
     if (!n) {
       page.innerHTML = `<div class="empty"><h3>The Codex is your world's memory</h3><p>Places, people, factions and lore. Link pages with <span class="mono">[[double brackets]]</span>, and every page shows what mentions it.</p><button class="btn primary" id="cxE">${icon("plus")} Write the first page</button></div>`;
-      $("#cxE", page).onclick = newPage; return;
+      $("#cxE", page).onclick = () => newPage(); return;
     }
     const bl = backlinks(n);
     page.innerHTML = `<div class="cx-toolbar">
@@ -125,11 +125,20 @@ export function createCodex(el, App) {
     const nn = { id: uid(), title, cat: "Other", tags: "", body: "", updated: Date.now() };
     notes().unshift(nn); save(); renderCats(); open(nn.id, "write"); toast(`Created "${title}"`);
   }
-  function newPage() {
-    const n = { id: uid(), title: "", cat: st.cat === "All" ? "Lore" : st.cat, tags: "", body: "", updated: Date.now() };
+  const TEMPLATES = {
+    Blank: ["Lore", ""],
+    NPC: ["NPCs", "**Looks:** \n**Wants:** \n**Fears:** \n**Secret:** \n**Voice:** \n\n## Relationships\n- [[ ]]\n\n## Where to find them\n"],
+    Location: ["Locations", "**First impression:** \n**Who's here:** \n**Danger:** \n\n## Areas\n- \n\n## Secrets\n- \n\n## Connected to\n- [[ ]]\n"],
+    Faction: ["Factions", "**Goal:** \n**Leader:** [[ ]]\n**Resources:** \n**Enemies:** [[ ]]\n\n## What they do if nobody stops them\n1. \n2. \n3. \n"],
+    Quest: ["Quests", "**Patron:** [[ ]]\n**Reward:** \n**Deadline:** \n\n## The real story\n\n## Clues\n- \n\n## Complications\n- \n"],
+    Item: ["Items", "**Looks like:** \n**Does:** \n**Cost / drawback:** \n**History:** \n**Who wants it:** [[ ]]\n"],
+  };
+  function newPage(tpl = "Blank") {
+    const [cat, body] = TEMPLATES[tpl] || TEMPLATES.Blank;
+    const n = { id: uid(), title: "", cat: tpl === "Blank" ? (st.cat === "All" ? "Lore" : st.cat) : cat, tags: "", body, updated: Date.now() };
     notes().unshift(n); save(); renderCats(); open(n.id, "write");
   }
-  $("#cxNew", el).onclick = newPage;
+  $("#cxNew", el).onclick = e => App.menu(e.currentTarget, Object.keys(TEMPLATES).map(t => ({ text: t === "Blank" ? "Blank page" : `${t} template`, icon: { Blank: "codex", NPC: "social", Location: "explore", Faction: "board", Quest: "travel", Item: "loot" }[t], run: () => newPage(t) })));
   $("#cxQ", el).oninput = e => { st.q = e.target.value; renderList(); };
   st.sel = C().ui.note && notes().some(n => n.id === C().ui.note) ? C().ui.note : notes()[0]?.id;
   renderCats(); renderList(); renderPage();
