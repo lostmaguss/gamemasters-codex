@@ -48,6 +48,12 @@ jobs:
         if: steps.check.outputs.skip == 'false'
         run: npm ci
 
+      - name: Check the packed app has every file it needs
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          npx electron-builder --win dir --publish never
+          node scripts/check-pack.js dist-installer/win-unpacked/resources/app.asar
+
       - name: Build installer and publish release
         if: steps.check.outputs.skip == 'false'
         env:
