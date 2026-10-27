@@ -195,7 +195,7 @@ export function createLive(el, App) {
             <div class="row" style="gap:6px">${(x.abilities || []).filter(a => a.roll).map(a => `<button class="rollchip sm" data-roll="${x.id}|${a.id}">${esc(a.name)} <span>${esc(a.roll)}</span></button>`).join("")}</div></div>`; }).join("") || `<p style="color:var(--faint);margin:0">No encounters planned.</p>`}
       </section>
       <section><div class="sec-h"><h3>Scenes</h3><div class="line"></div></div>${check(P.scenes, "scenes")}</section>
-      ${P.cast.length ? `<section><div class="sec-h"><h3>Cast</h3><div class="line"></div></div><div class="chips">${P.cast.map(id => { const n = c.notes.find(x => x.id === id); return n ? `<button class="chip" data-note="${id}">${esc(n.title)}</button>` : ""; }).join("")}</div></section>` : ""}
+      ${P.cast.length ? `<section><div class="sec-h"><h3>Cast</h3><div class="line"></div></div><div class="chips">${P.cast.map(id => { const n = c.notes.find(x => x.id === id); return n ? `<span class="chip cast-chip"><button class="lnk" data-note="${id}">${esc(n.title)}</button><button class="lnk" data-intro="${id}" title="Introduce on stream">${icon("social")}</button></span>` : ""; }).join("")}</div></section>` : ""}
       <section><div class="sec-h"><h3>Treasure</h3><div class="line"></div></div>${check(P.treasure, "treasure")}</section>
       ${quick}${tableBlock}`;
     bindPlan(box, s);
@@ -224,6 +224,7 @@ export function createLive(el, App) {
     $("#lvFight", box)?.addEventListener("click", () => App.go("combat"));
     $$("[data-open]", box).forEach(b => b.onclick = () => App.go("bestiary", { creature: b.dataset.open }));
     $$("[data-note]", box).forEach(b => b.onclick = () => App.go("codex", { note: b.dataset.note }));
+    $$("[data-intro]", box).forEach(b => b.onclick = () => { const n = c.notes.find(x => x.id === b.dataset.intro); App.lowerThird({ name: n.title, sub: n.tags || n.cat, color: n.cat === "NPCs" ? "#f39da8" : "#b8d8a8" }); });
   }
   function renderAll() { renderHead(); renderSound(); renderHand(); renderPlan(); }
   App.sound.onChange(() => { if (!el.closest("[hidden]")) renderSound(); });

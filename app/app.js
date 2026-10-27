@@ -128,6 +128,9 @@ export const App = {
   hideHandout() { App.onAir = null; Stage.hide(); App._air.forEach(f => f()); },
 };
 
+// ---- name cards on the stream window ----
+App.lowerThird = x => { Stage.overlay({ kind: "lower", show: true, id: uid(), name: x.name, sub: x.sub || "", color: x.color || "#ff7a3d", portrait: x.portrait || null, secs: 8 }); if (!App.streamLive) Stage.open(); toast(`Introducing ${x.name}`); };
+
 // ---- atmosphere on the stream window ----
 App.fx = {
   get state() { return (C().ui.fx ||= { on: {}, level: .6 }); },
@@ -329,6 +332,7 @@ function campaignMenu() {
     } },
     ...(window.codex ? [{ text: "Restore a backup…", icon: "clock", run: restoreModal }, { text: "Open save folder", icon: "book", run: () => window.codex.openFolder() }, { text: "Check for updates", icon: "reroll", run: checkUpdates }] : []),
     { text: "What's new", icon: "star", run: () => showNews(NEWS) },
+    { text: `Interface size: ${Math.round((S.data.prefs.zoom || 1) * 100)}% (Ctrl + / −)`, icon: "fit", run: () => { S.data.prefs.zoom = 1.1; zoomBy(-.1); } },
     "-",
     { text: "Delete this campaign", icon: "trash", run: () => {
       if (S.data.campaigns.length < 2) return toast("Make another campaign first; you need at least one");
@@ -373,6 +377,7 @@ function wireChrome() {
     if ((e.ctrlKey || e.metaKey) && /^[0-9]$/.test(e.key)) { const v = VIEWS[(+e.key + 9) % 10]; if (v) { e.preventDefault(); show(v.key); } }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(App, VIEWS); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") { e.preventDefault(); quickLog(); }
+    if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+" || e.key === "-")) { e.preventDefault(); zoomBy(e.key === "-" ? -.1 : .1); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); flush(); toast("Saved"); }
   });
 }
@@ -393,6 +398,12 @@ async function restoreModal() {
       } catch { toast("That backup couldn't be read"); }
     }));
   });
+}
+function zoomBy(d) {
+  const cur = S.data.prefs.zoom || 1, z = Math.round(Math.max(.7, Math.min(1.5, cur + d)) * 10) / 10;
+  S.data.prefs.zoom = z; save();
+  if (window.codex?.zoom) window.codex.zoom(z); else document.body.style.zoom = z;
+  toast(`Zoom ${Math.round(z * 100)}%`);
 }
 function quickLog() {
   const s = C().sessions.find(x => x.status === "live");
@@ -425,6 +436,7 @@ async function checkUpdates() {
   await loadData();
   try { await Promise.all([document.fonts.load('700 40px "Grenze Gotisch"'), document.fonts.load('400 15px "IBM Plex Sans Condensed"')]); } catch {}
   applyGenre();
+  if (S.data.prefs.zoom && S.data.prefs.zoom !== 1) { if (window.codex?.zoom) window.codex.zoom(S.data.prefs.zoom); else document.body.style.zoom = S.data.prefs.zoom; }
   try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
   buildRail(); wireChrome(); renderCampName(); ls.set("rules", C().rules);
   show(C().ui.view || "prep");

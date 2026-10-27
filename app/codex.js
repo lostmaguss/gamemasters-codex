@@ -78,6 +78,8 @@ export function createCodex(el, App) {
         <div class="mode-seg"><button data-m="read" class="${st.mode === "read" ? "on" : ""}">Read</button><button data-m="write" class="${st.mode === "write" ? "on" : ""}">Write</button></div>
         <div style="flex:1"></div>
         <button class="btn sm" id="cxPin">${icon("pin")} Pin to board</button>
+        <button class="btn sm" id="cxShow" title="Show this page to players as a handout">${icon("stream")} Show</button>
+        ${["NPCs", "Locations", "Factions"].includes(n.cat) ? `<button class="btn sm" id="cxIntro" title="Introduce on stream with a name card">${icon("social")} Introduce</button>` : ""}
         <button class="btn sm ghost" id="cxStar">${icon("star")} ${n.pinned ? "Unstar" : "Star"}</button>
         <button class="btn sm ghost danger" id="cxDel">${icon("trash")} Delete</button>
       </div>
@@ -108,6 +110,8 @@ export function createCodex(el, App) {
     }
     $$("[data-m]", page).forEach(b => b.onclick = () => { st.mode = b.dataset.m; renderPage(); });
     $("#cxPin", page).onclick = () => App.pinToBoard({ type: "ref", ref: n.id, w: 240, color: { Locations: "lichen", NPCs: "rose", Quests: "mustard", Items: "plum", Factions: "sky" }[n.cat] || "paper" });
+    $("#cxShow", page).onclick = () => App.showHandout({ id: "note:" + n.id, type: "text", style: "parchment", title: n.title, text: String(n.body || "").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\*\*|^#+\s*/gm, "") });
+    $("#cxIntro", page)?.addEventListener("click", () => App.lowerThird({ name: n.title, sub: n.tags || n.cat, color: CATS[n.cat] }));
     $("#cxStar", page).onclick = () => { n.pinned = !n.pinned; save(); renderList(); renderPage(); };
     $("#cxDel", page).onclick = () => App.confirm(`Delete "${n.title || "Untitled"}"?`, "The page is removed. Board cards that point to it will show as missing.", "Delete page", () => {
       C().notes = notes().filter(x => x.id !== n.id); st.sel = null; save(); renderCats(); renderList(); renderPage();

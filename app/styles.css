@@ -893,3 +893,7 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .fx-lvl input { flex: 1; accent-color: var(--ember); }
 .scapes .scape { color: var(--ink); border-color: var(--line); padding-right: 4px; }
 .scapes .scape:hover { border-color: var(--ember); }
+.cast-chip { padding: 0 4px 0 10px; color: var(--ink); }
+.cast-chip .lnk { border: 0; background: none; cursor: pointer; padding: 0 2px; display: inline-flex; align-items: center; }
+.cast-chip .lnk .ic { width: 13px; height: 13px; color: var(--faint); }
+.cast-chip .lnk:hover .ic { color: var(--ember); }

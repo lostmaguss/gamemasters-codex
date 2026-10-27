@@ -62,10 +62,9 @@ export function createBroadcast(el, App) {
     $("#ltGo", el).onclick = () => { const n = $("#ltName", el).value.trim(); if (!n) return toast("Type a name"); lower({ name: n, sub: $("#ltSub", el).value.trim() }); };
     $$(".lt-item", el).forEach(b => b.onclick = () => lower(items[+b.dataset.i]));
   }
-  function lower(x) { Stage.overlay({ kind: "lower", show: true, id: uid(), name: x.name, sub: x.sub || "", color: x.color || "#ff7a3d", portrait: x.portrait || null, secs: 8 }); if (!App.streamLive) Stage.open(); toast(`Introducing ${x.name}`); }
+  const lower = x => App.lowerThird(x);
   function clear() { onAirScene = null; Stage.overlay({ kind: "scene", show: false }); render(); }
   $("#bcClear", el).onclick = clear;
-  App.lowerThird = lower;
   render();
   return { show() { render(); }, refresh() { render(); } };
 }

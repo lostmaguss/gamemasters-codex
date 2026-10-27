@@ -144,6 +144,7 @@ function faceTexture(type, label, theme, uvPts, mode, vertexLabels) {
 }
 
 function labelFor(type, value, variant) {
+  if (variant === "fate") return value <= 2 ? "−" : value <= 4 ? "" : "+";
   if (variant === "tens") return value === 10 ? "00" : String(value * 10);
   if (variant === "units") return String(value % 10);
   return String(value);
@@ -170,7 +171,7 @@ function buildDie(type, themeKey, variant) {
     geo.addGroup(start, 3 * (pts.length - 2), fi);
     const tex = def.read === "vertex"
       ? faceTexture(type, "", T, uvs, "vertex", f.map(i => String(def.vertexValues[i])))
-      : faceTexture(variant ? 100 : type, labelFor(type, def.values[fi], variant), T, uvs, "face");
+      : faceTexture(variant && variant !== "fate" ? 100 : type, labelFor(type, def.values[fi], variant), T, uvs, "face");
     const m = new THREE.MeshStandardMaterial({ map: tex, roughness: T.rough, metalness: T.metal, flatShading: true, transparent: true, opacity: T.alpha || 1 });
     if (T.glow) { m.emissive = new THREE.Color(T.glow); m.emissiveMap = tex; m.emissiveIntensity = .55; }
     m.userData.baseOpacity = T.alpha || 1; m.userData.glow = T.glow;
@@ -328,6 +329,7 @@ export class DiceTray {
     groups.forEach((g, gi) => {
       for (let i = 0; i < g.count; i++) {
         if (g.sides === 100) { list.push({ gi, type: 10, variant: "tens", pair: i }); list.push({ gi, type: 10, variant: "units", pair: i }); }
+        else if (g.fate) list.push({ gi, type: 6, variant: "fate" });
         else if (DEFS[g.sides]) list.push({ gi, type: g.sides });
         else list.push({ gi, type: null, sides: g.sides });
       }
@@ -400,7 +402,7 @@ export class DiceTray {
         m.needsUpdate = true;
       });
       const tag = this.tags[i]; if (!tag) return;
-      tag.textContent = d.variant === "tens" ? (d.value === 10 ? "00" : d.value * 10) : d.variant === "units" ? d.value % 10 : d.value;
+      tag.textContent = d.variant === "tens" ? (d.value === 10 ? "00" : d.value * 10) : d.variant === "units" ? d.value % 10 : d.variant === "fate" ? (d.value <= 2 ? "−" : d.value <= 4 ? "0" : "+") : d.value;
       tag.className = "die-tag show" + (s.dropped ? " dropped" : "") + (s.max ? " max" : "") + (s.min ? " min" : "");
     });
     this.glowUntil = performance.now() + 50; this.start();

@@ -48,6 +48,7 @@ export function createBoard(el, App) {
       <button class="btn sm" id="tHead" title="Add a heading strip">${icon("type")} Heading</button>
       <button class="btn sm" id="tImg" title="Add an image (or paste / drop one)">${icon("image")} Image</button>
       <button class="btn sm" id="tRef" title="Pin a Codex note">${icon("codex")} From Codex</button>
+      <button class="btn sm" id="tWeb" title="Build a board of everything in the Codex, tied by its [[links]]">${icon("link")} World web</button>
       <div class="tool-sep"></div>
       <button class="btn sm icon ghost" id="zOut" title="Zoom out">−</button><span class="zoom-out" id="zLbl">100%</span><button class="btn sm icon ghost" id="zIn" title="Zoom in">+</button>
       <button class="btn sm icon ghost" id="zFit" title="Fit everything">${icon("fit")}</button>
@@ -355,6 +356,22 @@ export function createBoard(el, App) {
       };
       $("#rq", m).oninput = draw; draw();
     });
+  };
+  $("#tWeb", el).onclick = () => {
+    const c = C(), notes = c.notes.filter(n => n.title);
+    if (notes.length < 2) return toast("Write a few Codex pages that link each other with [[Title]] first");
+    const links = [], byTitle = new Map(notes.map(n => [n.title.toLowerCase(), n]));
+    for (const n of notes) for (const m of String(n.body || "").matchAll(/\[\[([^\]]+)\]\]/g)) { const t = byTitle.get(m[1].trim().toLowerCase()); if (t && t !== n && !links.some(l => (l[0] === n && l[1] === t) || (l[0] === t && l[1] === n))) links.push([n, t]); }
+    const linked = notes.filter(n => links.some(l => l[0] === n || l[1] === n));
+    const use = (linked.length >= 2 ? linked : notes).slice(0, 60);
+    const order = ["NPCs", "Factions", "Locations", "Quests", "Items", "Lore", "Other"];
+    use.sort((a, b) => order.indexOf(a.cat) - order.indexOf(b.cat));
+    const R = 160 + use.length * 32, color = { Locations: "lichen", NPCs: "rose", Quests: "mustard", Items: "plum", Factions: "sky" };
+    const cards = use.map((n, i) => { const a = i / use.length * Math.PI * 2 - Math.PI / 2; return { id: uid(), type: "ref", ref: n.id, w: 230, x: Math.round(R + Math.cos(a) * R), y: Math.round(R * .8 + Math.sin(a) * R * .8), rot: (Math.random() * 4 - 2).toFixed(2), z: 1, color: color[n.cat] || "paper", title: "", text: "" }; });
+    const idOf = n => cards[use.indexOf(n)]?.id;
+    const b = { id: uid(), name: "World web", cards: [{ id: uid(), type: "heading", title: c.name, x: Math.round(R - 150), y: Math.round(R * .8 - 30), w: 300, color: "paper", rot: "0", z: 2, text: "" }, ...cards], links: links.filter(l => idOf(l[0]) && idOf(l[1])).map(l => ({ id: uid(), a: idOf(l[0]), b: idOf(l[1]), color: "red" })), view: { x: 40, y: 20, z: .6 } };
+    c.boards.push(b); c.ui.board = b.id; save(); render(); setTimeout(fit, 80);
+    toast(`World web: ${cards.length} pages, ${b.links.length} strings`);
   };
   $("#zIn", el).onclick = () => zoomAt(1.2); $("#zOut", el).onclick = () => zoomAt(1 / 1.2); $("#zFit", el).onclick = fit;
   new ResizeObserver(() => drawMini()).observe(view);

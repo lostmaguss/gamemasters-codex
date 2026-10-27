@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, webUtils } = require("electron");
+const { contextBridge, ipcRenderer, webUtils, webFrame } = require("electron");
 const on = (ch, fn) => { const h = (_e, v) => fn(v); ipcRenderer.on(ch, h); return () => ipcRenderer.removeListener(ch, h); };
 
 contextBridge.exposeInMainWorld("codex", {
@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld("codex", {
   saveMedia: (dataURL, ext) => ipcRenderer.invoke("media:saveData", { dataURL, ext }),
   pathForFile: f => { try { return webUtils.getPathForFile(f); } catch { return null; } },
   version: () => ipcRenderer.invoke("app:version"),
+  zoom: f => { if (f) webFrame.setZoomFactor(f); return webFrame.getZoomFactor(); },
   discord: req => ipcRenderer.invoke("discord:send", req),
   update: {
     check: () => ipcRenderer.invoke("update:check"),

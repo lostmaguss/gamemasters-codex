@@ -1,18 +1,12 @@
 // Custom random tables. Rows can hold inline dice {2d6} and roll other tables with @{Table name}.
 import { $, $$, esc, h, icon, toast, uid, rnd, copyText, debounce } from "./util.js";
 import { C, save } from "./store.js";
-import { parseRoll } from "./roll.js";
+import { parseRoll, diceGroups, buildResult } from "./roll.js";
 
 export function quickRoll(expr) {
-  const terms = parseRoll(expr); let total = 0; const bits = [];
-  for (const t of terms) {
-    if (t.flat != null) { total += t.sign * t.flat; continue; }
-    const vals = Array.from({ length: t.count }, () => rnd(t.sides) + 1).sort((a, b) => b - a);
-    let kept = vals;
-    if (t.keep) { const n = Math.min(t.keep.n, vals.length); kept = t.keep.mode === "kh" ? vals.slice(0, n) : t.keep.mode === "kl" ? vals.slice(-n) : t.keep.mode === "dl" ? vals.slice(0, vals.length - n) : vals.slice(n); }
-    total += t.sign * kept.reduce((s, v) => s + v, 0); bits.push(vals.join(" "));
-  }
-  return { total, detail: bits.join(" | ") };
+  const terms = parseRoll(expr);
+  const r = buildResult({ id: 0, expr }, terms, diceGroups(terms).map(g => Array.from({ length: g.count }, () => rnd(g.sides) + 1)));
+  return { total: r.total, detail: r.groups.map(g => g.rolls.map(x => x.v).join(" ")).join(" | ") };
 }
 const findTable = (c, ref) => c.tables.find(t => t.id === ref) || c.tables.find(t => t.name.toLowerCase() === String(ref).trim().toLowerCase());
 
