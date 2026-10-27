@@ -88,6 +88,10 @@ export const THEMES = {
   jade:     { label: "Jade",     face: "#3e8f6c", face2: "#24614a", ink: "#f4efe4", rim: "#93d3b5", rough: .3, metal: .05 },
   amethyst: { label: "Amethyst", face: "#6f4a99", face2: "#4a2e6b", ink: "#ffd36b", rim: "#c7a6ee", rough: .28, metal: .1 },
   blood:    { label: "Blood",    face: "#8f1d2c", face2: "#5c0f1b", ink: "#f6e9dc", rim: "#e2707f", rough: .3, metal: .08 },
+  neon:     { label: "Neon",     face: "#16121f", face2: "#0b0910", ink: "#ff2e88", rim: "#3cf2ff", rough: .2, metal: .3, glow: "#ff2e88" },
+  chrome:   { label: "Chrome",   face: "#d9dde3", face2: "#8b939e", ink: "#11151a", rim: "#ffffff", rough: .12, metal: .85 },
+  holo:     { label: "Hologram", face: "#53e6ff", face2: "#1b6d9c", ink: "#eaffff", rim: "#bff7ff", rough: .1, metal: .1, glow: "#2ad4ff", alpha: .72 },
+  hull:     { label: "Hull plate", face: "#3a4a56", face2: "#222d35", ink: "#39d0c0", rim: "#6f8796", rough: .5, metal: .4 },
   party:    { label: "Mixed set" },
 };
 const PARTY = { 4: "jade", 6: "bone", 8: "amethyst", 10: "ember", 12: "blood", 20: "obsidian", 100: "ember" };
@@ -96,12 +100,15 @@ export const FELTS = {
   moss:    { label: "Moss felt",    color: "#28402c" },
   slate:   { label: "Slate felt",   color: "#2a2f36" },
   walnut:  { label: "Walnut tray",  color: "#4a3022", wood: true },
+  neon:    { label: "Neon grid",    color: "#120e1a", grid: "#ff2e88" },
+  deck:    { label: "Ship deck",    color: "#1b252d", grid: "#39d0c0", plates: true },
   green:   { label: "Green screen", color: "#00b140", flat: true },
 };
 
 const texCache = new Map();
 function faceTexture(type, label, theme, uvPts, mode, vertexLabels) {
-  const key = [type, label, theme.label, mode, vertexLabels && vertexLabels.join()].join("|");
+  const font = getComputedStyle(document.documentElement).getPropertyValue("--display").trim() || '"Grenze Gotisch", serif';
+  const key = [type, label, theme.label, mode, vertexLabels && vertexLabels.join(), font].join("|");
   if (texCache.has(key)) return texCache.get(key);
   const S = 256, cv = document.createElement("canvas"); cv.width = cv.height = S;
   const g = cv.getContext("2d");
@@ -117,7 +124,7 @@ function faceTexture(type, label, theme, uvPts, mode, vertexLabels) {
   const DEF = DEFS[type === 100 ? 10 : type];
   if (mode === "vertex") {
     const cx = P.reduce((s, p) => s + p[0], 0) / 3, cy = P.reduce((s, p) => s + p[1], 0) / 3;
-    g.font = `700 ${DEF.font}px "Grenze Gotisch", serif`;
+    g.font = `700 ${DEF.font * (font.includes("Grenze") ? 1 : .82)}px ${font}`;
     P.forEach(([x, y], i) => {
       const tx = cx + (x - cx) * .58, ty = cy + (y - cy) * .58;
       g.save(); g.translate(tx, ty); g.rotate(Math.atan2(x - cx, -(y - cy))); g.fillText(vertexLabels[i], 0, 4); g.restore();
@@ -125,7 +132,7 @@ function faceTexture(type, label, theme, uvPts, mode, vertexLabels) {
   } else {
     const cx = P.reduce((s, p) => s + p[0], 0) / P.length, cy = P.reduce((s, p) => s + p[1], 0) / P.length;
     const fs = label.length > 2 ? DEF.font * .62 : label.length > 1 ? DEF.font * .82 : DEF.font;
-    g.font = `700 ${fs}px "Grenze Gotisch", serif`;
+    g.font = `700 ${fs * (font.includes("Grenze") ? 1 : .82)}px ${font}`;
     const oy = type === 10 || type === 100 ? -S * .06 : 0;
     g.fillText(label, cx, cy + oy + fs * .04);
     if (label === "6" || label === "9") { g.fillRect(cx - fs * .2, cy + oy + fs * .42, fs * .4, Math.max(4, fs * .06)); }
@@ -164,7 +171,10 @@ function buildDie(type, themeKey, variant) {
     const tex = def.read === "vertex"
       ? faceTexture(type, "", T, uvs, "vertex", f.map(i => String(def.vertexValues[i])))
       : faceTexture(variant ? 100 : type, labelFor(type, def.values[fi], variant), T, uvs, "face");
-    mats.push(new THREE.MeshStandardMaterial({ map: tex, roughness: T.rough, metalness: T.metal, flatShading: true, transparent: true }));
+    const m = new THREE.MeshStandardMaterial({ map: tex, roughness: T.rough, metalness: T.metal, flatShading: true, transparent: true, opacity: T.alpha || 1 });
+    if (T.glow) { m.emissive = new THREE.Color(T.glow); m.emissiveMap = tex; m.emissiveIntensity = .55; }
+    m.userData.baseOpacity = T.alpha || 1; m.userData.glow = T.glow;
+    mats.push(m);
   });
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
@@ -196,6 +206,13 @@ function feltTexture(felt) {
   const g = cv.getContext("2d");
   g.fillStyle = felt.color; g.fillRect(0, 0, S, S);
   if (felt.flat) return new THREE.CanvasTexture(cv);
+  if (felt.grid) {
+    g.strokeStyle = felt.grid; g.globalAlpha = felt.plates ? .25 : .35; g.lineWidth = felt.plates ? 3 : 2;
+    const step = felt.plates ? 128 : 64;
+    for (let x = 0; x <= S; x += step) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, S); g.stroke(); g.beginPath(); g.moveTo(0, x); g.lineTo(S, x); g.stroke(); }
+    if (felt.plates) { g.fillStyle = felt.grid; for (let x = 12; x < S; x += 128) for (let y = 12; y < S; y += 128) { g.fillRect(x, y, 4, 4); g.fillRect(x + 100, y, 4, 4); g.fillRect(x, y + 100, 4, 4); g.fillRect(x + 100, y + 100, 4, 4); } }
+    g.globalAlpha = 1;
+  }
   if (felt.wood) {
     for (let y = 0; y < S; y += 2) { const t = Math.sin(y * .05 + Math.sin(y * .013) * 4) * .5 + .5; g.fillStyle = `rgba(0,0,0,${.05 + t * .12})`; g.fillRect(0, y, S, 1 + (t > .8)); }
   }
@@ -377,7 +394,11 @@ export class DiceTray {
     // states: per physical die index -> {dropped, max, min}
     this.dice.forEach((d, i) => {
       const s = states[i] || {};
-      d.mesh.material.forEach(m => { m.opacity = s.dropped ? .35 : 1; m.emissive = new THREE.Color(s.max ? 0xffb347 : s.min ? 0xff2a2a : 0x000000); m.emissiveIntensity = s.max || s.min ? .35 : 0; });
+      d.mesh.material.forEach(m => {
+        m.opacity = s.dropped ? .3 : m.userData.baseOpacity;
+        if (s.max || s.min) { m.emissive = new THREE.Color(s.max ? 0xffb347 : 0xff2a2a); m.emissiveIntensity = .35; m.emissiveMap = null; }
+        m.needsUpdate = true;
+      });
       const tag = this.tags[i]; if (!tag) return;
       tag.textContent = d.variant === "tens" ? (d.value === 10 ? "00" : d.value * 10) : d.variant === "units" ? d.value % 10 : d.value;
       tag.className = "die-tag show" + (s.dropped ? " dropped" : "") + (s.max ? " max" : "") + (s.min ? " min" : "");

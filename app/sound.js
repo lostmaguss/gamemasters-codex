@@ -2,24 +2,41 @@
 // Built-in sounds are synthesized with WebAudio, so the board works before any files are added.
 export const BUILTIN = {
   ambience: [
-    { id: "b:rain", name: "Rain", synth: "rain", icon: "rest" },
-    { id: "b:wind", name: "Howling wind", synth: "wind", icon: "travel" },
-    { id: "b:fire", name: "Campfire", synth: "fire", icon: "forge" },
-    { id: "b:cave", name: "Cave drips", synth: "cave", icon: "explore" },
-    { id: "b:sea", name: "Sea waves", synth: "sea", icon: "travel" },
-    { id: "b:drone", name: "Dungeon dread", synth: "drone", icon: "death" },
-    { id: "b:heart", name: "Heartbeat", synth: "heart", icon: "social" },
-    { id: "b:crowd", name: "Tavern murmur", synth: "crowd", icon: "social" },
+    { id: "b:neonrain", name: "Neon rain", synth: "neonrain", genre: "cyberpunk" },
+    { id: "b:server", name: "Server room", synth: "server", genre: "cyberpunk" },
+    { id: "b:club", name: "Club bass", synth: "club", genre: "cyberpunk" },
+    { id: "b:traffic", name: "City traffic", synth: "traffic", genre: "cyberpunk" },
+    { id: "b:shiphum", name: "Ship engines", synth: "shiphum", genre: "scifi" },
+    { id: "b:station", name: "Station corridor", synth: "station", genre: "scifi" },
+    { id: "b:reactor", name: "Reactor core", synth: "reactor", genre: "scifi" },
+    { id: "b:wilds", name: "Alien wilds", synth: "wilds", genre: "scifi" },
+    { id: "b:rain", name: "Rain", synth: "rain", genre: "fantasy", icon: "rest" },
+    { id: "b:wind", name: "Howling wind", synth: "wind", genre: "fantasy", icon: "travel" },
+    { id: "b:fire", name: "Campfire", synth: "fire", genre: "fantasy", icon: "forge" },
+    { id: "b:cave", name: "Cave drips", synth: "cave", genre: "fantasy", icon: "explore" },
+    { id: "b:sea", name: "Sea waves", synth: "sea", genre: "fantasy", icon: "travel" },
+    { id: "b:drone", name: "Dungeon dread", synth: "drone", genre: "fantasy", icon: "death" },
+    { id: "b:heart", name: "Heartbeat", synth: "heart", genre: "fantasy", icon: "social" },
+    { id: "b:crowd", name: "Tavern murmur", synth: "crowd", genre: "fantasy", icon: "social" },
   ],
   sfx: [
-    { id: "b:thunder", name: "Thunder", synth: "thunder" },
-    { id: "b:clash", name: "Sword clash", synth: "clash" },
-    { id: "b:knock", name: "Door knock", synth: "knock" },
-    { id: "b:bell", name: "Bell toll", synth: "bell" },
-    { id: "b:magic", name: "Spell shimmer", synth: "magic" },
-    { id: "b:gong", name: "Gong", synth: "gong" },
-    { id: "b:arrow", name: "Arrow", synth: "arrow" },
-    { id: "b:growl", name: "Growl", synth: "growl" },
+    { id: "b:gun", name: "Gunshot", synth: "gun", genre: "cyberpunk" },
+    { id: "b:burst", name: "SMG burst", synth: "burst", genre: "cyberpunk" },
+    { id: "b:glitch", name: "Hack glitch", synth: "glitch", genre: "cyberpunk" },
+    { id: "b:alarm", name: "Alarm", synth: "alarm", genre: "cyberpunk scifi" },
+    { id: "b:boom", name: "Explosion", synth: "boom", genre: "cyberpunk scifi" },
+    { id: "b:laser", name: "Laser", synth: "laser", genre: "scifi" },
+    { id: "b:airlock", name: "Airlock", synth: "airlock", genre: "scifi" },
+    { id: "b:comms", name: "Comms beep", synth: "comms", genre: "scifi cyberpunk" },
+    { id: "b:warp", name: "Jump drive", synth: "warp", genre: "scifi" },
+    { id: "b:thunder", name: "Thunder", synth: "thunder", genre: "fantasy" },
+    { id: "b:clash", name: "Sword clash", synth: "clash", genre: "fantasy" },
+    { id: "b:knock", name: "Door knock", synth: "knock", genre: "fantasy" },
+    { id: "b:bell", name: "Bell toll", synth: "bell", genre: "fantasy" },
+    { id: "b:magic", name: "Spell shimmer", synth: "magic", genre: "fantasy" },
+    { id: "b:gong", name: "Gong", synth: "gong", genre: "fantasy" },
+    { id: "b:arrow", name: "Arrow", synth: "arrow", genre: "fantasy" },
+    { id: "b:growl", name: "Growl", synth: "growl", genre: "fantasy" },
   ],
 };
 
@@ -39,6 +56,8 @@ export function createSoundEngine() {
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     return noiseBuf;
   };
+  const rnd8 = () => Math.floor(Math.random() * 8);
+  const pick8 = a => a[Math.floor(Math.random() * a.length)];
   const src = (loop = true) => { const s = ctx.createBufferSource(); s.buffer = noise(); s.loop = loop; s.loopStart = Math.random(); return s; };
   const filt = (type, f, q = 1) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = q; return n; };
   const lfo = (rate, depth, target, offset) => { const o = ctx.createOscillator(); o.frequency.value = rate; const g = ctx.createGain(); g.gain.value = depth; o.connect(g).connect(target); if (offset != null) target.value = offset; o.start(); return o; };
@@ -107,6 +126,81 @@ export function createSoundEngine() {
       clink();
       return () => { alive = false; parts.forEach(p => p.stop()); };
     },
+    neonrain(out) {
+      const stop1 = SYN.rain(out);
+      const lp = filt("lowpass", 900, 2); const g = ctx.createGain(); g.gain.value = .12; lp.connect(g).connect(out);
+      const os = [110, 164.8, 220.5].map(f => { const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.connect(lp); o.start(); return o; });
+      const l = lfo(.04, 500, lp.frequency, 900);
+      return () => { stop1(); os.forEach(o => o.stop()); l.stop(); };
+    },
+    server(out) {
+      const o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = 120; const og = ctx.createGain(); og.gain.value = .25; o.connect(og).connect(out); o.start();
+      const o2 = ctx.createOscillator(); o2.type = "sine"; o2.frequency.value = 240.5; const og2 = ctx.createGain(); og2.gain.value = .08; o2.connect(og2).connect(out); o2.start();
+      const s = src(); const hp = filt("highpass", 3000); const g = ctx.createGain(); g.gain.value = .06; s.connect(hp).connect(g).connect(out); s.start();
+      let alive = true;
+      const blip = () => { if (!alive) return; const t = ctx.currentTime; tone(out, "square", 1800 + rnd8() * 200, t, .002, .025, .03); setTimeout(blip, 120 + Math.random() * 900); };
+      blip();
+      return () => { alive = false; o.stop(); o2.stop(); s.stop(); };
+    },
+    club(out) {
+      const lp = filt("lowpass", 380); lp.connect(out);
+      let alive = true, step = 0;
+      const beat = () => {
+        if (!alive) return; const t = ctx.currentTime;
+        tone(lp, "sine", 120, t, .002, .9, .22, 45);
+        if (step % 2) burst(lp, t, .05, "highpass", 6000, 1, .08);
+        if (step % 4 === 2) tone(lp, "sawtooth", [55, 65.4, 49, 58.3][(step >> 2) % 4], t, .01, .25, .35);
+        step++; setTimeout(beat, 484);
+      };
+      beat(); return () => { alive = false; };
+    },
+    traffic(out) {
+      const s = src(); const lp = filt("lowpass", 500); const g = ctx.createGain(); g.gain.value = .5; s.connect(lp).connect(g).connect(out); s.start();
+      const l = lfo(.13, .2, g.gain, .45);
+      let alive = true;
+      const pass = () => { if (!alive) return; const t = ctx.currentTime; const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(90, t); o.frequency.linearRampToValueAtTime(70, t + 2.5); const f = filt("lowpass", 300); const gg = ctx.createGain(); env(gg, t, 1.2, .25, 1.4); o.connect(f).connect(gg).connect(out); o.start(t); o.stop(t + 2.8);
+        if (Math.random() < .2) tone(out, "square", 440, t + 1, .01, .05, .25); setTimeout(pass, 1500 + Math.random() * 4000); };
+      pass();
+      return () => { alive = false; s.stop(); l.stop(); };
+    },
+    shiphum(out) {
+      const lp = filt("lowpass", 180, 4); const g = ctx.createGain(); g.gain.value = .35; lp.connect(g).connect(out);
+      const os = [40, 40.4, 80.2].map(f => { const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.connect(lp); o.start(); return o; });
+      const s = src(); const bp = filt("bandpass", 250, 1); const ng = ctx.createGain(); ng.gain.value = .12; s.connect(bp).connect(ng).connect(out); s.start();
+      const l = lfo(.2, .06, g.gain, .35);
+      return () => { os.forEach(o => o.stop()); s.stop(); l.stop(); };
+    },
+    station(out) {
+      const s = src(); const lp = filt("lowpass", 300); const g = ctx.createGain(); g.gain.value = .35; s.connect(lp).connect(g).connect(out); s.start();
+      let alive = true;
+      const chirp = () => { if (!alive) return; const t = ctx.currentTime; const f = pick8([880, 1320, 660, 990]); tone(out, "sine", f, t, .005, .06, .12); if (Math.random() < .5) tone(out, "sine", f * 1.5, t + .15, .005, .05, .12); setTimeout(chirp, 2500 + Math.random() * 5000); };
+      chirp();
+      return () => { alive = false; s.stop(); };
+    },
+    reactor(out) {
+      const o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = 55; const g = ctx.createGain(); g.gain.value = .3; o.connect(g).connect(out); o.start();
+      const l = lfo(1.6, .18, g.gain, .3);
+      const s = src(); const bp = filt("bandpass", 1200, 8); const ng = ctx.createGain(); ng.gain.value = .08; s.connect(bp).connect(ng).connect(out); s.start();
+      const l2 = lfo(.3, 600, bp.frequency, 1200);
+      return () => { o.stop(); l.stop(); s.stop(); l2.stop(); };
+    },
+    wilds(out) {
+      const s = src(); const bp = filt("bandpass", 5200, 6); const g = ctx.createGain(); g.gain.value = .15; s.connect(bp).connect(g).connect(out); s.start();
+      const l = lfo(7, .1, g.gain, .12);
+      let alive = true;
+      const call = () => { if (!alive) return; const t = ctx.currentTime, f = 300 + Math.random() * 900; tone(out, "sine", f, t, .05, .12, .5, f * (Math.random() < .5 ? 2.2 : .5)); setTimeout(call, 900 + Math.random() * 3000); };
+      call();
+      return () => { alive = false; s.stop(); l.stop(); };
+    },
+    gun(out) { const t = ctx.currentTime; burst(out, t, .12, "lowpass", 2500, .7, 1.4); tone(out, "sine", 90, t, .002, .9, .2, 40); burst(out, t + .02, .5, "lowpass", 600, 1, .25); return .8; },
+    burst(out) { const t = ctx.currentTime; for (let i = 0; i < 7; i++) { burst(out, t + i * .075, .06, "lowpass", 2800, .7, 1); tone(out, "sine", 100, t + i * .075, .002, .5, .07, 50); } return 1; },
+    glitch(out) { const t = ctx.currentTime; for (let i = 0; i < 14; i++) tone(out, "square", 200 + Math.random() * 3000, t + i * .03, .001, .08, .025); burst(out, t + .1, .2, "bandpass", 4000, 5, .2); return .7; },
+    alarm(out) { const t = ctx.currentTime; for (let i = 0; i < 4; i++) { const o = ctx.createOscillator(); o.type = "square"; o.frequency.setValueAtTime(700, t + i * .6); o.frequency.linearRampToValueAtTime(1000, t + i * .6 + .3); o.frequency.linearRampToValueAtTime(700, t + i * .6 + .6); const g = ctx.createGain(); g.gain.value = .07; o.connect(g).connect(out); o.start(t + i * .6); o.stop(t + i * .6 + .58); } return 2.6; },
+    boom(out) { const t = ctx.currentTime; tone(out, "sine", 70, t, .005, 1.2, 1.2, 25); const s = src(false); const lp = filt("lowpass", 1400); lp.frequency.setValueAtTime(1400, t); lp.frequency.exponentialRampToValueAtTime(100, t + 2.5); const g = ctx.createGain(); env(g, t, .01, 1.5, 2.6); s.connect(lp).connect(g).connect(out); s.start(t, 0, 3); return 3.2; },
+    laser(out) { const t = ctx.currentTime; tone(out, "sawtooth", 1800, t, .002, .25, .22, 180); tone(out, "square", 2400, t, .002, .08, .18, 300); return .5; },
+    airlock(out) { const t = ctx.currentTime; tone(out, "sine", 140, t, .01, .5, .25, 90); const s = src(false); const bp = filt("bandpass", 2000, .8); bp.frequency.setValueAtTime(3000, t + .2); bp.frequency.exponentialRampToValueAtTime(400, t + 1.6); const g = ctx.createGain(); env(g, t + .2, .05, .7, 1.4); s.connect(bp).connect(g).connect(out); s.start(t + .2, 0, 1.8); return 2.2; },
+    comms(out) { const t = ctx.currentTime; tone(out, "sine", 1200, t, .005, .15, .09); tone(out, "sine", 1600, t + .12, .005, .15, .12); burst(out, t + .28, .25, "bandpass", 2500, 2, .05); return .7; },
+    warp(out) { const t = ctx.currentTime; const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(60, t); o.frequency.exponentialRampToValueAtTime(1600, t + 2); const lp = filt("lowpass", 2000, 6); const g = ctx.createGain(); env(g, t, 1.6, .5, .6); o.connect(lp).connect(g).connect(out); o.start(t); o.stop(t + 2.4); burst(out, t + 2, .5, "lowpass", 800, 1, 1); return 2.8; },
     thunder(out) {
       const t = ctx.currentTime; burst(out, t, .25, "highpass", 1500, .7, .8);
       const s = src(false); const lp = filt("lowpass", 900); lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(120, t + 3.5);

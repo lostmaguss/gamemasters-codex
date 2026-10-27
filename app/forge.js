@@ -4,7 +4,7 @@ import { GEN, NAMES, makeName } from "./gen.js";
 
 const KIND_META = {
   npc: { icon: "social", color: "rose", blurb: "Faces & secrets" },
-  place: { icon: "explore", color: "lichen", blurb: "Taverns to tombs" },
+  place: { icon: "explore", color: "lichen", blurb: "Where it happens" },
   mission: { icon: "travel", color: "mustard", blurb: "Jobs with a twist" },
   item: { icon: "loot", color: "plum", blurb: "Loot with a past" },
 };

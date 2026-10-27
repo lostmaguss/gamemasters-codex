@@ -7,7 +7,9 @@ import { Stage } from "./bridge.js";
 import { createSoundEngine } from "./sound.js";
 
 (async function () {
-  try { await document.fonts.load('700 40px "Grenze Gotisch"'); } catch {}
+  const applyLook = l => { if (!l || l === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = l; };
+  applyLook(ls.get("look", "lantern"));
+  try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
   const host = $("#tray");
   const tray = new DiceTray(host, { theme: ls.get("dice.theme", "ember"), felt: ls.get("dice.felt", "oxblood") });
   const ov = createOverlay(host);
@@ -82,6 +84,7 @@ import { createSoundEngine } from "./sound.js";
     if (e.key === "codex:dice.theme") { const v = JSON.parse(e.newValue); th.value = v; tray.setTheme(v); }
     if (e.key === "codex:dice.felt") { const v = JSON.parse(e.newValue); fe.value = v; tray.setFelt(v); }
     if (e.key === "codex:dice.sound") setDiceSound(JSON.parse(e.newValue));
+    if (e.key === "codex:look") applyLook(JSON.parse(e.newValue));
   });
   const toggleClean = () => document.body.classList.toggle("clean");
   const full = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});

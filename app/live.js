@@ -52,7 +52,11 @@ export function createLive(el, App) {
   }
 
   // ---------- sound ----------
-  function sounds(cat) { return [...BUILTIN[cat], ...C().sounds.filter(x => x.cat === cat).map(x => ({ ...x, user: true }))]; }
+  function sounds(cat) {
+    const g = C().genre || "fantasy", all = ls.get("live.allSounds", false);
+    const built = BUILTIN[cat].filter(x => all || !x.genre || x.genre.split(" ").includes(g)).sort((a, b) => (b.genre || "").includes(g) - (a.genre || "").includes(g));
+    return [...C().sounds.filter(x => x.cat === cat).map(x => ({ ...x, user: true })), ...built];
+  }
   function srcOf(x) { return x.synth ? { synth: x.synth } : { url: `codexmedia://media/${encodeURIComponent(x.file)}` }; }
   function renderSound() {
     const box = $("#lvSound", el), S = App.sound;
@@ -66,6 +70,7 @@ export function createLive(el, App) {
         <input type="range" min="0" max="1" step=".01" value="${vol(x.id)}" aria-label="${esc(x.name)} volume">${x.user ? `<button class="rm" title="Remove sound">${icon("x")}</button>` : ""}</div>`).join("")}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Effects · click to fire</div>
       <div class="sfx-grid">${sounds("sfx").map(x => `<button class="sfx" data-id="${x.id}">${esc(x.name)}${x.user ? `<span class="rm" title="Remove">${icon("x")}</span>` : ""}</button>`).join("")}</div>
+      <label class="toggle" style="margin-top:12px"><input type="checkbox" id="lvAll" ${ls.get("live.allSounds", false) ? "checked" : ""}> Show built-in sounds from every genre</label>
       <div class="drop" id="lvDrop">${icon("plus")} <span><b>Add your own sounds</b><br>Drop mp3/ogg/wav files here or click to pick</span></div>`;
     $$("[data-out]", box).forEach(b => b.onclick = () => { S.setOut(b.dataset.out); renderSound(); });
     $("#lvMaster", box).oninput = e => S.setMaster(+e.target.value);
@@ -86,6 +91,7 @@ export function createLive(el, App) {
       S.send({ op: "play", key: x.id + ":" + uid(), sound: srcOf(x), loop: false, vol: .9 });
       b.classList.remove("hit"); void b.offsetWidth; b.classList.add("hit");
     });
+    $("#lvAll", box).onchange = e => { ls.set("live.allSounds", e.target.checked); renderSound(); };
     const drop = $("#lvDrop", box);
     drop.onclick = () => importSounds();
     drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };

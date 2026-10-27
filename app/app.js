@@ -14,6 +14,16 @@ import { createSoundEngine } from "./sound.js";
 import { parseRoll, diceGroups, buildResult, breakdown, critLabel, shownTotal, DEFAULT_RULES } from "./roll.js";
 import { createCombat } from "./combat.js";
 import { rnd, ls } from "./util.js";
+import { setGenre } from "./gen.js";
+import { starterTables } from "./store.js";
+
+const LOOK_OF = { fantasy: "lantern", cyberpunk: "neon", scifi: "void" };
+export function applyGenre(c = C()) {
+  setGenre(c.genre || "fantasy");
+  const look = !c.look || c.look === "auto" ? LOOK_OF[c.genre || "fantasy"] : c.look;
+  if (look === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = look;
+  ls.set("look", look);
+}
 
 const VIEWS = [
   { key: "prep", label: "Prep", icon: "book", make: createPrep, group: "Session" },
@@ -213,7 +223,8 @@ export function rulesModal() {
   const c = C(); const R = { ...DEFAULT_RULES, ...(c.rules || {}) };
   App.modal(`<h2>Rules & genre</h2>
     <label class="f"><span>Genre</span><select id="rgG"><option value="fantasy">Fantasy</option><option value="scifi">Sci-fi</option><option value="cyberpunk">Cyberpunk</option></select></label>
-    <p class="md-help" style="margin:-6px 0 0">Changes what the Forge generates and which built-in sounds and starter tables you get.</p>
+    <p class="md-help" style="margin:-6px 0 0">Changes what the Forge generates, the built-in sounds, starter tables, dice and the app's look.</p>
+    <label class="f"><span>App look</span><select id="rgL"><option value="auto">Match the genre</option><option value="lantern">Lantern (warm, blackletter)</option><option value="neon">Neon (cyberpunk)</option><option value="void">Void (sci-fi)</option></select></label>
     <div class="two">
       <label class="f"><span>Critical die</span><select id="rgD"><option value="20">d20</option><option value="100">d100 (percentile)</option><option value="10">d10</option><option value="12">d12</option><option value="6">d6</option><option value="any">Any single die</option></select></label>
       <label class="f"><span>What's good</span><select id="rgM"><option value="high">High rolls (max = critical, 1 = fumble)</option><option value="low">Low rolls (1 = critical, max = fumble)</option><option value="none">No criticals</option></select></label>
@@ -221,17 +232,27 @@ export function rulesModal() {
     <label class="f"><span>Initiative order</span><select id="rgI"><option value="high">Highest goes first</option><option value="low">Lowest goes first</option></select></label>
     <p class="md-help" style="margin:0">For roll-under systems, roll against a target: <code>1d100&lt;=45</code> shows Success or Failure. For dice pools, count hits: <code>8d6&gt;=5</code>.</p>
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
-    $("#rgG", m).value = c.genre || "fantasy"; $("#rgD", m).value = String(R.critDie); $("#rgM", m).value = R.critMode; $("#rgI", m).value = R.initHigh ? "high" : "low";
+    $("#rgG", m).value = c.genre || "fantasy"; $("#rgL", m).value = c.look || "auto"; $("#rgD", m).value = String(R.critDie); $("#rgM", m).value = R.critMode; $("#rgI", m).value = R.initHigh ? "high" : "low";
     $("[data-x]", m).onclick = close;
     $("[data-ok]", m).onclick = () => {
       const d = $("#rgD", m).value; const g = $("#rgG", m).value;
       c.rules = { critDie: d === "any" ? "any" : Number(d), critMode: $("#rgM", m).value, initHigh: $("#rgI", m).value === "high" };
-      const changedGenre = (c.genre || "fantasy") !== g; c.genre = g;
-      save(); ls.set("rules", c.rules); close(); if (changedGenre) App.genreChanged?.(c); App.refreshAll(); toast("Rules saved");
+      const changedGenre = (c.genre || "fantasy") !== g; c.genre = g; c.look = $("#rgL", m).value;
+      save(); ls.set("rules", c.rules); close(); applyGenre(c); if (changedGenre) App.genreChanged?.(c); else toast("Rules saved");
+      for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; } $("#views").innerHTML = ""; const v = current; current = null; show(v);
     };
   });
 }
 App.rulesModal = rulesModal;
+App.genreChanged = c => {
+  const have = new Set(c.tables.map(t => t.name.toLowerCase() + "|" + (t.folder || "")));
+  const add = starterTables(c.genre).filter(t => !have.has(t.name.toLowerCase() + "|" + (t.folder || "")));
+  c.tables.push(...add);
+  const dice = { fantasy: ["ember", "oxblood"], cyberpunk: ["neon", "neon"], scifi: ["hull", "deck"] }[c.genre];
+  ls.set("dice.theme", dice[0]); ls.set("dice.felt", dice[1]);
+  applyGenre(c); save();
+  toast(`Switched to ${({ fantasy: "fantasy", cyberpunk: "cyberpunk", scifi: "sci-fi" })[c.genre]}${add.length ? `. Added ${add.length} starter tables` : ""}`);
+};
 
 function confirmModal(title, text, okText, run) {
   App.modal(`<h2>${esc(title)}</h2><p style="margin:0;color:var(--dim)">${esc(text)}</p><div class="foot"><button class="btn ghost" data-x>Keep it</button><button class="btn primary" data-ok style="background:var(--bad);border-color:var(--bad)">${esc(okText)}</button></div>`,
@@ -329,6 +350,8 @@ async function checkUpdates() {
 (async function boot() {
   await loadData();
   try { await Promise.all([document.fonts.load('700 40px "Grenze Gotisch"'), document.fonts.load('400 15px "IBM Plex Sans Condensed"')]); } catch {}
+  applyGenre();
+  try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
   buildRail(); wireChrome(); renderCampName(); ls.set("rules", C().rules);
   show(C().ui.view || "prep");
 })();
