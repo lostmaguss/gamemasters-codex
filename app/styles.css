@@ -832,3 +832,53 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .search-btn:hover { border-color: var(--line); color: var(--dim); }
 .search-btn kbd { margin-left: auto; font: 11px var(--mono); }
 .search-btn .ic { width: 15px; height: 15px; }
+
+/* ---------- BROADCAST ---------- */
+.cast, .clocksv { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+.cast-grid { overflow: auto; padding: 20px 24px 60px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-content: start; }
+.scene-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.scene { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 16px; border-radius: 12px; border: 1px solid var(--line-soft); background: linear-gradient(160deg, var(--surface-2), var(--surface)); cursor: pointer; text-align: left; min-height: 120px; }
+.scene .ic { width: 26px; height: 26px; color: var(--ember); }
+.scene b { font: 700 22px var(--display); }
+.scene span { font-size: 13px; color: var(--faint); }
+.scene:hover { border-color: var(--line); }
+.scene.on { border-color: var(--ember); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ember) 30%, transparent); background: linear-gradient(160deg, color-mix(in srgb, var(--ember) 22%, var(--surface-2)), var(--surface)); }
+.lt-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+.lt-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; max-height: 50vh; overflow: auto; }
+.lt-item { text-align: left; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line-soft); border-left: 4px solid var(--mc); background: var(--surface); cursor: pointer; display: flex; flex-direction: column; min-width: 0; }
+.lt-item:hover { border-color: var(--line); border-left-color: var(--mc); }
+.lt-item b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lt-item span { font-size: 12px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- CLOCKS ---------- */
+.ck-grid { display: grid; grid-template-columns: 1fr 360px; min-height: 0; }
+.ck-list { overflow: auto; padding: 20px 24px 60px; display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; align-content: start; }
+.clock { position: relative; display: grid; grid-template-columns: 140px 1fr; gap: 16px; padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line-soft); border-left: 4px solid var(--kc); }
+.clock-face { position: relative; display: grid; place-items: center; }
+.clock-face path { cursor: pointer; transition: fill .2s; }
+.clock-face path:hover { fill-opacity: .6; }
+.ck-n { position: absolute; bottom: -4px; right: 6px; font-size: 12px; color: var(--dim); }
+.clock-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ck-name { font: 700 20px var(--display); background: none; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; padding: 2px 0; }
+.clock-body input[type=color] { width: 28px; height: 28px; border: 0; padding: 0; background: none; cursor: pointer; }
+.clock-body textarea { font-size: 13.5px; }
+.ck-full { position: absolute; top: 10px; right: 12px; font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--bad); }
+.ck-cal { border-left: 1px solid var(--line-soft); background: var(--bg-2); overflow: auto; padding: 18px 20px; }
+.ck-cal .sec-h h3 { font-size: 24px; }
+.cal-today { display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--ember) 18%, var(--surface)), var(--surface)); border: 1px solid color-mix(in srgb, var(--ember) 35%, var(--line)); }
+.cal-today b { font: 700 26px/1.1 var(--display); }
+.cal-today span:last-child { color: var(--dim); font-size: 13px; }
+.cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px; }
+.cal-d { height: 34px; border-radius: 6px; border: 1px solid var(--line-soft); background: var(--surface); cursor: pointer; font: 13px var(--mono); position: relative; }
+.cal-d:hover { border-color: var(--line); }
+.cal-d.today { background: var(--ember); color: var(--ember-ink); border-color: var(--ember); font-weight: 600; }
+.cal-d.ev::after { content: ""; position: absolute; bottom: 3px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--c-plum); }
+.cal-ev { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.cal-ev li { display: grid; grid-template-columns: 28px 1fr 22px; gap: 6px; align-items: center; }
+.cal-ev li.none { display: block; color: var(--faint); font-size: 13px; }
+.cal-ev .x { border: 0; background: none; color: var(--faint); cursor: pointer; }
+.cal-ev .ic { width: 13px; height: 13px; }
+
+.rail a { padding: 6px 4px 5px; gap: 2px; font-size: 11px; }
+.rail a .ic { width: 20px; height: 20px; }
+.rail-sep { margin: 4px 10px; }

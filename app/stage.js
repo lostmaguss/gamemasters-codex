@@ -6,6 +6,7 @@ import { dieIcon, createOverlay } from "./diceui.js";
 import { Stage } from "./bridge.js";
 import { createSoundEngine } from "./sound.js";
 import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprender.js";
+import { clockSVG } from "./clocks.js";
 
 (async function () {
   const applyLook = l => { if (!l || l === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = l; };
@@ -83,6 +84,14 @@ import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprende
       if (o.fog) { const fi = await loadFresh(o.fog); MS.fog = fi; }
       mrender(); return;
     }
+    if (o.kind === "scene") { showScene(o); return; }
+    if (o.kind === "lower") { showLower(o); return; }
+    if (o.kind === "clocks") {
+      const cb = $("#clockbar"); cb.hidden = !o.show; if (!o.show) return;
+      cb.innerHTML = o.list.map(k => `<div class="ck" style="color:${k.color}">${clockSVG(k.segs, k.filled, k.color, 64)}<b></b></div>`).join("");
+      $$(".ck b", cb).forEach((b, i) => b.textContent = o.list[i].name);
+      return;
+    }
     if (o.kind === "party") {
       const pb = $("#partybar"); pb.hidden = !o.show; if (!o.show) return;
       pb.innerHTML = o.list.map(() => `<div class="pb-c"><i class="pb-p"></i><div class="pb-t"><b></b><div class="pb-bar"><i></i></div><span class="pb-k"></span></div></div>`).join("");
@@ -109,6 +118,36 @@ import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprende
     $$(".st-c", strip).forEach((el, i) => { el.querySelector("b").textContent = o.list[i].name; const k = el.querySelector(".st-k"); if (k) k.textContent = o.list[i].conds.join(" · "); });
     strip.querySelector(".cur")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
   });
+  // full-screen scenes: starting soon, break, chapter title, recap, end card
+  const sceneEl = $("#scene"); let sceneTimer = 0;
+  function showScene(o) {
+    clearInterval(sceneTimer);
+    if (!o.show) { if (!sceneEl.hidden) { sceneEl.classList.add("out"); setTimeout(() => { sceneEl.hidden = true; sceneEl.classList.remove("out"); sceneEl.innerHTML = ""; }, 480); } return; }
+    sceneEl.hidden = false; sceneEl.classList.remove("out");
+    const motes = Array.from({ length: 26 }, () => `<i style="left:${Math.random() * 100}%;animation-duration:${8 + Math.random() * 14}s;animation-delay:${-Math.random() * 20}s;width:${2 + Math.random() * 4}px;height:${2 + Math.random() * 4}px"></i>`).join("");
+    sceneEl.innerHTML = `<div class="motes">${motes}</div><div class="sc-in"><div class="sc-camp"></div><div class="sc-title"></div><div class="sc-sub"></div>${o.endsAt ? `<div class="sc-count">--:--</div>` : ""}${o.text ? `<div class="sc-text"></div>` : ""}</div>`;
+    $(".sc-camp", sceneEl).textContent = o.type === "title" || o.type === "recap" ? o.campaign : o.tagline || "";
+    const t = $(".sc-title", sceneEl);
+    if (o.type === "title") [...(o.title || "")].forEach((ch, i) => { const sp = document.createElement("span"); sp.textContent = ch === " " ? "\u00a0" : ch; sp.style.animationDelay = (0.4 + i * 0.06) + "s"; t.append(sp); });
+    else t.textContent = o.title || "";
+    $(".sc-sub", sceneEl).textContent = o.sub || "";
+    if (o.text) { const tx = $(".sc-text", sceneEl); o.text.split(/\n+/).filter(Boolean).forEach((para, i) => { const p = document.createElement("p"); p.textContent = para; p.style.animationDelay = (0.6 + i * 2.2) + "s"; tx.append(p); }); }
+    if (o.endsAt) {
+      const cnt = $(".sc-count", sceneEl);
+      const tick = () => { const ms = o.endsAt - Date.now(); if (ms <= 0) { cnt.textContent = o.type === "soon" ? "Starting now" : "Back now"; cnt.style.fontSize = "clamp(40px, 9vh, 110px)"; clearInterval(sceneTimer); return; } const s = Math.ceil(ms / 1000); cnt.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+      tick(); sceneTimer = setInterval(tick, 250);
+    }
+  }
+  const lowerEl = $("#lower"); let lowerT = 0;
+  function showLower(o) {
+    clearTimeout(lowerT);
+    lowerEl.style.setProperty("--lc", o.color || "var(--ember)");
+    lowerEl.innerHTML = `<div class="lt-p"></div><div class="lt-b"><b></b><span></span></div>`;
+    const p = $(".lt-p", lowerEl); if (o.portrait) p.style.backgroundImage = `url(${o.portrait})`; else p.textContent = (o.name || "?")[0];
+    $(".lt-b b", lowerEl).textContent = o.name; $(".lt-b span", lowerEl).textContent = o.sub || ""; if (!o.sub) $(".lt-b span", lowerEl).remove();
+    lowerEl.hidden = false; lowerEl.className = "lower"; void lowerEl.offsetWidth; lowerEl.classList.add("in");
+    lowerT = setTimeout(() => { lowerEl.classList.add("out"); setTimeout(() => lowerEl.hidden = true, 460); }, (o.secs || 8) * 1000);
+  }
   Stage.onHide(() => { ho.classList.remove("in"); ho.classList.add("out"); setTimeout(() => { ho.hidden = true; ho.innerHTML = ""; }, 450); });
   Stage.onClear(() => { tray.clear(); ov.hide(); });
   Stage.onClose(() => window.close());

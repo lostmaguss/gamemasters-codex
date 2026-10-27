@@ -16,6 +16,8 @@ import { createCombat } from "./combat.js";
 import { createMap } from "./map.js";
 import { createParty } from "./party.js";
 import { openPalette } from "./palette.js";
+import { createBroadcast } from "./broadcast.js";
+import { createClocks } from "./clocks.js";
 import * as Discord from "./discord.js";
 import { rnd, ls } from "./util.js";
 import { setGenre } from "./gen.js";
@@ -35,12 +37,14 @@ const VIEWS = [
   { key: "combat", label: "Combat", icon: "combat", make: createCombat },
   { key: "map", label: "Map", icon: "map", make: createMap },
   { key: "dice", label: "Dice", icon: "dice", make: createDice },
+  { key: "broadcast", label: "Stream", icon: "discord", make: createBroadcast },
   { key: "party", label: "Party", icon: "social", make: createParty, group: "Make" },
   { key: "forge", label: "Forge", icon: "forge", make: createForge },
   { key: "tables", label: "Tables", icon: "tables", make: createTables },
   { key: "bestiary", label: "Bestiary", icon: "death", make: createBestiary },
   { key: "codex", label: "Codex", icon: "codex", make: createCodex, group: "World" },
   { key: "board", label: "Board", icon: "board", make: createBoard },
+  { key: "clocks", label: "Clocks", icon: "clock", make: createClocks },
   { key: "chronicle", label: "Chronicle", icon: "chronicle", make: createChronicle },
 ];
 const mounted = {};

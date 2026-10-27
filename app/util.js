@@ -29,6 +29,7 @@ const ICONS = {
   dice: "M12 2l9 5v10l-9 5-9-5V7zM12 2v20M3 7l9 5 9-5",
   plus: "M12 5v14M5 12h14",
   check: "M5 12l4 4 10-10",
+  clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
   map: "M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15",
   lock: "M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4",
   tables: "M4 5h16v14H4zM4 10h16M4 15h16M10 5v14",
