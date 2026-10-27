@@ -1,10 +1,11 @@
 // Dice view on the GM desk. Rolls happen in the 3D tray here, or in the stream window when it's open.
 import { $, $$, esc, h, icon, toast, uid, ls } from "./util.js";
 import { C, save } from "./store.js";
-import { parseRoll, diceGroups, buildResult, markFor } from "./roll.js";
+import { parseRoll, diceGroups, buildResult, markFor, customFor } from "./roll.js";
 import { DiceTray, THEMES, FELTS, setDiceSound } from "./dice3d.js";
 import { dieIcon, createOverlay, logItem } from "./diceui.js";
 import { Stage } from "./bridge.js";
+import { customDiceModal } from "./customdice.js";
 
 export function createDice(el, App) {
   const st = { pool: {}, mod: 0, custom: false, pending: null };
@@ -28,6 +29,10 @@ export function createDice(el, App) {
       <div>
         <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 class="side-h" style="margin:0">Saved rolls</h3><button class="btn sm ghost" id="pSave">${icon("plus")} Save current</button></div>
         <div class="presets" id="dPresets"></div>
+      </div>
+      <div>
+        <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 class="side-h" style="margin:0">Custom dice</h3><button class="btn sm ghost" id="cdNew">${icon("plus")} New die</button></div>
+        <div class="presets" id="dCustom"></div>
       </div>
       <div class="stream-card">
         <div class="row" style="justify-content:space-between"><h3 class="side-h" style="margin:0">Stream window</h3><span class="eyebrow" id="sState">Closed</span></div>
@@ -80,7 +85,7 @@ export function createDice(el, App) {
   async function roll(expr = exprIn.value, label = labelIn.value.trim(), secret = false) {
     err.textContent = "";
     let terms; try { terms = parseRoll(expr); } catch (e) { err.textContent = e.message; return; }
-    const req = { id: uid(), expr, label: secret ? (label || "Secret roll") : label, who: "", rules: C().rules };
+    const req = { id: uid(), expr, label: secret ? (label || "Secret roll") : label, who: "", rules: C().rules, custom: customFor(expr) };
     if (!secret && App.streamLive && opt.toStage) { st.pending = req.id; Stage.roll(req); ov.wait(label || expr); return; }
     ov.hide();
     const values = await tray.roll(diceGroups(terms));
@@ -104,6 +109,18 @@ export function createDice(el, App) {
   };
   addEventListener("keydown", onKey);
 
+  function renderCustom() {
+    const box = $("#dCustom", el), list = C().customDice || [];
+    box.innerHTML = list.length ? list.map(d => `<span class="preset" data-cd="${d.id}" title="Click to roll, right-click to edit">${esc(d.name)} <code>${esc(d.faces.map(f => f.label || "·").join(" "))}</code><button class="x" title="Edit">${icon("gear")}</button></span>`).join("")
+      : `<span style="color:var(--faint);font-size:13.5px">Dice with your own symbols: boons, runes, hit/miss…</span>`;
+    $$("[data-cd]", box).forEach(b => {
+      const d = list.find(x => x.id === b.dataset.cd);
+      const edit = () => customDiceModal(App, d, renderCustom);
+      b.oncontextmenu = e => { e.preventDefault(); edit(); };
+      b.onclick = e => { if (e.target.closest(".x")) return edit(); exprIn.value = `${(exprIn.value.match(new RegExp(`^(\\d+)d\\[${d.name}\\]$`, "i")) || [, 0])[1] * 1 + 1}d[${d.name}]`; exprIn.dispatchEvent(new Event("input")); };
+    });
+  }
+  $("#cdNew", el).onclick = () => customDiceModal(App, null, renderCustom);
   function renderPresets() {
     const box = $("#dPresets", el), list = C().presets || (C().presets = []);
     box.innerHTML = list.length ? list.map(p => `<span class="preset" data-id="${p.id}" title="${esc(p.expr)}">${esc(p.name)} <code>${esc(p.expr)}</code><button class="x" title="Remove">${icon("x")}</button></span>`).join("")
@@ -141,10 +158,10 @@ export function createDice(el, App) {
     if (on) Stage.onTop(opt.onTop);
   }
   streamState(!!App.streamLive);
-  syncPool(); renderPresets(); renderLog();
+  syncPool(); renderPresets(); renderCustom(); renderLog();
   return {
     show() { tray.resize(); },
-    refresh() { renderPresets(); renderLog(); },
+    refresh() { renderPresets(); renderCustom(); renderLog(); },
     streamState, addLog,
     showResult(r) { if (r.id === st.pending) st.pending = null; ov.show(r); },
     destroy() { removeEventListener("keydown", onKey); tray.dispose(); },

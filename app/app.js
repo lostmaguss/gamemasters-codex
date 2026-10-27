@@ -1,5 +1,6 @@
 import { stashSummary, UNIT as STASH_UNIT } from "./stash.js";
 import { initPoll } from "./poll.js";
+import { syncCustomDice } from "./customdice.js";
 import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
 import { $, $$, esc, h, icon, toast, uid } from "./util.js";
 import { S, C, loadData, save, flush, onSaved, blankCampaign } from "./store.js";
@@ -14,7 +15,7 @@ import { createLive } from "./live.js";
 import { createTables } from "./tables.js";
 import { createBestiary } from "./bestiary.js";
 import { createSoundEngine } from "./sound.js";
-import { parseRoll, diceGroups, buildResult, breakdown, critLabel, shownTotal, DEFAULT_RULES } from "./roll.js";
+import { parseRoll, diceGroups, buildResult, breakdown, critLabel, shownTotal, DEFAULT_RULES, customFor } from "./roll.js";
 import { createCombat } from "./combat.js";
 import { createMap } from "./map.js";
 import { createParty } from "./party.js";
@@ -104,7 +105,7 @@ export const App = {
     let terms; try { terms = parseRoll(expr); } catch (e) { toast(e.message); return; }
     // a player's roll gets their sheet color on the dice
     const pc = who && C().party.find(m => (m.character || m.player) === who);
-    const req = { id, expr, label, who, rules: C().rules, color: pc?.color || null };
+    const req = { id, expr, label, who, rules: C().rules, color: pc?.color || null, custom: customFor(expr) };
     if (onResult) App._rollCbs.set(id, onResult);
     if (!secret && App.streamLive) { Stage.roll(req); rollToast({ ...req, pending: true }); return; }
     const vals = diceGroups(terms).map(g => Array.from({ length: g.count }, () => rnd(g.sides) + 1));
@@ -232,7 +233,7 @@ function show(key, arg) {
 
 function renderCampName() { $("#campName").textContent = C().name || "Untitled campaign"; document.title = `${C().name} · Gamemaster's Codex`; }
 function switchCampaign(id) {
-  S.data.currentId = id; save();
+  S.data.currentId = id; save(); syncCustomDice();
   for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; }
   $("#views").innerHTML = ""; current = null;
   renderCampName(); show(C().ui.view || "prep");
@@ -384,7 +385,7 @@ function wireChrome() {
   App.fx.push();
   import("./combat.js").then(m => m.pushCombat());
   if (window.codex?.update) window.codex.update.onState(updateState);
-  wireBot(); initPoll(App); initPlayers(App);
+  syncCustomDice(); wireBot(); initPoll(App); initPlayers(App);
   Stage.onState(setLive);
   Stage.isOpen().then(setLive);
   App.tableMode = async () => {

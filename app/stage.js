@@ -32,7 +32,7 @@ import { createFx } from "./fx.js";
   }
   function roll(req) {
     busy = busy.then(async () => {
-      let terms; try { terms = parseRoll(req.expr); } catch { return; }
+      let terms; try { terms = parseRoll(req.expr, req.custom); } catch (e) { ov.show({ label: req.label || req.expr, expr: req.expr, total: "?", groups: [], mod: 0, error: e.message }); return; }
       ov.hide();
       const values = await tray.roll(diceGroups(terms), { color: req.color });
       const r = buildResult(req, terms, values);

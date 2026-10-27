@@ -138,7 +138,8 @@ function faceTexture(type, label, theme, uvPts, mode, vertexLabels) {
     });
   } else {
     const cx = P.reduce((s, p) => s + p[0], 0) / P.length, cy = P.reduce((s, p) => s + p[1], 0) / P.length;
-    const fs = label.length > 2 ? DEF.font * .62 : label.length > 1 ? DEF.font * .82 : DEF.font;
+    const n = Array.from(label).length;
+    const fs = n > 3 ? DEF.font * Math.min(.62, 2 / n) : n > 2 ? DEF.font * .62 : n > 1 ? DEF.font * .82 : DEF.font;
     g.font = `700 ${fs * (font.includes("Grenze") ? 1 : .82)}px ${font}`;
     const oy = type === 10 || type === 100 ? -S * .06 : 0;
     g.fillText(label, cx, cy + oy + fs * .04);
@@ -157,7 +158,7 @@ function labelFor(type, value, variant) {
   return String(value);
 }
 
-function buildDie(type, themeKey, variant) {
+function buildDie(type, themeKey, variant, faces) {
   const T = typeof themeKey === "object" && themeKey ? themeKey : THEMES[themeKey === "party" ? PARTY[variant === "tens" || variant === "units" ? 100 : type] : themeKey] || THEMES.ember;
   const def = DEFS[type];
   const pos = [], uv = [], mats = [], faceNormals = [];
@@ -177,8 +178,8 @@ function buildDie(type, themeKey, variant) {
     for (let t = 1; t < pts.length - 1; t++) for (const j of [0, t, t + 1]) { pos.push(...pts[j]); uv.push(...uvs[j]); }
     geo.addGroup(start, 3 * (pts.length - 2), fi);
     const tex = def.read === "vertex"
-      ? faceTexture(type, "", T, uvs, "vertex", f.map(i => String(def.vertexValues[i])))
-      : faceTexture(variant && variant !== "fate" ? 100 : type, labelFor(type, def.values[fi], variant), T, uvs, "face");
+      ? faceTexture(type, "", T, uvs, "vertex", f.map(i => faces ? faces[def.vertexValues[i] - 1] || "" : String(def.vertexValues[i])))
+      : faceTexture(variant && variant !== "fate" && variant !== "custom" ? 100 : type, faces ? faces[def.values[fi] - 1] || "" : labelFor(type, def.values[fi], variant), T, uvs, "face");
     const m = new THREE.MeshStandardMaterial({ map: tex, roughness: T.rough, metalness: T.metal, flatShading: true, transparent: true, opacity: T.alpha || 1 });
     if (T.glow) { m.emissive = new THREE.Color(T.glow); m.emissiveMap = tex; m.emissiveIntensity = .55; }
     m.userData.baseOpacity = T.alpha || 1; m.userData.glow = T.glow;
@@ -340,6 +341,7 @@ export class DiceTray {
       for (let i = 0; i < g.count; i++) {
         if (g.sides === 100) { list.push({ gi, type: 10, variant: "tens", pair: i }); list.push({ gi, type: 10, variant: "units", pair: i }); }
         else if (g.fate) list.push({ gi, type: 6, variant: "fate" });
+        else if (g.faces && DEFS[g.sides]) list.push({ gi, type: g.sides, variant: "custom", faces: g.faces });
         else if (DEFS[g.sides]) list.push({ gi, type: g.sides });
         else list.push({ gi, type: null, sides: g.sides });
       }
@@ -347,7 +349,7 @@ export class DiceTray {
     const physical = list.filter(x => x.type).slice(0, 40);
     const fromLeft = Math.random() < .5, B = this.bounds;
     physical.forEach((x, i) => {
-      const d = buildDie(x.type, theme, x.variant);
+      const d = buildDie(x.type, theme, x.variant, x.faces);
       const body = new CANNON.Body({ mass: 1, material: this.dieMat, shape: d.shape, linearDamping: .12, angularDamping: .12 });
       const row = i % 6, col = Math.floor(i / 6);
       body.position.set((fromLeft ? -1 : 1) * (B.w - 1.2 - col * 1.6), 3 + Math.random() * 2.5, (row - 2.5) * Math.min(1.7, B.d / 3.2) + Math.random() * .5);
@@ -412,7 +414,7 @@ export class DiceTray {
         m.needsUpdate = true;
       });
       const tag = this.tags[i]; if (!tag) return;
-      tag.textContent = d.variant === "tens" ? (d.value === 10 ? "00" : d.value * 10) : d.variant === "units" ? d.value % 10 : d.variant === "fate" ? (d.value <= 2 ? "−" : d.value <= 4 ? "0" : "+") : d.value;
+      tag.textContent = d.meta?.faces ? (d.meta.faces[d.value - 1] || "·") : d.variant === "tens" ? (d.value === 10 ? "00" : d.value * 10) : d.variant === "units" ? d.value % 10 : d.variant === "fate" ? (d.value <= 2 ? "−" : d.value <= 4 ? "0" : "+") : d.value;
       tag.className = "die-tag show" + (s.dropped ? " dropped" : "") + (s.max ? " max" : "") + (s.min ? " min" : "");
     });
     this.glowUntil = performance.now() + 50; this.start();

@@ -56,6 +56,18 @@ Players roll from Discord and the dice land on your stream window with their nam
 
 The bot only answers while the app is open.
 
+## Players' phones and OBS
+
+Campaign menu → **Table link: phones & OBS**. Turn it on and players scan the QR code (same Wi-Fi as your computer). Each picks their character and gets:
+
+- **Table:** turn order ("It's your turn!"), votes, handouts, the map with fog, the party stash
+- **Me:** their sheet. Tap a stat to roll it on your table, or tap HP up and down
+- **Secrets:** your whispers to them
+
+The same panel lists **OBS browser sources**: transparent overlays (everything, dice only, turn order, party bar, map, popups, scenes) you can place anywhere in OBS. While an OBS dice source is open, rolls happen there.
+
+The first time, Windows asks to let the app on your network: allow **Private networks**.
+
 ## Dice notation
 
 | Write | Means |
@@ -64,6 +76,7 @@ The bot only answers while the app is open.
 | `2d20kh1`, `4d6dl1` | Keep highest 1, drop lowest 1 |
 | `3d6!` | Exploding: a max rolls again |
 | `4d6r1` | Reroll 1s once |
+| `3d[Boon]` | Custom dice with your own faces (make them in the Dice view) |
 | `4dF` | Fate/Fudge dice |
 | `1d100<=45` | Roll-under target: Success or Failure |
 | `8d6>=5` | Dice pool: count the hits |
