@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld("codex", {
   version: () => ipcRenderer.invoke("app:version"),
   zoom: f => { if (f) webFrame.setZoomFactor(f); return webFrame.getZoomFactor(); },
   discord: req => ipcRenderer.invoke("discord:send", req),
+  printPDF: o => ipcRenderer.invoke("print:pdf", o),
   bot: {
     start: token => ipcRenderer.send("bot:start", token),
     stop: () => ipcRenderer.send("bot:stop"),

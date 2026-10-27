@@ -328,6 +328,7 @@ function campaignMenu() {
     { text: "Rules & genre", icon: "gear", run: rulesModal },
     { text: Discord.connected() ? "Discord (connected)" : "Connect Discord…", icon: "discord", run: () => Discord.discordModal(App) },
     { text: "Table link: phones & OBS…", icon: "stream", run: () => tableModal() },
+    { text: "Print…", icon: "book", run: () => import("./print.js").then(x => x.printModal(App)) },
     "-",
     { text: "Export backup…", icon: "save", run: async () => {
       const name = `${c.name.replace(/[^\w\- ]+/g, "").trim() || "campaign"}-${new Date().toISOString().slice(0, 10)}.json`;

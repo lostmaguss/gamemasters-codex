@@ -77,7 +77,7 @@ export function createPrep(el, App) {
             <div class="chips">${c.handouts.map(hd => `<button class="chip ${P.handouts.includes(hd.id) ? "on" : ""}" data-hd="${hd.id}">${icon(hd.type === "image" ? "image" : "codex")} ${esc(hd.title || "Untitled")}</button>`).join("") || `<span style="color:var(--faint);font-size:14px">Make handouts in Live.</span>`}</div></section>
           <section><div class="sec-h"><h3>Open threads</h3><div class="line"></div></div>
             <ul class="checks">${openThreads.map(({ t, o }) => `<li data-th="${o.id}:${t.id}"><input type="checkbox" title="Resolved"><span style="font-size:14px">${esc(t.text)} <span class="carried">· S${esc(o.num)}</span></span><span></span></li>`).join("") || `<li style="color:var(--faint);display:block">Nothing left hanging.</li>`}</ul></section>
-          <section><button class="btn sm ghost danger" id="ppDel">${icon("trash")} Discard this plan</button></section>
+          <section><button class="btn sm" id="ppPrint">${icon("book")} Print the session sheet</button> <button class="btn sm ghost danger" id="ppDel">${icon("trash")} Discard this plan</button></section>
         </aside>
       </div>`;
     const b = box;
@@ -86,6 +86,7 @@ export function createPrep(el, App) {
     $("#ppTitle", b).oninput = e => { s.title = e.target.value; touch(); };
     $("#ppRecap", b).oninput = e => { s.recap = e.target.value; touch(); };
     $("#ppStartTxt", b).oninput = e => { P.start = e.target.value; touch(); };
+    $("#ppPrint", b)?.addEventListener("click", () => import("./print.js").then(x => x.printPDF("session")));
     $("#ppDraft", b)?.addEventListener("click", () => {
       const strip = t => String(t || "").replace(/\[\[([^\]]+)\]\]/g, "$1").trim();
       const key = (prev.beats || []).filter(x => x.star && x.text).map(x => strip(x.text));

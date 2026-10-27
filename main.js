@@ -207,6 +207,26 @@ ipcMain.handle("discord:send", async (_e, { url, payload, file, files }) => {
   } catch (e) { return { ok: false, status: 0, error: String(e.message || e) }; }
 });
 
+// ---- printables: render a page in a hidden window and save it as a PDF ----
+ipcMain.handle("print:pdf", async (_e, { html, name, landscape }) => {
+  const os = require("os");
+  const tmp = path.join(os.tmpdir(), `codex-print-${Date.now()}.html`);
+  const base = pathToFileURL(path.join(__dirname, "app")).href + "/";
+  await fs.promises.writeFile(tmp, html.replace("<head>", `<head><base href="${base}">`), "utf8");
+  const w = new BrowserWindow({ show: false, width: 900, height: 1200, webPreferences: { sandbox: true } });
+  try {
+    await w.loadFile(tmp);
+    await w.webContents.executeJavaScript("document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; }))))");
+    const pdf = await w.webContents.printToPDF({ pageSize: "A4", printBackground: true, landscape: !!landscape, margins: { marginType: "none" } });
+    if (process.env.CODEX_PRINT_TEST) { await fs.promises.writeFile(process.env.CODEX_PRINT_TEST, pdf); return { ok: true, file: process.env.CODEX_PRINT_TEST, pages: (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length }; }
+    const { canceled, filePath } = await dialog.showSaveDialog(desk, { title: "Save PDF", defaultPath: path.join(app.getPath("documents"), (name || "codex") + ".pdf"), filters: [{ name: "PDF", extensions: ["pdf"] }] });
+    if (canceled || !filePath) return { ok: false };
+    await fs.promises.writeFile(filePath, pdf); shell.openPath(filePath);
+    return { ok: true, file: filePath };
+  } catch (e) { return { ok: false, error: String(e.message || e) }; }
+  finally { w.destroy(); fs.promises.unlink(tmp).catch(() => {}); }
+});
+
 // ---- updates ----
 let updater = null;
 function setupUpdates() {
