@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a1517">
+<title>At the table</title>
+<link rel="stylesheet" href="/app/styles.css">
+<style>
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--ink); margin: 0; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+  .pw { display: grid; grid-template-rows: auto 1fr auto; height: 100dvh; }
+  .ph { display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; background: var(--bg-2); border-bottom: 1px solid var(--line-soft); }
+  .ph h1 { font: 700 22px var(--display); margin: 0; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); flex: none; } .dot.on { background: var(--good); }
+  .who-btn { border: 0; background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px 6px 6px; display: flex; gap: 8px; align-items: center; font: 600 14px var(--body); max-width: 50%; }
+  .who-btn i { width: 26px; height: 26px; border-radius: 50%; background: var(--mc) center/cover; flex: none; }
+  .who-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  main { overflow-y: auto; padding: 14px 14px 30px; display: flex; flex-direction: column; gap: 14px; }
+  nav { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bg-2); border-top: 1px solid var(--line-soft); padding-bottom: env(safe-area-inset-bottom); }
+  nav button { border: 0; background: none; color: var(--dim); font: 600 13px var(--body); padding: 10px 0 12px; display: flex; flex-direction: column; align-items: center; gap: 3px; position: relative; }
+  nav button.on { color: var(--ember); } nav .ic { width: 22px; height: 22px; }
+  nav .badge { position: absolute; top: 6px; left: calc(50% + 6px); background: var(--ember); color: var(--ember-ink); font: 700 11px var(--mono); border-radius: 999px; padding: 1px 6px; }
+  .card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: 14px; padding: 14px; }
+  .card h2 { font: 700 22px var(--display); margin: 0 0 8px; }
+  .eyebrow { font: 600 11px var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
+  .pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pick button { border: 2px solid var(--mc); background: var(--surface); color: var(--ink); border-radius: 14px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; font: 700 17px var(--display); }
+  .pick i { width: 64px; height: 64px; border-radius: 50%; background: var(--mc) center/cover; display: grid; place-items: center; font: 700 28px var(--display); color: var(--bg); font-style: normal; }
+  .pick small { font: 500 12px var(--body); color: var(--dim); }
+  .turns { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+  .turns span { flex: none; padding: 6px 10px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--mc); font: 600 13px var(--body); }
+  .turns span.cur { background: var(--ember); color: var(--ember-ink); }
+  .yourturn { background: var(--ember); color: var(--ember-ink); border-radius: 14px; padding: 14px; text-align: center; font: 700 24px var(--display); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { transform: scale(1.02); } }
+  .vote button { width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 10px; padding: 12px; margin-top: 8px; font: 600 16px var(--body); display: flex; justify-content: space-between; position: relative; overflow: hidden; }
+  .vote button i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--ember) 25%, transparent); }
+  .vote button span, .vote button b { position: relative; } .vote button.mine { border-color: var(--ember); box-shadow: 0 0 0 1px var(--ember); }
+  .ho img { width: 100%; border-radius: 10px; display: block; }
+  .ho .body { white-space: pre-wrap; font: 400 17px/1.5 var(--hand, var(--body)); }
+  canvas.map { width: 100%; aspect-ratio: 4 / 3; border-radius: 10px; background: #0c0a0b; display: block; touch-action: none; }
+  .me-h { display: flex; gap: 12px; align-items: center; }
+  .me-h i { width: 58px; height: 58px; border-radius: 50%; background: var(--mc) center/cover; border: 3px solid var(--mc); flex: none; display: grid; place-items: center; font: 700 26px var(--display); font-style: normal; color: var(--bg); }
+  .me-h b { font: 700 26px var(--display); display: block; } .me-h span { color: var(--dim); }
+  .res { margin-top: 10px; } .res .rh { display: flex; justify-content: space-between; font: 600 13px var(--mono); }
+  .res .bar { height: 10px; border-radius: 6px; background: var(--surface-3); overflow: hidden; margin: 6px 0; } .res .bar i { display: block; height: 100%; background: var(--mc); }
+  .res .rb { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; } .res .rb button { border: 0; border-radius: 8px; padding: 10px 0; background: var(--surface-2); color: var(--ink); font: 700 15px var(--mono); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+  .stats button { border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 12px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .stats button small { font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+  .stats button b { font: 700 26px var(--display); }
+  .rollrow { display: flex; gap: 8px; margin-top: 10px; } .rollrow input { flex: 1; min-width: 0; font: 600 17px var(--mono); }
+  .btn.big { padding: 12px 18px; font-size: 16px; }
+  .conds { display: flex; flex-wrap: wrap; gap: 6px; } .conds span { padding: 4px 10px; border-radius: 999px; background: var(--surface-3); font-size: 13px; }
+  .txt { white-space: pre-wrap; font-size: 15px; line-height: 1.5; color: var(--ink-2, var(--ink)); }
+  .msg { border-left: 3px solid var(--ember); } .msg .when { float: right; color: var(--faint); font: 500 12px var(--mono); }
+  .result { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%) scale(.8); opacity: 0; pointer-events: none; background: var(--bg-2); border: 2px solid var(--ember); border-radius: 18px; padding: 18px 26px; text-align: center; min-width: 220px; box-shadow: 0 20px 60px rgba(0,0,0,.6); transition: .25s cubic-bezier(.2,1.3,.3,1); z-index: 50; }
+  .result.on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .result b { display: block; font: 700 72px/1 var(--display); color: var(--ember); } .result.crit b { color: var(--crit); } .result.fumble b { color: var(--bad); }
+  .result small { display: block; color: var(--dim); font: 500 13px var(--mono); margin-top: 6px; }
+  .result span { font: 600 16px var(--body); }
+  .empty-p { color: var(--faint); text-align: center; padding: 30px 10px; }
+  .money { font: 700 28px var(--display); color: var(--crit); }
+</style>
+</head>
+<body>
+<div class="pw">
+  <header class="ph"><span class="dot" id="dot"></span><h1 id="camp">At the table</h1><button class="who-btn" id="who" hidden></button></header>
+  <main id="main"></main>
+  <nav id="nav" hidden>
+    <button data-tab="table" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v12H3zM8 21h8M12 17v4"/></svg>Table</button>
+    <button data-tab="me"><svg class="ic" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"/></svg>Me</button>
+    <button data-tab="inbox"><svg class="ic" viewBox="0 0 24 24"><path d="M7 11V7a5 5 0 0 1 10 0v4M5 11h14v10H5z"/></svg>Secrets<span class="badge" id="badge" hidden></span></button>
+  </nav>
+</div>
+<div class="result" id="result"></div>
+<script type="module" src="/app/player.js"></script>
+</body>
+</html>

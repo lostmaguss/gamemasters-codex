@@ -4,6 +4,7 @@ const { app, BrowserWindow, ipcMain, dialog, Menu, shell, protocol, net, screen 
 const path = require("path");
 const fs = require("fs");
 const { pathToFileURL } = require("url");
+const table = require("./tableserver");
 
 // Set this to { owner, repo } of a public GitHub repo that holds release builds to turn on auto-update.
 const UPDATE_REPO = { owner: "lostmaguss", repo: "gamemasters-codex" };
@@ -61,7 +62,7 @@ function openStage() {
     for (const [ch, v] of pendingStage) stage.webContents.send(ch, v);
     pendingStage = [];
   });
-  stage.on("closed", () => { stage = null; desk && desk.webContents.send("stage:state", false); });
+  stage.on("closed", () => { stage = null; desk && desk.webContents.send("stage:state", table.mirror.hasObsDice()); });
 }
 
 // ---- data file ----
@@ -135,22 +136,26 @@ ipcMain.handle("stage:toScreen", async (_e, id) => {
 });
 ipcMain.on("stage:windowed", () => { if (stage && !stage.isDestroyed()) { stage.setFullScreen(false); stage.setSize(1280, 760); stage.center(); stage.webContents.send("stage:tableMode", false); } });
 ipcMain.on("stage:close", () => stage && stage.close());
-ipcMain.handle("stage:isOpen", () => !!(stage && !stage.isDestroyed()));
+ipcMain.handle("stage:isOpen", () => !!(stage && !stage.isDestroyed()) || table.mirror.hasObsDice());
 ipcMain.on("stage:ontop", (_e, on) => stage && stage.setAlwaysOnTop(!!on, "floating"));
-ipcMain.on("stage:roll", (_e, req) => stage && stage.webContents.send("stage:roll", req));
-ipcMain.on("stage:result", (_e, res) => desk && desk.webContents.send("stage:result", res));
-ipcMain.on("stage:clear", () => stage && stage.webContents.send("stage:clear"));
-ipcMain.on("stage:sound", (_e, cmd) => stage && stage.webContents.send("stage:sound", cmd));
+const stageUp = () => !!(stage && !stage.isDestroyed());
+ipcMain.on("stage:roll", (_e, req) => { if (stageUp()) stage.webContents.send("stage:roll", req); else table.mirror.roll(req); });
+ipcMain.on("stage:result", (_e, res) => { desk && desk.webContents.send("stage:result", res); table.mirror.result(res); });
+ipcMain.on("stage:clear", () => { stage && stage.webContents.send("stage:clear"); table.mirror.clear(); });
+ipcMain.on("stage:sound", (_e, cmd) => { stage && stage.webContents.send("stage:sound", cmd); table.mirror.sound(cmd); });
 // handouts open the stream window if needed and arrive once it has loaded
 ipcMain.on("stage:show", (_e, h) => {
+  table.mirror.show(h);
+  if (!stageUp() && table.mirror.hasObsDice()) return; // streaming through OBS: no window needed
   if (stage && !stage.isDestroyed() && !stage.webContents.isLoading()) stage.webContents.send("stage:show", h);
   else { pendingStage.push(["stage:show", h]); openStage(); }
 });
 ipcMain.on("stage:overlay", (_e, o) => {
   overlays[o.kind] = o.secs ? { ...o, _at: Date.now() } : o;
+  table.mirror.overlay(o);
   if (stage && !stage.isDestroyed() && !stage.webContents.isLoading()) stage.webContents.send("stage:overlay", o);
 });
-ipcMain.on("stage:hide", () => stage && stage.webContents.send("stage:hide"));
+ipcMain.on("stage:hide", () => { stage && stage.webContents.send("stage:hide"); table.mirror.hide(); });
 
 // ---- media (audio files) ----
 ipcMain.handle("media:import", async (_e, paths) => {
@@ -224,6 +229,7 @@ ipcMain.handle("app:version", () => app.getVersion());
 
 const bot = require("./bot");
 bot.setup(() => desk);
+table.setup(() => desk, mediaDir, () => !!(stage && !stage.isDestroyed()));
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);

@@ -1,5 +1,6 @@
 import { stashSummary, UNIT as STASH_UNIT } from "./stash.js";
 import { initPoll } from "./poll.js";
+import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
 import { $, $$, esc, h, icon, toast, uid } from "./util.js";
 import { S, C, loadData, save, flush, onSaved, blankCampaign } from "./store.js";
 import { Stage } from "./bridge.js";
@@ -322,6 +323,7 @@ function campaignMenu() {
     { text: "Party & sheets", icon: "social", run: () => App.go("party") },
     { text: "Rules & genre", icon: "gear", run: rulesModal },
     { text: Discord.connected() ? "Discord (connected)" : "Connect Discord…", icon: "discord", run: () => Discord.discordModal(App) },
+    { text: "Table link: phones & OBS…", icon: "stream", run: () => tableModal() },
     "-",
     { text: "Export backup…", icon: "save", run: async () => {
       const name = `${c.name.replace(/[^\w\- ]+/g, "").trim() || "campaign"}-${new Date().toISOString().slice(0, 10)}.json`;
@@ -377,7 +379,7 @@ function wireChrome() {
   App.fx.push();
   import("./combat.js").then(m => m.pushCombat());
   if (window.codex?.update) window.codex.update.onState(updateState);
-  wireBot(); initPoll(App);
+  wireBot(); initPoll(App); initPlayers(App);
   Stage.onState(setLive);
   Stage.isOpen().then(setLive);
   App.tableMode = async () => {
@@ -457,8 +459,15 @@ function quickLog() {
 
 // ---- whispers: a private message to one player through the bot ----
 App.whisper = async (member, { text, title, image }) => {
-  if (!window.codex?.bot) return toast("Whispers work in the desktop app with the dice bot connected");
-  if (!member.discordId) return toast(`${member.character || member.player} hasn't used the bot yet. Ask them to type /me once, then try again`);
+  const name = member.character || member.player;
+  // the table link: kept in their phone's Secrets tab, even if they connect later
+  const tableOn = !!S.data.prefs.table?.on;
+  if (tableOn) phoneWhisper(member, { text, title, image });
+  if (!member.discordId || !App._botOnline) {
+    if (tableOn) { toast(playersOnline().includes(member.id) ? `Whispered to ${name}'s phone` : `Saved for ${name}: they'll see it when they open the table link`); return { ok: true }; }
+    if (!window.codex?.bot) return toast("Whispers work in the desktop app with the table link or the dice bot");
+    return toast(`${name} hasn't used the bot yet. Ask them to type /me once, or turn on the table link (campaign menu)`);
+  }
   const file = image ? { dataURL: await toDataURL(image), name: "secret." + ((await toDataURL(image)).match(/data:image\/(\w+)/)?.[1] || "png").replace("jpeg", "jpg") } : null;
   const r = await window.codex.bot.dm({ userId: member.discordId, content: text || "", title: title || "", file });
   toast(r.ok ? `Whispered to ${member.character || member.player}` : `Whisper failed: ${r.error}`);
@@ -467,9 +476,9 @@ App.whisper = async (member, { text, title, image }) => {
 App.whisperPicker = (payload) => {
   const party = C().party;
   if (!party.length) return toast("Add your party first");
-  App.modal(`<h2>Whisper to…</h2><p style="margin:0;color:var(--dim)">Sent as a private Discord message from your dice bot. Only that player sees it.</p>
+  App.modal(`<h2>Whisper to…</h2><p style="margin:0;color:var(--dim)">Goes to their phone (table link) and/or a private Discord message from your dice bot. Only that player sees it.</p>
     ${payload.ask ? `<label class="f"><span>Message</span><textarea id="wT" rows="4" placeholder="You notice the magistrate's hand is shaking."></textarea></label>` : ""}
-    <div class="chips">${party.map(m => `<button class="chip" data-w="${m.id}" style="border-color:${esc(m.color)}">${esc(m.character || m.player)}${m.discordId ? "" : " (not linked yet)"}</button>`).join("")}</div>`, (m, close) => {
+    <div class="chips">${party.map(m => `<button class="chip" data-w="${m.id}" style="border-color:${esc(m.color)}">${esc(m.character || m.player)}${m.discordId || S.data.prefs.table?.on ? "" : " (not linked yet)"}</button>`).join("")}</div>`, (m, close) => {
     $$("[data-w]", m).forEach(b => b.onclick = async () => {
       const mem = party.find(x => x.id === b.dataset.w), text = payload.ask ? $("#wT", m).value.trim() : payload.text;
       if (payload.ask && !text) return toast("Write the message first");

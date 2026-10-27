@@ -14,7 +14,7 @@ const SCENES = {
 };
 export function createBroadcast(el, App) {
   const st = () => (C().ui.cast ||= { soonMin: 10, brbMin: 10, next: "", custom: "" });
-  el.innerHTML = `<div class="cast"><header class="pt-head"><div><div class="eyebrow">Stream</div><h2>Broadcast</h2></div><div style="flex:1"></div><span class="eyebrow" id="bcState">Showing the table</span><button class="btn" id="bcClear">${icon("x")} Back to the table</button></header><div class="cast-grid" id="bcGrid"></div></div>`;
+  el.innerHTML = `<div class="cast"><header class="pt-head"><div><div class="eyebrow">Stream</div><h2>Broadcast</h2></div><div style="flex:1"></div><span class="eyebrow" id="bcState">Showing the table</span><button class="btn" id="bcObs" title="Browser sources for OBS, and the phone link">OBS &amp; phones</button><button class="btn" id="bcClear">${icon("x")} Back to the table</button></header><div class="cast-grid" id="bcGrid"></div></div>`;
   let onAirScene = null;
 
   function sceneData(type) {
@@ -75,6 +75,7 @@ export function createBroadcast(el, App) {
   const lower = x => App.lowerThird(x);
   function clear() { onAirScene = null; Stage.overlay({ kind: "scene", show: false }); render(); }
   $("#bcClear", el).onclick = clear;
+  $("#bcObs", el).onclick = () => import("./players.js").then(x => x.tableModal());
   onPoll(() => { const h = $("#bcPoll", el); if (h && !h.contains(document.activeElement)) renderPollControls(h); });
   render();
   return { show() { render(); }, refresh() { render(); } };

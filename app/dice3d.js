@@ -246,7 +246,7 @@ export class DiceTray {
     this.host = host; this.opts = opts;
     this.theme = opts.theme || "ember"; this.feltKey = opts.felt || "oxblood";
     this.dice = []; this.tags = [];
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: !!opts.preserve });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: !!opts.transparent, premultipliedAlpha: false, preserveDrawingBuffer: !!opts.preserve });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.05;
@@ -265,7 +265,8 @@ export class DiceTray {
     key.shadow.radius = 5; key.shadow.bias = -0.0006;
     this.scene.add(key);
     const rim = new THREE.PointLight(0xff8a50, 60, 60); rim.position.set(12, 8, -10); this.scene.add(rim);
-    this.floorMat = new THREE.MeshStandardMaterial({ roughness: .95, metalness: 0 });
+    // transparent: for OBS, the floor only catches shadows and the stream shows through
+    this.floorMat = opts.transparent ? new THREE.ShadowMaterial({ opacity: .4 }) : new THREE.MeshStandardMaterial({ roughness: .95, metalness: 0 });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), this.floorMat);
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; this.scene.add(floor);
     this.setFelt(this.feltKey);
@@ -297,6 +298,7 @@ export class DiceTray {
   setTheme(k) { this.theme = k; }
   setFelt(k) {
     this.feltKey = FELTS[k] ? k : "oxblood";
+    if (this.opts.transparent) { this.scene.background = null; this.renderer.setClearColor(0x000000, 0); this.renderOnce(); return; }
     this.floorMat.map?.dispose?.();
     this.floorMat.map = feltTexture(FELTS[this.feltKey]); this.floorMat.needsUpdate = true;
     this.scene.background = new THREE.Color(FELTS[this.feltKey].color).multiplyScalar(FELTS[this.feltKey].flat ? 1 : .55);

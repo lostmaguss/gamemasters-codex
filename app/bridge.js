@@ -1,10 +1,22 @@
 // Talks to the stream dice window: Electron IPC in the app, BroadcastChannel when opened in a browser.
 const api = window.codex?.stage;
 let bc = null; try { bc = new BroadcastChannel("codex-stage"); } catch {}
-const subs = { result: [], state: [], roll: [], clear: [], close: [], sound: [], show: [], hide: [], overlay: [] };
+const subs = { result: [], state: [], roll: [], clear: [], close: [], sound: [], show: [], hide: [], overlay: [], rollShow: [] };
+// opened from the table server (OBS browser source): events stream in, results post back
+const Q = new URLSearchParams(location.search);
+export const remote = !api && Q.get("k") && /^https?:/.test(location.protocol) ? { key: Q.get("k"), only: Q.get("only") } : null;
+if (remote) {
+  const connect = () => {
+    const es = new EventSource(`/events?k=${encodeURIComponent(remote.key)}&role=obs${remote.only ? "&only=" + encodeURIComponent(remote.only) : ""}`);
+    es.onmessage = e => { const { t, v } = JSON.parse(e.data); (subs[t] || []).forEach(f => f(v)); };
+    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+  };
+  connect();
+}
+const post = a => fetch(`/act?k=${encodeURIComponent(remote.key)}`, { method: "POST", body: JSON.stringify(a) }).catch(() => {});
 const lastOverlay = {};
 let browserOpen = false;
-if (!api && bc) bc.onmessage = e => {
+if (!api && !remote && bc) bc.onmessage = e => {
   const { t, v } = e.data || {};
   if (t === "hello") { browserOpen = true; subs.state.forEach(f => f(true)); Object.values(lastOverlay).forEach(o => bc.postMessage({ t: "overlay", v: o })); }
   if (t === "bye") { browserOpen = false; subs.state.forEach(f => f(false)); }
@@ -30,7 +42,8 @@ export const Stage = {
   // stream-window side
   onRoll(fn) { if (api) api.onRoll(fn); else subs.roll.push(fn); },
   onClear(fn) { if (api) api.onClear(fn); else subs.clear.push(fn); },
-  sendResult(r) { if (api) api.sendResult(r); else bc?.postMessage({ t: "result", v: r }); },
+  sendResult(r) { if (api) api.sendResult(r); else if (remote) post({ type: "result", r }); else bc?.postMessage({ t: "result", v: r }); },
+  onRollShow(fn) { subs.rollShow.push(fn); },
   onClose(fn) { subs.close.push(fn); },
-  hello() { if (!api) { bc?.postMessage({ t: "hello" }); addEventListener("beforeunload", () => bc?.postMessage({ t: "bye" })); } },
+  hello() { if (!api && !remote) { bc?.postMessage({ t: "hello" }); addEventListener("beforeunload", () => bc?.postMessage({ t: "bye" })); } },
 };

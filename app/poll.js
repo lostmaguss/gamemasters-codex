@@ -6,7 +6,16 @@ import { Stage } from "./bridge.js";
 
 let App = null, subs = new Set();
 const P = () => C().ui.poll || null;
-const counts = p => p.opts.map((text, i) => { const d = p.discord?.[i] || { n: 0, names: [] }; return { text, n: d.n + (p.manual[i] || 0), names: d.names }; });
+const counts = p => p.opts.map((text, i) => {
+  const d = p.discord?.[i] || { n: 0, names: [] }, ph = Object.values(p.phone || {}).filter(v => v.idx === i).map(v => v.name);
+  return { text, n: d.n + (p.manual[i] || 0) + ph.length, names: [...d.names, ...ph] };
+});
+export const pollCounts = p => counts(p);
+// a vote from a player's phone (the table link); they can change it while the vote is open
+export function phoneVote(m, id, idx) {
+  const p = P(); if (!p || p.id !== id || !p.open || !p.opts[idx]) return;
+  (p.phone ||= {})[m.id] = { idx, name: m.character || m.player }; changed();
+}
 function push() {
   const p = P();
   if (!p || !p.onStream) return Stage.overlay({ kind: "poll", show: false });

@@ -31,6 +31,18 @@ contextBridge.exposeInMainWorld("codex", {
     onVote: fn => on("bot:vote", fn),
     fakeVote: v => ipcRenderer.invoke("bot:fakeVote", v),
   },
+  table: {
+    start: o => ipcRenderer.invoke("table:start", o),
+    stop: () => ipcRenderer.invoke("table:stop"),
+    info: () => ipcRenderer.invoke("table:info"),
+    qr: text => ipcRenderer.invoke("table:qr", text),
+    players: v => ipcRenderer.send("table:players", v),
+    inbox: (member, list) => ipcRenderer.send("table:inbox", { member, list }),
+    to: (member, t, v) => ipcRenderer.send("table:to", { member, t, v }),
+    online: () => ipcRenderer.invoke("table:online"),
+    onStatus: fn => on("table:status", fn),
+    onAct: fn => on("table:act", fn),
+  },
   update: {
     check: () => ipcRenderer.invoke("update:check"),
     install: () => ipcRenderer.send("update:install"),

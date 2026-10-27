@@ -30,9 +30,10 @@ export function createParty(el, App) {
     const c = C(), L = sheetLayout(c);
     $("#ptHead", el).innerHTML = `<div><div class="eyebrow">${esc(c.name)}</div><h2>The party</h2></div><div style="flex:1"></div>
       <label class="toggle"><input type="checkbox" id="ptStream" ${c.ui.partyOnStream ? "checked" : ""}> ${icon("stream")} Party health on stream</label>
-      <button class="btn" id="ptLayout">${icon("gear")} Sheet layout</button><button class="btn primary" id="ptAdd">${icon("plus")} Add character</button>`;
+      <button class="btn" id="ptTable" title="Players open their sheet on their phone">${icon("stream")} Phones</button><button class="btn" id="ptLayout">${icon("gear")} Sheet layout</button><button class="btn primary" id="ptAdd">${icon("plus")} Add character</button>`;
     $("#ptStream", el).onchange = e => { c.ui.partyOnStream = e.target.checked; save(); pushParty(); };
     $("#ptLayout", el).onclick = layoutModal;
+    $("#ptTable", el).onclick = () => import("./players.js").then(x => x.tableModal());
     $("#ptAdd", el).onclick = () => { const m = { id: uid(), player: "", character: "", role: "", color: PALETTE[c.party.length % PALETTE.length] }; c.party.push(m); st.sel = m.id; save(); render(); setTimeout(() => $(`[data-m="${m.id}"] [data-k=character]`, el)?.focus(), 30); };
     renderStash($("#ptStash", el), App);
     const grid = $("#ptGrid", el);

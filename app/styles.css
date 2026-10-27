@@ -977,3 +977,15 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .apply { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--ember); background: color-mix(in srgb, var(--ember) 10%, var(--surface)); }
 .apply .chip { color: var(--ink); }
 .mstat.hp span { color: #fff; opacity: .9; }
+
+/* ---- table link: phones & OBS ---- */
+.tl-grid { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+.tl-qr { background: #fff; border-radius: 12px; padding: 10px; } .tl-qr svg { display: block; width: 100%; height: auto; }
+.tl-url { font-size: 15px; word-break: break-all; color: var(--ember); margin-top: 4px; user-select: all; }
+.chip.tl-on { color: var(--good); }
+.tl-obs { margin-top: 6px; } .tl-obs summary { cursor: pointer; padding: 6px 0; }
+.tl-obs-list { display: flex; flex-direction: column; gap: 6px; }
+.tl-obs-row { display: grid; grid-template-columns: 170px 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; background: var(--surface); }
+.tl-obs-row > div { display: flex; flex-direction: column; } .tl-obs-row .carried { font-size: 12px; }
+.tl-obs-row code { font-size: 11.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal:has(#tlBody) { width: min(760px, 94vw); }

@@ -84,6 +84,9 @@
   .po span, .po em, .po u { position: relative; } .po span { font: 600 clamp(15px, 2.2vh, 22px) var(--body); }
   .po em { font: 700 clamp(16px, 2.4vh, 24px) var(--mono); font-style: normal; } .po u { grid-column: 1 / -1; text-decoration: none; font-size: clamp(11px, 1.4vh, 14px); color: var(--dim); } .po u:empty { display: none; }
   .poll.closed .po:not(.win) { opacity: .45; } .po.win { outline: 2px solid var(--crit); } .po.win i { background: color-mix(in srgb, var(--crit) 40%, transparent); }
+  body.obs, body.obs .stage, body.obs .tray-host { background: transparent !important; }
+  body.obs .bar, body.obs .hint, body.obs #bar, body.obs #hint { display: none !important; }
+  body.obs-nodice #tray, body.obs-nodice .hist { display: none !important; }
   .loot { position: absolute; left: 50%; top: 14vh; z-index: 10; transform: translateX(-50%); display: grid; place-items: center; pointer-events: none; }
   .loot.in { animation: loIn .8s cubic-bezier(.2,1.3,.3,1) both; } .loot.out { animation: ltOut .5s ease-in both; }
   @keyframes loIn { from { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(.7) rotate(-3deg); } to { opacity: 1; transform: translateX(-50%); } }

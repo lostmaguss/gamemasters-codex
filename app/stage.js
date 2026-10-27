@@ -3,7 +3,7 @@ import { $, $$, uid, ls } from "./util.js";
 import { parseRoll, diceGroups, buildResult, markFor } from "./roll.js";
 import { DiceTray, THEMES, FELTS, setDiceSound } from "./dice3d.js";
 import { dieIcon, createOverlay } from "./diceui.js";
-import { Stage } from "./bridge.js";
+import { Stage, remote } from "./bridge.js";
 import { createSoundEngine } from "./sound.js";
 import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprender.js";
 import { clockSVG } from "./clocks.js";
@@ -13,8 +13,12 @@ import { createFx } from "./fx.js";
   const applyLook = l => { if (!l || l === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = l; };
   applyLook(ls.get("look", "lantern"));
   try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
+  // OBS browser source: transparent, no controls, only the pieces asked for (?only=dice,combat,...)
+  const only = remote?.only ? new Set(remote.only.split(",")) : null;
+  if (remote) { document.body.classList.add("obs"); if (only && !only.has("dice")) document.body.classList.add("obs-nodice"); }
+  const Qp = new URLSearchParams(location.search);
   const host = $("#tray");
-  const tray = new DiceTray(host, { theme: ls.get("dice.theme", "ember"), felt: ls.get("dice.felt", "oxblood") });
+  const tray = new DiceTray(host, { theme: Qp.get("theme") || ls.get("dice.theme", "ember"), felt: ls.get("dice.felt", "oxblood"), transparent: !!remote });
   const ov = createOverlay(host);
   setDiceSound(ls.get("dice.sound", true));
   const hist = $("#hist");
@@ -36,6 +40,8 @@ import { createFx } from "./fx.js";
     });
   }
   Stage.onRoll(roll);
+  // another window threw these dice: just show the result
+  Stage.onRollShow(r => { if (document.body.classList.contains("obs-nodice")) return; ov.show(r); addHist(r); });
   const sound = createSoundEngine();
   const fx = createFx($("#fxC"), $("#fxTint"));
   Stage.onSound(cmd => { sound.run(cmd); if (cmd.op === "play" && /thunder|boom/.test(cmd.sound?.synth || "")) fx.strike(); });
