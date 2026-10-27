@@ -108,7 +108,7 @@ import { createFx } from "./fx.js";
       return;
     }
     if (o.kind === "party") {
-      const pb = $("#partybar"); pb.hidden = !o.show; if (!o.show) return;
+      const pb = $("#partybar"); pb.hidden = !o.show; document.body.classList.toggle("has-party", !!o.show); if (!o.show) return;
       pb.innerHTML = o.list.map(() => `<div class="pb-c"><i class="pb-p"></i><div class="pb-t"><b></b><div class="pb-bar"><i></i></div><span class="pb-k"></span></div></div>`).join("");
       $$(".pb-c", pb).forEach((el, i) => {
         const m = o.list[i], pct = m.max ? Math.max(0, Math.min(100, m.hp / m.max * 100)) : 100;
