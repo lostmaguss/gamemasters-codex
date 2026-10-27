@@ -336,6 +336,7 @@ function campaignMenu() {
     ...(window.codex ? [{ text: "Restore a backup…", icon: "clock", run: restoreModal }, { text: "Open save folder", icon: "book", run: () => window.codex.openFolder() }, { text: "Check for updates", icon: "reroll", run: checkUpdates }] : []),
     { text: "What's new", icon: "star", run: () => showNews(NEWS) },
     { text: "Keyboard shortcuts (F1)", icon: "type", run: helpSheet },
+    { text: "User guide (opens in browser)", icon: "book", run: () => window.open("https://github.com/lostmaguss/gamemasters-codex#readme") },
     { text: `Interface size: ${Math.round((S.data.prefs.zoom || 1) * 100)}% (Ctrl + / −)`, icon: "fit", run: () => { S.data.prefs.zoom = 1.1; zoomBy(-.1); } },
     "-",
     { text: "Delete this campaign", icon: "trash", run: () => {
