@@ -3,6 +3,7 @@ import { $, $$, esc, h, icon, toast, uid, ls } from "./util.js";
 import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
 import { nextPlanned } from "./bestiary.js";
+import { renderPollControls, onPoll } from "./poll.js";
 
 const SCENES = {
   soon: { label: "Starting soon", icon: "rest", desc: "Countdown while people join" },
@@ -42,6 +43,9 @@ export function createBroadcast(el, App) {
         <div class="sec-h" style="margin-top:22px"><h3>Countdown on stream</h3><div class="line"></div></div>
         <div class="lt-form" style="grid-template-columns:1fr 90px auto auto"><input type="text" id="tmL" placeholder="The ritual completes" value="${esc(S.timerLabel || "")}"><input type="number" id="tmM" min="0.25" step="0.25" value="${S.timerMin || 3}" title="Minutes"><button class="btn primary" id="tmGo">${icon("clock")} Start</button><button class="btn" id="tmX">Stop</button></div>
         <p class="md-help">A ticking clock at the top of the stream window. It flashes when time runs out.</p>
+        <div class="sec-h" style="margin-top:22px"><h3>Party vote</h3><div class="line"></div></div>
+        <div id="bcPoll"></div>
+        <p class="md-help">With the dice bot online, players vote with buttons in Discord; at the table, tap + for each hand. Results show on stream as they come in.</p>
         <div class="sec-h" style="margin-top:22px"><h3>Atmosphere</h3><div class="line"></div></div>
         <div id="bcFx"></div>
         <p class="md-help">Weather and mood over the table and map. Storm flashes also fire whenever you play Thunder or Explosion.</p>
@@ -58,6 +62,7 @@ export function createBroadcast(el, App) {
       ...c.notes.filter(n => ["NPCs", "Locations", "Factions"].includes(n.cat)).map(n => ({ name: n.title, sub: n.tags || n.cat, color: n.cat === "NPCs" ? "#f39da8" : n.cat === "Locations" ? "#b8d8a8" : "#a8d3e4", portrait: n.img })),
       ...c.bestiary.map(x => ({ name: x.name, sub: x.kind, color: "#ff6b6b", portrait: x.img }))];
     App.fx.controls($("#bcFx", el));
+    renderPollControls($("#bcPoll", el));
     $("#tmGo", el).onclick = () => { S.timerLabel = $("#tmL", el).value.trim(); S.timerMin = Math.max(.25, +$("#tmM", el).value || 3); save(); Stage.overlay({ kind: "timer", show: true, label: S.timerLabel, endsAt: Date.now() + S.timerMin * 60000 }); if (!App.streamLive) Stage.open(); toast("Countdown started"); };
     $("#tmX", el).onclick = () => Stage.overlay({ kind: "timer", show: false });
     $$("[data-scene]", el).forEach(b => b.onclick = () => onAirScene === b.dataset.scene ? clear() : show(b.dataset.scene));
@@ -70,6 +75,7 @@ export function createBroadcast(el, App) {
   const lower = x => App.lowerThird(x);
   function clear() { onAirScene = null; Stage.overlay({ kind: "scene", show: false }); render(); }
   $("#bcClear", el).onclick = clear;
+  onPoll(() => { const h = $("#bcPoll", el); if (h && !h.contains(document.activeElement)) renderPollControls(h); });
   render();
   return { show() { render(); }, refresh() { render(); } };
 }

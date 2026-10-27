@@ -52,6 +52,8 @@ Players roll from Discord and the dice land on your stream window with their nam
 | `/me` | Shows them their own sheet, privately |
 | `/stash` | Shows the party's money and loot |
 
+**Party votes:** in the Stream view, ask a question and the bot posts buttons in your game channel; results show live on stream.
+
 The bot only answers while the app is open.
 
 ## Dice notation

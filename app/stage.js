@@ -91,6 +91,16 @@ import { createFx } from "./fx.js";
     if (o.kind === "scene") { showScene(o); return; }
     if (o.kind === "lower") { showLower(o); return; }
     if (o.kind === "loot") { showLoot(o); return; }
+    if (o.kind === "poll") {
+      const pe = $("#poll"); pe.hidden = !o.show; if (!o.show) return;
+      const tot = o.opts.reduce((s, x) => s + x.n, 0) || 1;
+      pe.className = "poll" + (o.closed ? " closed" : "");
+      pe.innerHTML = `<small></small><b class="pq"></b>${o.opts.map(() => `<div class="po"><i></i><span></span><em></em><u></u></div>`).join("")}`;
+      $("small", pe).textContent = o.closed ? "The party decided" : o.viaDiscord ? "Vote now · buttons in Discord" : "The party decides";
+      $(".pq", pe).textContent = o.q;
+      $$(".po", pe).forEach((d, i) => { const x = o.opts[i]; d.querySelector("i").style.width = (x.n / tot * 100) + "%"; d.querySelector("span").textContent = x.text; d.querySelector("em").textContent = x.n; d.querySelector("u").textContent = x.names.join(", "); d.classList.toggle("win", o.closed && x.n === o.top && o.top > 0); });
+      return;
+    }
     if (o.kind === "clocks") {
       const cb = $("#clockbar"); cb.hidden = !o.show; if (!o.show) return;
       cb.innerHTML = o.list.map(k => `<div class="ck" style="color:${k.color}">${clockSVG(k.segs, k.filled, k.color, 64)}<b></b></div>`).join("");

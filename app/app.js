@@ -1,4 +1,5 @@
 import { stashSummary, UNIT as STASH_UNIT } from "./stash.js";
+import { initPoll } from "./poll.js";
 import { $, $$, esc, h, icon, toast, uid } from "./util.js";
 import { S, C, loadData, save, flush, onSaved, blankCampaign } from "./store.js";
 import { Stage } from "./bridge.js";
@@ -376,7 +377,7 @@ function wireChrome() {
   App.fx.push();
   import("./combat.js").then(m => m.pushCombat());
   if (window.codex?.update) window.codex.update.onState(updateState);
-  wireBot();
+  wireBot(); initPoll(App);
   Stage.onState(setLive);
   Stage.isOpen().then(setLive);
   App.tableMode = async () => {
@@ -486,9 +487,10 @@ function botReply(r) {
 }
 function wireBot() {
   const B = window.codex?.bot; if (!B) return;
-  B.onStatus(st => { App._botStatus?.(st); if (st.state === "online" && !App._botToasted) { App._botToasted = true; toast(`Dice bot online as ${st.tag}`); } });
+  B.onStatus(st => { App._botOnline = st.state === "online"; App._botStatus?.(st); if (st.state === "online" && !App._botToasted) { App._botToasted = true; toast(`Dice bot online as ${st.tag}`); } });
   B.onRoll(req => {
     const fail = error => B.reply({ id: req.id, ok: false, error });
+    if (req.channelId && S.data.prefs.bot && S.data.prefs.bot.channel !== req.channelId) { S.data.prefs.bot.channel = req.channelId; save(); }
     const c = C(), names = (req.names || [req.who]).map(n => String(n).toLowerCase());
     const member = c.party.find(m => (req.userId && m.discordId === req.userId) || (m.discord && names.includes(String(m.discord).trim().replace(/^@/, "").toLowerCase())));
     // remember the player's Discord account so whispers can reach them

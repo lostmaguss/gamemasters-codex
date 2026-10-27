@@ -76,6 +76,14 @@
   .lower.in { animation: ltIn .6s cubic-bezier(.2,1.1,.3,1) both; } .lower.out { animation: ltOut .45s ease-in both; }
   @keyframes ltIn { from { transform: translateX(-60px); opacity: 0; clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
   @keyframes ltOut { to { transform: translateX(-40px); opacity: 0; } }
+  .poll { position: absolute; right: 3vw; top: 50%; transform: translateY(-50%); z-index: 9; width: min(30vw, 460px); background: rgba(20,15,17,.94); border: 1px solid rgba(255,255,255,.08); border-left: 5px solid var(--ember); border-radius: 12px; padding: 16px 18px 18px; box-shadow: 0 18px 50px rgba(0,0,0,.55); animation: ltIn .5s cubic-bezier(.2,1.1,.3,1) both; }
+  .poll small { display: block; font: 700 clamp(11px, 1.4vh, 15px) var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--ember); }
+  .poll .pq { display: block; margin: 6px 0 12px; font: 700 clamp(20px, 3.2vh, 34px)/1.1 var(--display); }
+  .po { position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr auto; gap: 0 10px; padding: 8px 12px; margin-top: 6px; border-radius: 8px; background: rgba(255,255,255,.05); }
+  .po i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--ember) 32%, transparent); transition: width .6s cubic-bezier(.2,1,.3,1); }
+  .po span, .po em, .po u { position: relative; } .po span { font: 600 clamp(15px, 2.2vh, 22px) var(--body); }
+  .po em { font: 700 clamp(16px, 2.4vh, 24px) var(--mono); font-style: normal; } .po u { grid-column: 1 / -1; text-decoration: none; font-size: clamp(11px, 1.4vh, 14px); color: var(--dim); } .po u:empty { display: none; }
+  .poll.closed .po:not(.win) { opacity: .45; } .po.win { outline: 2px solid var(--crit); } .po.win i { background: color-mix(in srgb, var(--crit) 40%, transparent); }
   .loot { position: absolute; left: 50%; top: 14vh; z-index: 10; transform: translateX(-50%); display: grid; place-items: center; pointer-events: none; }
   .loot.in { animation: loIn .8s cubic-bezier(.2,1.3,.3,1) both; } .loot.out { animation: ltOut .5s ease-in both; }
   @keyframes loIn { from { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(.7) rotate(-3deg); } to { opacity: 1; transform: translateX(-50%); } }
@@ -131,7 +139,7 @@
 </style>
 </head>
 <body>
-<div class="stage" id="stage"><div class="tray-host" id="tray"></div><canvas id="mapc" class="mapc" hidden></canvas><div class="partybar" id="partybar" hidden></div><div class="clockbar" id="clockbar" hidden></div><div class="lower" id="lower" hidden></div><div class="loot" id="loot" hidden></div><div class="sttimer" id="sttimer" hidden></div><div class="fx-tint" id="fxTint"></div><canvas class="fx-c" id="fxC"></canvas><div class="stscene" id="scene" hidden></div><ul class="hist" id="hist"></ul><div class="strip" id="strip" hidden></div><div class="handout" id="handout" hidden></div></div>
+<div class="stage" id="stage"><div class="tray-host" id="tray"></div><canvas id="mapc" class="mapc" hidden></canvas><div class="partybar" id="partybar" hidden></div><div class="clockbar" id="clockbar" hidden></div><div class="lower" id="lower" hidden></div><div class="loot" id="loot" hidden></div><div class="poll" id="poll" hidden></div><div class="sttimer" id="sttimer" hidden></div><div class="fx-tint" id="fxTint"></div><canvas class="fx-c" id="fxC"></canvas><div class="stscene" id="scene" hidden></div><ul class="hist" id="hist"></ul><div class="strip" id="strip" hidden></div><div class="handout" id="handout" hidden></div></div>
 <div class="bar" id="bar">
   <div class="dgrid" id="quick" style="display:flex;gap:6px"></div>
   <div class="tool-sep"></div>

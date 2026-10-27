@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.20.0", title: "Party votes", items: ["Stream view → Party vote: ask the table a question with up to 10 options", "With the dice bot online, players vote with buttons in Discord and can change their minds", "At the table, tap + for each raised hand", "Live result bars on stream; closing reveals the winner (and logs it in a live session)", "Loot finds that repeat now stack into one entry"] },
   { v: "1.19.0", title: "Party stash", items: ["The Party view has a shared stash: money in your currency (gold, credits, eddies…), loot, and who carries what", "Forge loot or items and press To stash; the Live improv kit has it too", "Reveal a find on stream as a glowing loot card, with a sound", "Split the purse evenly into everyone's Inventory", "Players can type /stash in Discord to see it"] },
   { v: "1.18.1", title: "Board fixes", items: ["You can now tie string from a heading card's pin", "Grabbing a pin that already has string on it starts a new string instead of selecting the old one"] },
   { v: "1.18.0", title: "Table mode for in-person games", items: ["Put the player display fullscreen on a TV or projector with one click (Stream window button, or the Dice view)", "Dice, maps with fog, handouts, turn order, scenes and weather show there; your laptop stays private", "Esc on the TV, or 'Back to a normal window', returns it to a window for Discord"] },

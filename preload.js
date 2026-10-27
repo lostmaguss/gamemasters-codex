@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld("codex", {
     config: c => ipcRenderer.send("bot:config", c),
     dm: m => ipcRenderer.invoke("bot:dm", m),
     fake: req => ipcRenderer.invoke("bot:fake", req),
+    poll: cmd => ipcRenderer.invoke("bot:poll", cmd),
+    onVote: fn => on("bot:vote", fn),
+    fakeVote: v => ipcRenderer.invoke("bot:fakeVote", v),
   },
   update: {
     check: () => ipcRenderer.invoke("update:check"),
