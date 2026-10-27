@@ -882,3 +882,14 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .rail a { padding: 6px 4px 5px; gap: 2px; font-size: 11px; }
 .rail a .ic { width: 20px; height: 20px; }
 .rail-sep { margin: 4px 10px; }
+.news-list { display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow: auto; }
+.news { display: grid; grid-template-columns: 64px 1fr; gap: 12px; }
+.news-v { background: var(--ember); color: var(--ember-ink); border-radius: 8px; height: 28px; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+.news h3 { font-size: 22px; margin-bottom: 4px; }
+.news ul { margin: 0; padding-left: 18px; color: var(--dim); font-size: 14.5px; line-height: 1.55; }
+.news li::marker { color: var(--ember); }
+.fx-chips .chip.on { background: color-mix(in srgb, var(--ember) 22%, var(--surface-2)); }
+.fx-lvl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.fx-lvl input { flex: 1; accent-color: var(--ember); }
+.scapes .scape { color: var(--ink); border-color: var(--line); padding-right: 4px; }
+.scapes .scape:hover { border-color: var(--ember); }

@@ -39,6 +39,9 @@ export function createBroadcast(el, App) {
           <label class="f" style="flex:1;min-width:180px"><span>Next session (end card)</span><input type="text" id="bcNext" value="${esc(S.next)}" placeholder="Friday 21:00"></label>
         </div>
         <p class="md-help">Scenes cover the whole stream window. Your sounds keep playing, so start an ambience loop under "Starting soon".</p>
+        <div class="sec-h" style="margin-top:22px"><h3>Atmosphere</h3><div class="line"></div></div>
+        <div id="bcFx"></div>
+        <p class="md-help">Weather and mood over the table and map. Storm flashes also fire whenever you play Thunder or Explosion.</p>
       </section>
       <section class="cast-col"><div class="sec-h"><h3>Name cards</h3><div class="line"></div></div>
         <p class="md-help" style="margin-top:0">Introduce someone the way TV does: a caption slides in for a few seconds.</p>
@@ -51,6 +54,7 @@ export function createBroadcast(el, App) {
     const items = [...c.party.map(m => ({ name: m.character || m.player, sub: [m.role, m.player && `played by ${m.player}`].filter(Boolean).join(" · "), color: m.color, portrait: m.portrait })),
       ...c.notes.filter(n => ["NPCs", "Locations", "Factions"].includes(n.cat)).map(n => ({ name: n.title, sub: n.tags || n.cat, color: n.cat === "NPCs" ? "#f39da8" : n.cat === "Locations" ? "#b8d8a8" : "#a8d3e4" })),
       ...c.bestiary.map(x => ({ name: x.name, sub: x.kind, color: "#ff6b6b", portrait: x.img }))];
+    App.fx.controls($("#bcFx", el));
     $$("[data-scene]", el).forEach(b => b.onclick = () => onAirScene === b.dataset.scene ? clear() : show(b.dataset.scene));
     $("#bcSoon", el).onchange = e => { S.soonMin = Math.max(1, +e.target.value || 10); save(); };
     $("#bcBrb", el).onchange = e => { S.brbMin = Math.max(1, +e.target.value || 10); save(); };

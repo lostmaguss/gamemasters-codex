@@ -18,6 +18,9 @@ import { createParty } from "./party.js";
 import { openPalette } from "./palette.js";
 import { createBroadcast } from "./broadcast.js";
 import { createClocks } from "./clocks.js";
+import { unseen, newsHTML, NEWS } from "./whatsnew.js";
+import { BEATS } from "./chronicle.js";
+import { FX } from "./fx.js";
 import * as Discord from "./discord.js";
 import { rnd, ls } from "./util.js";
 import { setGenre } from "./gen.js";
@@ -62,7 +65,7 @@ export const App = {
     back.addEventListener("mousedown", e => { if (e.target === back) close(); });
     document.body.append(back);
     mount?.(back.firstElementChild, close);
-    back.querySelector("input,textarea,select,button")?.focus();
+    if (!back.contains(document.activeElement)) (back.querySelector("input[type=text],input[type=search],textarea") || back.querySelector("input,select,button"))?.focus();
     return close;
   },
   menu(anchor, items) {
@@ -124,6 +127,26 @@ export const App = {
   discord: Discord,
   hideHandout() { App.onAir = null; Stage.hide(); App._air.forEach(f => f()); },
 };
+
+// ---- atmosphere on the stream window ----
+App.fx = {
+  get state() { return (C().ui.fx ||= { on: {}, level: .6 }); },
+  push() { Stage.overlay({ kind: "fx", ...this.state }); },
+  toggle(k) { const s = this.state; s.on[k] = !s.on[k]; save(); this.push(); App._fxSubs.forEach(f => f()); },
+  setAll(on, level) { const s = this.state; s.on = { ...on }; if (level != null) s.level = level; save(); this.push(); App._fxSubs.forEach(f => f()); },
+  level(v) { this.state.level = v; save(); this.push(); },
+  controls(box) {
+    const draw = () => {
+      const s = this.state;
+      box.innerHTML = `<div class="chips fx-chips">${Object.entries(FX).map(([k, f]) => `<button class="chip ${s.on[k] ? "on" : ""}" data-fx="${k}">${f.label}</button>`).join("")}</div>
+        <label class="fx-lvl"><span class="eyebrow">Strength</span><input type="range" min=".15" max="1" step=".05" value="${s.level}"></label>`;
+      box.querySelectorAll("[data-fx]").forEach(b => b.onclick = () => { this.toggle(b.dataset.fx); if (!App.streamLive) toast("Open the stream window to see it"); });
+      box.querySelector("input").oninput = e => this.level(+e.target.value);
+    };
+    App._fxSubs.add(draw); draw();
+  },
+};
+App._fxSubs = new Set();
 
 // ---- sound router: plays in the stream window (so screen share carries it) or in this window ----
 const localSound = createSoundEngine();
@@ -197,7 +220,7 @@ function switchCampaign(id) {
   S.data.currentId = id; save();
   for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; }
   $("#views").innerHTML = ""; current = null;
-  renderCampName(); show(C().ui.view || "forge");
+  renderCampName(); show(C().ui.view || "prep");
 }
 
 function renameModal(c) {
@@ -304,7 +327,8 @@ function campaignMenu() {
         save(); switchCampaign(list[list.length - 1].id); toast("Imported " + list.length + " campaign" + (list.length > 1 ? "s" : ""));
       } catch { toast("That file isn't a Codex backup"); }
     } },
-    ...(window.codex ? [{ text: "Open save folder", icon: "book", run: () => window.codex.openFolder() }, { text: "Check for updates", icon: "reroll", run: checkUpdates }] : []),
+    ...(window.codex ? [{ text: "Restore a backup…", icon: "clock", run: restoreModal }, { text: "Open save folder", icon: "book", run: () => window.codex.openFolder() }, { text: "Check for updates", icon: "reroll", run: checkUpdates }] : []),
+    { text: "What's new", icon: "star", run: () => showNews(NEWS) },
     "-",
     { text: "Delete this campaign", icon: "trash", run: () => {
       if (S.data.campaigns.length < 2) return toast("Make another campaign first; you need at least one");
@@ -334,6 +358,7 @@ function wireChrome() {
     if (!on && App.onAir) { App.onAir = null; App._air.forEach(f => f()); }
   };
   Stage.onResult(onStageResult);
+  App.fx.push();
   import("./combat.js").then(m => m.pushCombat());
   if (window.codex?.update) window.codex.update.onState(updateState);
   Stage.onState(setLive);
@@ -347,7 +372,37 @@ function wireChrome() {
   addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && /^[0-9]$/.test(e.key)) { const v = VIEWS[(+e.key + 9) % 10]; if (v) { e.preventDefault(); show(v.key); } }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(App, VIEWS); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") { e.preventDefault(); quickLog(); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); flush(); toast("Saved"); }
+  });
+}
+
+function showNews(list) {
+  App.modal(`<h2>What's new</h2><div class="news-list">${newsHTML(list)}</div><div class="foot"><button class="btn primary" data-ok>Let's play</button></div>`, (m, close) => { $("[data-ok]", m).onclick = close; });
+}
+async function restoreModal() {
+  const list = await window.codex.backups();
+  if (!list.length) return toast("No backups yet. One is made each day the app saves");
+  App.modal(`<h2>Restore a backup</h2><p style="margin:0;color:var(--dim)">The app keeps one copy of all your campaigns per day, for 14 days. Restoring replaces everything with that day's copy. Your current data is kept as today's backup first.</p>
+    <div style="display:flex;flex-direction:column;gap:4px;max-height:50vh;overflow:auto">${list.map(f => `<button class="cx-item" data-f="${esc(f)}"><b>${esc(f.replace("codex-", "").replace(".json", ""))}</b></button>`).join("")}</div>`, (m, close) => {
+    $$("[data-f]", m).forEach(b => b.onclick = () => App.confirm(`Restore ${b.querySelector("b").textContent}?`, "Everything goes back to how it was that day.", "Restore", async () => {
+      try {
+        const d = JSON.parse(await window.codex.restore(b.dataset.f));
+        if (!d.campaigns?.length) throw new Error("empty");
+        S.data = d; await flush(); save(); close(); switchCampaign(d.currentId || d.campaigns[0].id); toast("Backup restored");
+      } catch { toast("That backup couldn't be read"); }
+    }));
+  });
+}
+function quickLog() {
+  const s = C().sessions.find(x => x.status === "live");
+  if (!s) return toast("Start a session to log what happens");
+  App.modal(`<h2>Log it</h2><div class="chips" id="qlT">${Object.entries(BEATS).map(([k, b], i) => `<button class="chip ${i === 1 ? "on" : ""}" data-t="${k}" style="--bt:${b.color}">${icon(k)} ${b.label}</button>`).join("")}</div>
+    <input type="text" id="qlX" placeholder="What just happened?"><label class="toggle"><input type="checkbox" id="qlS"> Key moment</label><p class="md-help" style="margin:0">Enter saves. Logged to Session ${esc(s.num)}.</p>`, (m, close) => {
+    let type = "social";
+    $$("[data-t]", m).forEach(b => b.onclick = () => { type = b.dataset.t; $$("[data-t]", m).forEach(x => x.classList.toggle("on", x === b)); $("#qlX", m).focus(); });
+    $("#qlX", m).focus();
+    $("#qlX", m).onkeydown = e => { if (e.key === "Enter" && e.target.value.trim()) { s.beats.push({ id: uid(), type, text: e.target.value.trim(), star: $("#qlS", m).checked }); save(); close(); toast(`Logged in Session ${s.num}`); } };
   });
 }
 
@@ -373,4 +428,8 @@ async function checkUpdates() {
   try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
   buildRail(); wireChrome(); renderCampName(); ls.set("rules", C().rules);
   show(C().ui.view || "prep");
+  // tell people what changed since they last opened the app
+  const v = window.codex ? await window.codex.version() : NEWS[0].v;
+  const seen = S.data.prefs.seenVersion;
+  if (seen !== v) { const list = unseen(seen || "1.1.1"); S.data.prefs.seenVersion = v; save(); if (list.length) setTimeout(() => showNews(list), 600); }
 })();

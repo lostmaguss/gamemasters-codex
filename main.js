@@ -71,6 +71,24 @@ ipcMain.handle("data:load", async () => {
     try { return await fs.promises.readFile(dataFile() + ".bak", "utf8"); } catch { return null; }
   }
 });
+// one dated copy per day in <userData>/backups, last 14 kept
+async function dailyBackup(file) {
+  const dir = path.join(dataDir(), "backups");
+  const name = `codex-${new Date().toISOString().slice(0, 10)}.json`;
+  try {
+    await fs.promises.mkdir(dir, { recursive: true });
+    await fs.promises.access(path.join(dir, name)).catch(async () => {
+      await fs.promises.copyFile(file, path.join(dir, name));
+      const all = (await fs.promises.readdir(dir)).filter(f => /^codex-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
+      for (const old of all.slice(0, Math.max(0, all.length - 14))) await fs.promises.unlink(path.join(dir, old)).catch(() => {});
+    });
+  } catch {}
+}
+ipcMain.handle("data:backups", async () => {
+  const dir = path.join(dataDir(), "backups");
+  try { return (await fs.promises.readdir(dir)).filter(f => f.endsWith(".json")).sort().reverse(); } catch { return []; }
+});
+ipcMain.handle("data:restore", async (_e, name) => fs.promises.readFile(path.join(dataDir(), "backups", path.basename(name)), "utf8"));
 ipcMain.handle("data:save", async (_e, text) => {
   const file = dataFile();
   await fs.promises.mkdir(dataDir(), { recursive: true });
@@ -78,6 +96,7 @@ ipcMain.handle("data:save", async (_e, text) => {
   const tmp = file + ".tmp";
   await fs.promises.writeFile(tmp, text, "utf8");
   await fs.promises.rename(tmp, file);
+  await dailyBackup(file);
   return true;
 });
 ipcMain.handle("data:export", async (_e, { text, name }) => {

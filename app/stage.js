@@ -7,6 +7,7 @@ import { Stage } from "./bridge.js";
 import { createSoundEngine } from "./sound.js";
 import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprender.js";
 import { clockSVG } from "./clocks.js";
+import { createFx } from "./fx.js";
 
 (async function () {
   const applyLook = l => { if (!l || l === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = l; };
@@ -36,7 +37,8 @@ import { clockSVG } from "./clocks.js";
   }
   Stage.onRoll(roll);
   const sound = createSoundEngine();
-  Stage.onSound(cmd => sound.run(cmd));
+  const fx = createFx($("#fxC"), $("#fxTint"));
+  Stage.onSound(cmd => { sound.run(cmd); if (cmd.op === "play" && /thunder|boom/.test(cmd.sound?.synth || "")) fx.strike(); });
   // handouts: shown big over the table, players see them through the screen share
   const ho = $("#handout");
   Stage.onShow(hd => {
@@ -84,6 +86,7 @@ import { clockSVG } from "./clocks.js";
       if (o.fog) { const fi = await loadFresh(o.fog); MS.fog = fi; }
       mrender(); return;
     }
+    if (o.kind === "fx") { fx.set(o); return; }
     if (o.kind === "scene") { showScene(o); return; }
     if (o.kind === "lower") { showLower(o); return; }
     if (o.kind === "clocks") {

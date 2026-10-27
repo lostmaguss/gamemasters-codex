@@ -65,11 +65,14 @@ export function createLive(el, App) {
       <div class="lv-out"><div class="mode-seg"><button data-out="stream" class="${S.out === "stream" ? "on" : ""}" title="Plays from the stream window, so Discord's screen share can carry it">Stream window</button><button data-out="local" class="${S.out === "local" ? "on" : ""}">This window</button></div>
         <input type="range" min="0" max="1" step=".01" id="lvMaster" value="${S.master}" title="Master volume"><button class="btn sm ghost" id="lvStop" title="Stop everything">${icon("x")} Stop</button></div>
       ${S.out === "stream" && !App.streamLive ? `<p class="lv-note">The stream window is closed, so sound plays here until you open it.</p>` : ""}
+      <div class="eyebrow" style="margin:14px 0 8px">Soundscapes · one click sets the whole mood</div>
+      <div class="chips scapes">${(C().soundscapes || []).map(sc => `<span class="chip scape" data-sc="${sc.id}">${esc(sc.name)}<button class="x" data-scdel title="Delete">${icon("x")}</button></span>`).join("")}<button class="chip" id="lvScSave" title="Save the loops (and weather) playing now">${icon("plus")} Save current mix</button></div>
       <div class="eyebrow" style="margin:14px 0 8px">Ambience · layer as many as you like</div>
       <div class="amb-grid">${sounds("ambience").map(x => `<div class="amb ${S.active.has(x.id) ? "on" : ""}" data-id="${x.id}"><button class="amb-b">${S.active.has(x.id) ? `<span class="eq"><i></i><i></i><i></i></span>` : icon("sound")}<span>${esc(x.name)}</span></button>
         <input type="range" min="0" max="1" step=".01" value="${vol(x.id)}" aria-label="${esc(x.name)} volume">${x.user ? `<button class="rm" title="Remove sound">${icon("x")}</button>` : ""}</div>`).join("")}</div>
       <div class="eyebrow" style="margin:16px 0 8px">Effects · click to fire</div>
       <div class="sfx-grid">${sounds("sfx").map(x => `<button class="sfx" data-id="${x.id}">${esc(x.name)}${x.user ? `<span class="rm" title="Remove">${icon("x")}</span>` : ""}</button>`).join("")}</div>
+      <div class="eyebrow" style="margin:16px 0 8px">Weather on stream</div><div id="lvFx"></div>
       <label class="toggle" style="margin-top:12px"><input type="checkbox" id="lvAll" ${ls.get("live.allSounds", false) ? "checked" : ""}> Show built-in sounds from every genre</label>
       <div class="drop" id="lvDrop">${icon("plus")} <span><b>Add your own sounds</b><br>Drop mp3/ogg/wav files here or click to pick</span></div>`;
     $$("[data-out]", box).forEach(b => b.onclick = () => { S.setOut(b.dataset.out); renderSound(); });
@@ -91,6 +94,23 @@ export function createLive(el, App) {
       S.send({ op: "play", key: x.id + ":" + uid(), sound: srcOf(x), loop: false, vol: .9 });
       b.classList.remove("hit"); void b.offsetWidth; b.classList.add("hit");
     });
+    $("#lvScSave", box).onclick = () => {
+      if (!S.active.size) return toast("Start some ambience loops first, then save the mix");
+      App.modal(`<h2>Save soundscape</h2><label class="f"><span>Name</span><input type="text" id="scN" placeholder="Tavern at night"></label><label class="toggle"><input type="checkbox" id="scF" checked> Include the current weather on stream</label><div class="foot"><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
+        const ok = () => { (C().soundscapes ||= []).push({ id: uid(), name: $("#scN", m).value.trim() || "Soundscape", loops: [...S.active.values()].map(c => ({ key: c.key, sound: c.sound, vol: c.vol })), fx: $("#scF", m).checked ? { ...App.fx.state.on } : null }); save(); close(); renderSound(); };
+        $("[data-ok]", m).onclick = ok; $("#scN", m).onkeydown = e => e.key === "Enter" && ok();
+      });
+    };
+    $$(".scape", box).forEach(ch => ch.onclick = e => {
+      const sc = C().soundscapes.find(x => x.id === ch.dataset.sc);
+      if (e.target.closest("[data-scdel]")) { C().soundscapes = C().soundscapes.filter(x => x !== sc); save(); renderSound(); return; }
+      const keep = new Set(sc.loops.map(l => l.key));
+      for (const k of [...S.active.keys()]) if (!keep.has(k)) S.send({ op: "stop", key: k, fade: 2 });
+      for (const l of sc.loops) { if (S.active.has(l.key)) S.send({ op: "vol", key: l.key, vol: l.vol }); else S.send({ op: "play", key: l.key, sound: l.sound, loop: true, vol: l.vol, fade: 2 }); ls.set("vol." + l.key, l.vol); }
+      if (sc.fx) App.fx.setAll(sc.fx);
+      renderSound(); toast(sc.name);
+    });
+    App.fx.controls($("#lvFx", box));
     $("#lvAll", box).onchange = e => { ls.set("live.allSounds", e.target.checked); renderSound(); };
     const drop = $("#lvDrop", box);
     drop.onclick = () => importSounds();

@@ -42,6 +42,11 @@
   .st-hp i { display: block; height: 100%; background: var(--good); }
   .st-s { font-size: 12px; color: var(--dim); letter-spacing: .06em; }
   .st-k { font-size: 11px; color: var(--c-plum); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fx-c { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 7; pointer-events: none; }
+  .fx-tint { position: absolute; inset: 0; z-index: 6; pointer-events: none; transition: background 2s; }
+  .fx-tint.night { background: radial-gradient(ellipse at 50% 40%, rgba(10,20,60,.25), rgba(5,8,25,.62)); }
+  .fx-tint.blood { background: radial-gradient(ellipse at 50% 40%, rgba(120,0,10,.18), rgba(60,0,5,.55)); }
+  .fx-tint.night.blood { background: radial-gradient(ellipse at 50% 40%, rgba(90,0,20,.3), rgba(20,0,10,.7)); }
   .stscene { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; text-align: center; overflow: hidden; color: var(--ink);
     background: radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--ember) 35%, transparent), transparent 60%), radial-gradient(ellipse at 50% 40%, var(--surface-2), var(--bg) 70%); animation: sceneIn .7s ease-out both; }
   .stscene.out { animation: sceneOut .5s ease-in both; }
@@ -108,7 +113,7 @@
 </style>
 </head>
 <body>
-<div class="stage" id="stage"><div class="tray-host" id="tray"></div><canvas id="mapc" class="mapc" hidden></canvas><div class="partybar" id="partybar" hidden></div><div class="clockbar" id="clockbar" hidden></div><div class="lower" id="lower" hidden></div><div class="stscene" id="scene" hidden></div><ul class="hist" id="hist"></ul><div class="strip" id="strip" hidden></div><div class="handout" id="handout" hidden></div></div>
+<div class="stage" id="stage"><div class="tray-host" id="tray"></div><canvas id="mapc" class="mapc" hidden></canvas><div class="partybar" id="partybar" hidden></div><div class="clockbar" id="clockbar" hidden></div><div class="lower" id="lower" hidden></div><div class="fx-tint" id="fxTint"></div><canvas class="fx-c" id="fxC"></canvas><div class="stscene" id="scene" hidden></div><ul class="hist" id="hist"></ul><div class="strip" id="strip" hidden></div><div class="handout" id="handout" hidden></div></div>
 <div class="bar" id="bar">
   <div class="dgrid" id="quick" style="display:flex;gap:6px"></div>
   <div class="tool-sep"></div>

@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld("codex", {
   exportData: (text, name) => ipcRenderer.invoke("data:export", { text, name }),
   importData: () => ipcRenderer.invoke("data:import"),
   openFolder: () => ipcRenderer.invoke("data:folder"),
+  backups: () => ipcRenderer.invoke("data:backups"),
+  restore: name => ipcRenderer.invoke("data:restore", name),
   importMedia: paths => ipcRenderer.invoke("media:import", paths),
   removeMedia: file => ipcRenderer.invoke("media:remove", file),
   saveMedia: (dataURL, ext) => ipcRenderer.invoke("media:saveData", { dataURL, ext }),
