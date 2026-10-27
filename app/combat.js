@@ -37,7 +37,12 @@ export function createCombat(el, App) {
   el.innerHTML = `<div class="combat"><header class="cb-head" id="cbHead"></header><div class="cb-grid"><section class="cb-list" id="cbList"></section><aside class="cb-side" id="cbSide"></aside></div></div>`;
   const cb = () => combat();
   const log = msg => { const L = cb().log; L.unshift({ t: Date.now(), r: cb().round, msg }); L.length = Math.min(L.length, 80); };
-  const changed = (full = true) => { save(); pushCombat(); if (full) render(); };
+  const changed = (full = true) => {
+    // player HP lives on their party sheet; keep the two in step
+    const c = C();
+    for (const x of cb().list) if (x.kind === "pc" && x.ref) { const m = c.party.find(p => p.id === x.ref); if (m) { m.res ||= {}; m.res.HP ||= { cur: "", max: "" }; m.res.HP.cur = x.hp; if (x.max !== "") m.res.HP.max = x.max; } }
+    save(); pushCombat(); import("./party.js").then(p => p.pushParty()); if (full) render();
+  };
 
   function renderHead() {
     const b = cb(), box = $("#cbHead", el), cur = b.list[b.turn];
@@ -161,7 +166,7 @@ export function createCombat(el, App) {
     const b = cb(), c = C();
     $("#aParty", box).onclick = () => {
       if (!c.party.length) return toast("Add your party first (campaign menu → Party & players)");
-      let n = 0; c.party.forEach(m => { if (!b.list.some(x => x.ref === m.id)) { b.list.push({ id: uid(), kind: "pc", ref: m.id, name: m.character || m.player, color: m.color, init: "", hp: m.hp ?? "", max: m.maxHp ?? "", def: m.def ?? "", conds: [] }); n++; } });
+      let n = 0; c.party.forEach(m => { if (!b.list.some(x => x.ref === m.id)) { b.list.push({ id: uid(), kind: "pc", ref: m.id, name: m.character || m.player, color: m.color, init: "", hp: m.res?.HP?.cur ?? "", max: m.res?.HP?.max ?? "", def: m.stats?.Defense ?? "", conds: [] }); n++; } });
       changed(); toast(n ? `Added ${n} player${n > 1 ? "s" : ""}` : "The party is already in");
     };
     $("#aEnc", box).onclick = () => {

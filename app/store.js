@@ -54,7 +54,10 @@ function sampleCampaign() {
   const c = blankCampaign("The Ash Crown");
   c.tagline = "Frontier dark fantasy · homebrew";
   const p = [["Deniz", "Varka Stormtusk", "Brawler", "#ef7f8f"], ["Ece", "Lirien Moonwhisper", "Hexblade", "#c39bd3"], ["Mert", "Bodo Thistlefoot", "Scout", "#a7cf9e"], ["Selin", "Sister Oriel", "Healer", "#8fc3d9"]];
-  c.party = p.map(([player, character, role, color]) => ({ id: uid(), player, character, role, color }));
+  const st = [[3, 1, 0, 1, 26], [0, 2, 2, 1, 18], [0, 3, 1, 0, 16], [1, 0, 1, 3, 20]];
+  c.party = p.map(([player, character, role, color], i) => ({ id: uid(), player, character, role, color,
+    stats: { Might: st[i][0], Agility: st[i][1], Wits: st[i][2], Will: st[i][3] }, res: { HP: { cur: st[i][4], max: st[i][4] } }, conds: [],
+    text: { Abilities: ["Rage: double damage for a round, then exhausted", "Hex: curse one target, they roll twice and take the worse", "Sneak attack: +1d6 when unseen", "Mend: heal 1d8+Will, three times a day"][i] } }));
   const n1 = { id: uid(), title: "Millford", cat: "Locations", tags: "river town, act 1", pinned: true, updated: Date.now(),
     body: "# Millford\nA walled river town under the **Ash Crown's** occupation. The mill wheel hasn't turned since the dam was seized.\n\n- Ruled by [[Magistrate Corwin Hale]]\n- The Drunken Lantern is where the resistance meets\n- Rumor: the old well lets you hear the dead" };
   const n2 = { id: uid(), title: "Magistrate Corwin Hale", cat: "NPCs", tags: "villain, millford", updated: Date.now(),

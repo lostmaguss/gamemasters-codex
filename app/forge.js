@@ -130,5 +130,5 @@ export function createForge(el, App) {
   renderDecks(); renderOpts(); quickNames();
   const last = c().recent[0];
   if (last && GEN[last.kind] && last.kind === st.kind) { st.cur = last; renderCard(true); renderDraws(); } else draw();
-  return { refresh() { renderDraws(); }, destroy() { removeEventListener("keydown", onKey); } };
+  return { refresh() { renderDraws(); }, show(arg) { if (arg?.draw) { st.kind = arg.draw; renderDecks(); renderOpts(); draw(); } }, destroy() { removeEventListener("keydown", onKey); } };
 }

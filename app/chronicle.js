@@ -160,7 +160,7 @@ export function createChronicle(el, App) {
     const carry = carried(s);
     const list = (arr, key, ph) => `<ul class="checks" data-list="${key}">${arr.map(t => `<li class="${t.done ? "done" : ""}" data-id="${t.id}"><input type="checkbox" ${t.done ? "checked" : ""} aria-label="Done"><input type="text" value="${esc(t.text)}" placeholder="${ph}"><button class="x" title="Remove">${icon("x")}</button></li>`).join("")}</ul><button class="btn sm ghost" data-addto="${key}">${icon("plus")} Add</button>`;
     return `<aside class="spread-side">
-      <div class="side-box"><h4>${icon("social")} At the table <button class="btn sm ghost act" id="pEdit">Edit party</button></h4>
+      <div class="side-box"><h4>${icon("social")} At the table <button class="btn sm ghost act" id="pEdit">Party sheets</button></h4>
         ${c.party.length ? c.party.map(m => `<div class="member ${s.attendance[m.id] === false ? "absent" : ""}" data-m="${m.id}" style="--mc:${esc(m.color)}">
           <button class="present ${s.attendance[m.id] !== false ? "on" : ""}" title="Present">${icon("check")}</button>
           <div class="who"><b>${esc(m.character || m.player)}</b><span>${esc(m.player)}${m.role ? " · " + esc(m.role) : ""}</span></div>

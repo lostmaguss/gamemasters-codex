@@ -83,6 +83,19 @@ import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprende
       if (o.fog) { const fi = await loadFresh(o.fog); MS.fog = fi; }
       mrender(); return;
     }
+    if (o.kind === "party") {
+      const pb = $("#partybar"); pb.hidden = !o.show; if (!o.show) return;
+      pb.innerHTML = o.list.map(() => `<div class="pb-c"><i class="pb-p"></i><div class="pb-t"><b></b><div class="pb-bar"><i></i></div><span class="pb-k"></span></div></div>`).join("");
+      $$(".pb-c", pb).forEach((el, i) => {
+        const m = o.list[i], pct = m.max ? Math.max(0, Math.min(100, m.hp / m.max * 100)) : 100;
+        el.style.setProperty("--mc", m.color); el.querySelector("b").textContent = m.name;
+        el.querySelector(".pb-bar i").style.width = pct + "%"; el.querySelector(".pb-bar i").style.background = pct <= 25 ? "var(--bad)" : pct <= 50 ? "var(--crit)" : "var(--mc)";
+        el.querySelector(".pb-k").textContent = [m.max ? `${m.hp}/${m.max}` : "", ...m.conds].filter(Boolean).join(" · ");
+        const p = el.querySelector(".pb-p"); if (m.portrait) p.style.backgroundImage = `url(${m.portrait})`; else p.textContent = (m.name || "?")[0];
+        el.classList.toggle("down", m.max > 0 && m.hp <= 0);
+      });
+      return;
+    }
     if (o.kind !== "combat") return;
     document.body.classList.toggle("has-strip", !!o.show);
     if (!o.show) { strip.hidden = true; strip.innerHTML = ""; return; }

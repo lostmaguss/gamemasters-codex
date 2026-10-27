@@ -14,6 +14,8 @@ import { createSoundEngine } from "./sound.js";
 import { parseRoll, diceGroups, buildResult, breakdown, critLabel, shownTotal, DEFAULT_RULES } from "./roll.js";
 import { createCombat } from "./combat.js";
 import { createMap } from "./map.js";
+import { createParty } from "./party.js";
+import { openPalette } from "./palette.js";
 import * as Discord from "./discord.js";
 import { rnd, ls } from "./util.js";
 import { setGenre } from "./gen.js";
@@ -33,7 +35,8 @@ const VIEWS = [
   { key: "combat", label: "Combat", icon: "combat", make: createCombat },
   { key: "map", label: "Map", icon: "map", make: createMap },
   { key: "dice", label: "Dice", icon: "dice", make: createDice },
-  { key: "forge", label: "Forge", icon: "forge", make: createForge, group: "Make" },
+  { key: "party", label: "Party", icon: "social", make: createParty, group: "Make" },
+  { key: "forge", label: "Forge", icon: "forge", make: createForge },
   { key: "tables", label: "Tables", icon: "tables", make: createTables },
   { key: "bestiary", label: "Bestiary", icon: "death", make: createBestiary },
   { key: "codex", label: "Codex", icon: "codex", make: createCodex, group: "World" },
@@ -267,7 +270,8 @@ function confirmModal(title, text, okText, run) {
     (m, close) => { $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = () => { close(); run(); }; });
 }
 App.confirm = confirmModal;
-App.partyModal = partyModal;
+App.partyModal = () => App.go("party");
+App.stage = Stage;
 
 function campaignMenu() {
   const c = C();
@@ -277,7 +281,7 @@ function campaignMenu() {
     { text: "New campaign", icon: "plus", run: () => { const n = blankCampaign("New campaign"); S.data.campaigns.push(n); switchCampaign(n.id); renameModal(n); } },
     "-",
     { text: "Rename campaign", icon: "type", run: () => renameModal(c) },
-    { text: "Party & players", icon: "social", run: partyModal },
+    { text: "Party & sheets", icon: "social", run: () => App.go("party") },
     { text: "Rules & genre", icon: "gear", run: rulesModal },
     { text: Discord.connected() ? "Discord (connected)" : "Connect Discord…", icon: "discord", run: () => Discord.discordModal(App) },
     "-",
@@ -315,6 +319,7 @@ function wireChrome() {
     W.onState(({ max }) => $("#wMax").innerHTML = max ? `<svg class="ic" viewBox="0 0 24 24"><path d="M8 8h11v11H8zM5 16V5h11"/></svg>` : `<svg class="ic" viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/></svg>`);
   }
   $("#campBtn").onclick = campaignMenu;
+  $("#searchBtn").onclick = () => openPalette(App, VIEWS);
   const st = $("#saveState");
   onSaved(s => { st.className = "save-state no-drag " + s; st.textContent = s === "saving" ? "Saving…" : s === "error" ? "Not saved" : "Saved"; });
   const sb = $("#streamBtn");
@@ -337,7 +342,7 @@ function wireChrome() {
   ]) : Stage.open();
   addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && /^[0-9]$/.test(e.key)) { const v = VIEWS[(+e.key + 9) % 10]; if (v) { e.preventDefault(); show(v.key); } }
-    if ((e.ctrlKey || e.metaKey) && e.key === "-") { e.preventDefault(); show("chronicle"); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(App, VIEWS); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); flush(); toast("Saved"); }
   });
 }
