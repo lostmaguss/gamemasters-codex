@@ -913,3 +913,4 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .help-grid dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; font-size: 13.5px; align-items: baseline; }
 .help-grid dt { margin: 0; } .help-grid dd { margin: 0; color: var(--dim); }
 .help-grid kbd { font: 11.5px var(--mono); padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; white-space: nowrap; }
+.cx-img { float: right; width: 240px; max-width: 40%; margin: 6px 0 16px 24px; border-radius: 10px; box-shadow: 0 16px 30px rgba(0,0,0,.4); border: 3px solid var(--paper); transform: rotate(1.5deg); }

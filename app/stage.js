@@ -68,7 +68,7 @@ import { createFx } from "./fx.js";
     mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     let view = fitView(MS.map, W, H, 10);
     if (MS.follow) { const z = W / MS.follow.span; view = { z, x: W / 2 - MS.follow.cx * z, y: H / 2 - MS.follow.cy * z }; }
-    drawMap(mctx, W, H, { map: { ...MS.map, tokens: MS.tokens }, img: MS.img, fog: MS.fog, view, gm: false, current: MS.current, fogTex });
+    drawMap(mctx, W, H, { map: { ...MS.map, tokens: MS.tokens, areas: MS.areas || [] }, img: MS.img, fog: MS.fog, view, gm: false, current: MS.current, fogTex });
   }
   new ResizeObserver(mrender).observe(mapc);
   Stage.onOverlay(async o => {
@@ -81,7 +81,7 @@ import { createFx } from "./fx.js";
     }
     if (o.kind === "mapstate") {
       if (MS.map && o.id !== MS.map.id) return;
-      MS.follow = o.follow; MS.current = o.current;
+      MS.follow = o.follow; MS.current = o.current; MS.areas = o.areas || [];
       MS.tokens = await Promise.all((o.tokens || []).map(async t => ({ ...t, _img: t.img ? await loadImg(t.img) : null })));
       if (o.fog) { const fi = await loadFresh(o.fog); MS.fog = fi; }
       mrender(); return;

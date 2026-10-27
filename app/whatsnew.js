@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.11.0", title: "Tactical map tools", items: ["Measure distances on the map in cells and your own units", "Area templates (circle, cone, line) that players see on stream", "Pictures on Codex pages, used in name cards", "Party portraits on map tokens", "Roll the players' initiative from a sheet stat"] },
   { v: "1.10.0", title: "Loot, encounters & music", items: ["Forge: Loot hoards and Encounters (built from your own bestiary when you have one)", "Codex page templates for NPCs, places, factions, quests and items", "Countdown timer on stream from the Stream view", "Music: add your own tracks and play them as a playlist", "F1 shows every keyboard shortcut"] },
   { v: "1.9.0", title: "Homebrew dice & world web", items: ["Exploding dice (3d6!), rerolls (4d6r1) and Fate dice (4dF) as real 3D dice", "World web: one click turns your Codex links into a corkboard of strings", "Show any Codex page on stream, or introduce it with a name card", "Introduce tonight's cast straight from Live", "Ctrl + and Ctrl − make the whole interface bigger or smaller"] },
   { v: "1.8.0", title: "Atmosphere & safety", items: ["Weather on stream: rain, snow, fog, embers, storm flashes, night tint, neon glitch (Stream and Live)", "Soundscapes: save a mix of loops (and weather) and start it with one click", "Daily automatic backups, restore from the campaign menu", "Ctrl+L logs what just happened from any screen"] },

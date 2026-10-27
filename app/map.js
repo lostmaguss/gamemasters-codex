@@ -2,7 +2,7 @@
 import { $, $$, esc, h, icon, toast, uid, ls, debounce } from "./util.js";
 import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
-import { drawMap, loadImg, loadFresh, mapSrc, fitView } from "./maprender.js";
+import { drawMap, loadImg, loadFresh, mapSrc, fitView, drawArea, drawRuler } from "./maprender.js";
 import { shrinkImage } from "./board.js";
 import { combat } from "./combat.js";
 
@@ -20,7 +20,11 @@ export function createMap(el, App) {
         <button data-t="reveal" title="Paint fog away (R)">${icon("discovery")} Reveal</button>
         <button data-t="hide" title="Paint fog back (H)">${icon("rest")} Hide</button>
         <button data-t="box" title="Drag a box to reveal (B)">${icon("max")} Box</button>
+        <button data-t="ruler" title="Measure a distance (D)">${icon("travel")} Measure</button>
+        <button data-t="area" title="Place a circle, cone or line (A)">${icon("discovery")} Area</button>
       </div>
+      <select id="mShape" title="Area shape" style="width:auto;height:30px"><option value="circle">Circle</option><option value="cone">Cone</option><option value="line">Line</option></select>
+      <button class="btn sm ghost" id="mClearAreas" title="Remove all area templates">Clear areas</button>
       <input type="range" id="mBrush" min="10" max="300" value="${st.brush}" title="Brush size">
       <button class="btn sm ghost" id="mAll" title="Reveal the whole map">Reveal all</button>
       <button class="btn sm ghost" id="mNone" title="Cover the whole map in fog">Hide all</button>
@@ -69,7 +73,7 @@ export function createMap(el, App) {
       const m = M(); if (!m || !ui().onStream) return;
       const cb = combat(), cur = cb.active ? cb.list[cb.turn]?.id : null;
       const v = m.view, follow = ui().follow ? { cx: (W / 2 - v.x) / v.z, cy: (H / 2 - v.y) / v.z, span: W / v.z } : null;
-      Stage.overlay({ kind: "mapstate", id: m.id, fog: st.fog ? st.fog.toDataURL("image/png") : null, tokens: (m.tokens || []).filter(t => !t.hidden).map(({ _img, ...t }) => t), follow, current: cur });
+      Stage.overlay({ kind: "mapstate", id: m.id, fog: st.fog ? st.fog.toDataURL("image/png") : null, tokens: (m.tokens || []).filter(t => !t.hidden).map(({ _img, ...t }) => t), areas: m.areas || [], follow, current: cur });
     }, 160);
   }
 
@@ -84,6 +88,8 @@ export function createMap(el, App) {
     syncCombatState(m, cb);
     drawMap(ctx, W, H, { map: m, img: st.img, fog: st.fog, view: m?.view || { x: 0, y: 0, z: 1 }, gm: true, current: cur });
     if (m && st.sel) { const t = m.tokens.find(x => x.id === st.sel); if (t) { const v = m.view, r = (t.size || 1) * (m.grid?.size || 70) * .5; ctx.strokeStyle = "#fff"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(v.x + t.x * v.z, v.y + t.y * v.z, r * v.z + 4, 0, 7); ctx.stroke(); ctx.setLineDash([]); } }
+    if (st.ruler && m) drawRuler(ctx, st.ruler.p1, st.ruler.p2, m.view, rulerLabel(m, st.ruler.p1, st.ruler.p2));
+    if (st.area && m) { ctx.save(); ctx.translate(m.view.x, m.view.y); ctx.scale(m.view.z, m.view.z); drawArea(ctx, st.area, m.view, true); ctx.restore(); drawRuler(ctx, { x: st.area.x1, y: st.area.y1 }, { x: st.area.x2, y: st.area.y2 }, m.view, rulerLabel(m, { x: st.area.x1, y: st.area.y1 }, { x: st.area.x2, y: st.area.y2 })); }
     if (st.box) { ctx.strokeStyle = "#ff7a3d"; ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeRect(st.box.x0, st.box.y0, st.box.x1 - st.box.x0, st.box.y1 - st.box.y0); ctx.setLineDash([]); }
     if (st.cursor && (st.tool === "reveal" || st.tool === "hide") && m) { ctx.strokeStyle = st.tool === "reveal" ? "#ffcf5a" : "#9aa"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(st.cursor.x, st.cursor.y, st.brush * m.view.z / 2, 0, 7); ctx.stroke(); }
     if (!m) { ctx.fillStyle = "#b8a79f"; ctx.font = '600 16px "IBM Plex Sans Condensed"'; ctx.textAlign = "center"; ctx.fillText("Add a map image to start: New map, or drop an image here", W / 2, H / 2); }
@@ -101,6 +107,11 @@ export function createMap(el, App) {
   new ResizeObserver(resize).observe(stage);
 
   // ---------- coordinates & tools ----------
+  function rulerLabel(m, a, b) {
+    const g = m.grid || {}, cells = Math.hypot(b.x - a.x, b.y - a.y) / (g.size || 70);
+    const per = Number(g.per) || 5, unit = g.unit ?? "ft";
+    return `${cells.toFixed(1)} cells${unit ? ` · ${Math.round(cells * per * 10) / 10} ${unit}` : ""}`;
+  }
   const toMap = (cx, cy) => { const r = canvas.getBoundingClientRect(), v = M().view; return { x: (cx - r.left - v.x) / v.z, y: (cy - r.top - v.y) / v.z }; };
   const tokenAt = p => { const m = M(), cell = m.grid?.size || 70; return [...(m.tokens || [])].reverse().find(t => Math.hypot(t.x - p.x, t.y - p.y) <= (t.size || 1) * cell * .46); };
   function paint(p, mode) {
@@ -121,6 +132,8 @@ export function createMap(el, App) {
     const p = toMap(e.clientX, e.clientY);
     if (e.button === 1 || e.button === 2 || (st.tool === "move" && !tokenAt(p)) || e.shiftKey && st.tool === "move") { st.drag = { t: "pan", sx: e.clientX, sy: e.clientY, vx: m.view.x, vy: m.view.y }; if (st.tool === "move") { st.sel = null; renderSide(); } return; }
     if (st.tool === "move") { const t = tokenAt(p); st.sel = t.id; st.drag = { t: "token", tok: t, dx: t.x - p.x, dy: t.y - p.y }; renderSide(); render(); return; }
+    if (st.tool === "ruler") { st.ruler = { p1: p, p2: p }; st.drag = { t: "ruler" }; render(); return; }
+    if (st.tool === "area") { st.area = { shape: $("#mShape", el).value, x1: p.x, y1: p.y, x2: p.x, y2: p.y, color: "#ff7a3d", cell: m.grid?.size || 70, w: 1 }; st.drag = { t: "area" }; render(); return; }
     if (st.tool === "box") { const r = canvas.getBoundingClientRect(); st.box = { x0: e.clientX - r.left, y0: e.clientY - r.top, x1: e.clientX - r.left, y1: e.clientY - r.top }; st.drag = { t: "box", p0: p }; return; }
     paint(p, st.tool); st.drag = { t: "paint", last: p }; render(); pushState();
   });
@@ -133,11 +146,15 @@ export function createMap(el, App) {
     if (d.t === "pan") { m.view.x = d.vx + e.clientX - d.sx; m.view.y = d.vy + e.clientY - d.sy; render(); if (ui().follow) pushState(); }
     if (d.t === "token") { d.tok.x = p.x + d.dx; d.tok.y = p.y + d.dy; render(); pushState(); }
     if (d.t === "paint") { paintLine(d.last, p, st.tool); d.last = p; render(); pushState(); }
+    if (d.t === "ruler") { st.ruler.p2 = p; render(); }
+    if (d.t === "area") { st.area.x2 = p.x; st.area.y2 = p.y; render(); }
     if (d.t === "box") { st.box.x1 = e.clientX - r.left; st.box.y1 = e.clientY - r.top; d.p1 = p; render(); }
   });
   const up = () => {
     const d = st.drag; st.drag = null; if (!d) return;
     if (d.t === "token") { snap(d.tok); save(); render(); pushState(); }
+    if (d.t === "ruler") { setTimeout(() => { st.ruler = null; render(); }, 1500); }
+    if (d.t === "area") { const a = st.area; st.area = null; if (Math.hypot(a.x2 - a.x1, a.y2 - a.y1) > 5) { (M().areas ||= []).push({ id: uid(), ...a }); save(); pushState(); } render(); }
     if (d.t === "paint") saveFog();
     if (d.t === "pan") save();
     if (d.t === "box" && d.p1) {
@@ -187,6 +204,7 @@ export function createMap(el, App) {
       <section><div class="sec-h"><h3>Grid</h3><div class="line"></div></div>
         <label class="toggle"><input type="checkbox" id="gShow" ${g.show ? "checked" : ""}> Show grid and snap tokens</label>
         <div class="row" style="margin-top:8px;gap:8px"><label class="f" style="width:84px"><span>Cell px</span><input type="number" id="gSize" value="${g.size}"></label><label class="f" style="width:70px"><span>Offset X</span><input type="number" id="gOx" value="${g.ox || 0}"></label><label class="f" style="width:70px"><span>Offset Y</span><input type="number" id="gOy" value="${g.oy || 0}"></label></div>
+        <div class="row" style="margin-top:8px;gap:8px"><label class="f" style="width:84px"><span>One cell =</span><input type="number" id="gPer" value="${g.per ?? 5}" step="0.5"></label><label class="f" style="width:70px"><span>Unit</span><input type="text" id="gUnit" value="${esc(g.unit ?? "ft")}"></label></div>
         <p class="md-help">Match the cell size to the squares drawn on your map, then nudge the offset until the lines sit on them.</p>
         <label class="toggle"><input type="checkbox" id="fOn" ${m.fogOn !== false ? "checked" : ""}> Fog of war</label>
       </section>
@@ -201,8 +219,8 @@ export function createMap(el, App) {
       const v = m.view, cx = (W / 2 - v.x) / v.z, cy = (H / 2 - v.y) / v.z;
       for (const x of cb.list) {
         if (m.tokens.some(t => t.ref === x.id)) continue;
-        const cr = x.ref && c.bestiary.find(y => y.id === x.ref);
-        const t = { id: uid(), ref: x.id, name: x.name, color: x.color || (x.kind === "foe" ? "#f39da8" : x.kind === "ally" ? "#b8d8a8" : "#a8d3e4"), size: 1, hidden: x.hidden || false, img: cr?.img || null, x: cx + ((i % 6) - 2.5) * cell, y: cy + (Math.floor(i / 6) - .5) * cell };
+        const cr = x.ref && c.bestiary.find(y => y.id === x.ref), pm = x.ref && c.party.find(y => y.id === x.ref);
+        const t = { id: uid(), ref: x.id, name: x.name, color: x.color || (x.kind === "foe" ? "#f39da8" : x.kind === "ally" ? "#b8d8a8" : "#a8d3e4"), size: 1, hidden: x.hidden || false, img: cr?.img || pm?.portrait || null, x: cx + ((i % 6) - 2.5) * cell, y: cy + (Math.floor(i / 6) - .5) * cell };
         snap(t); m.tokens.push(t); i++;
       }
       Promise.all(m.tokens.map(async t => { if (t.img && !t._img) t._img = await loadImg(t.img); })).then(() => { render(); pushState(); });
@@ -223,6 +241,8 @@ export function createMap(el, App) {
     $("#gShow", b).onchange = e => { g.show = e.target.checked; save(); render(); pushMap(); };
     const num = (id, k) => $(id, b).oninput = e => { g[k] = Math.max(k === "size" ? 8 : -9999, Number(e.target.value) || 0); render(); saveView(); pushMap(); };
     num("#gSize", "size"); num("#gOx", "ox"); num("#gOy", "oy");
+    $("#gPer", b).oninput = e => { g.per = Number(e.target.value) || 5; saveView(); };
+    $("#gUnit", b).oninput = e => { g.unit = e.target.value.trim(); saveView(); };
     $("#fOn", b).onchange = e => { m.fogOn = e.target.checked; save(); render(); pushMap(); pushState(); };
     $("#mName", b).oninput = e => { m.name = e.target.value; saveView(); renderTabs(); };
     $("#mFit", b).onclick = () => { m.view = fitView(m, W, H); render(); save(); pushState(); };
@@ -230,7 +250,8 @@ export function createMap(el, App) {
       C().maps = maps().filter(x => x !== m); if (m.file) await window.codex?.removeMedia(m.file); C().ui.map = maps()[0]?.id; save(); renderTabs(); renderSide(); load(); pushMap();
     });
   }
-  function setTool(t) { st.tool = t; $$("#mTools button", el).forEach(b => b.classList.toggle("on", b.dataset.t === t)); canvas.style.cursor = t === "move" ? "grab" : "crosshair"; $("#mHint", el).innerHTML = { move: "<b>Drag</b> tokens to move them · drag empty space or <b>right-drag</b> to pan · <b>scroll</b> to zoom", reveal: "<b>Paint</b> to reveal what the players can see · <b>right-drag</b> pans", hide: "<b>Paint</b> fog back over areas · <b>right-drag</b> pans", box: "<b>Drag a box</b> to reveal a room" }[t]; render(); }
+  $("#mClearAreas", el).onclick = () => { const m = M(); if (m) { m.areas = []; save(); render(); pushState(); } };
+  function setTool(t) { st.tool = t; $$("#mTools button", el).forEach(b => b.classList.toggle("on", b.dataset.t === t)); canvas.style.cursor = t === "move" ? "grab" : "crosshair"; $("#mHint", el).innerHTML = { move: "<b>Drag</b> tokens to move them · drag empty space or <b>right-drag</b> to pan · <b>scroll</b> to zoom", reveal: "<b>Paint</b> to reveal what the players can see · <b>right-drag</b> pans", hide: "<b>Paint</b> fog back over areas · <b>right-drag</b> pans", box: "<b>Drag a box</b> to reveal a room", ruler: "<b>Drag</b> to measure · set the units in Grid", area: "<b>Drag</b> from the center or origin to place an area · players see it · <b>Clear areas</b> removes them" }[t]; render(); }
   $$("#mTools button", el).forEach(b => b.onclick = () => setTool(b.dataset.t));
   $("#mBrush", el).oninput = e => { st.brush = +e.target.value; ls.set("map.brush", st.brush); };
   $("#mAll", el).onclick = () => { if (!st.fog) return; st.fog.getContext("2d").clearRect(0, 0, st.fog.width, st.fog.height); saveFog(); render(); pushState(); };
@@ -242,7 +263,7 @@ export function createMap(el, App) {
   $("#mFollow", el).onchange = e => { ui().follow = e.target.checked; save(); pushState(); };
   const onKey = e => {
     if (el.closest("[hidden]") || document.querySelector(".modal-back") || e.target.closest("input,textarea,select")) return;
-    const k = { m: "move", r: "reveal", h: "hide", b: "box" }[e.key.toLowerCase()]; if (k && !e.ctrlKey) setTool(k);
+    const k = { m: "move", r: "reveal", h: "hide", b: "box", d: "ruler", a: "area" }[e.key.toLowerCase()]; if (k && !e.ctrlKey) setTool(k);
     if ((e.key === "Delete" || e.key === "Backspace") && st.sel) { const m = M(); m.tokens = m.tokens.filter(t => t.id !== st.sel); st.sel = null; save(); renderSide(); render(); pushState(); }
   };
   addEventListener("keydown", onKey);

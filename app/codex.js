@@ -1,6 +1,7 @@
 // The Codex: world notes as a small wiki. [[Title]] links notes together; backlinks show who mentions a page.
 import { $, $$, esc, h, icon, toast, uid, debounce } from "./util.js";
 import { C, save } from "./store.js";
+import { shrinkImage } from "./board.js";
 
 export const CATS = { Locations: "#b8d8a8", NPCs: "#f39da8", Factions: "#a8d3e4", Quests: "#f2c75c", Items: "#cfb2e2", Lore: "#efe4cf", Other: "#8a7d78" };
 
@@ -86,7 +87,7 @@ export function createCodex(el, App) {
       <div class="manuscript" id="cxBody"></div>`;
     const body = $("#cxBody", page);
     if (st.mode === "read") {
-      body.innerHTML = `<h1 class="cx-title">${esc(n.title || "Untitled")}</h1>
+      body.innerHTML = `${n.img ? `<img class="cx-img" src="${n.img}" alt="">` : ""}<h1 class="cx-title">${esc(n.title || "Untitled")}</h1>
         <div class="meta"><span class="tag" style="border-color:${CATS[n.cat]};color:${CATS[n.cat]}">${esc(n.cat)}</span>${(n.tags || "").split(",").map(t => t.trim()).filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join("")}<span>Edited ${new Date(n.updated || Date.now()).toLocaleDateString()}</span></div>
         <div class="prose">${md(n.body, notes()) || `<p style="color:var(--faint)">Nothing written yet. Switch to Write.</p>`}</div>
         <div class="backlinks"><div class="eyebrow" style="margin-bottom:8px">Mentioned in</div><div class="chips">${bl.length ? bl.map(b => `<button class="chip" data-bl="${b.kind}:${b.id}">${icon(b.kind === "note" ? "codex" : "chronicle")} ${esc(b.label)}</button>`).join("") : `<span style="color:var(--faint);font-size:14px">Nothing links here yet. Write [[${esc(n.title)}]] anywhere to connect it.</span>`}</div></div>`;
@@ -98,6 +99,7 @@ export function createCodex(el, App) {
           <label class="f"><span>Section</span><select id="eC">${Object.keys(CATS).map(c => `<option ${c === n.cat ? "selected" : ""}>${c}</option>`).join("")}</select></label>
           <label class="f" style="grid-column:span 2"><span>Tags</span><input type="text" id="eG" value="${esc(n.tags)}" placeholder="act 2, north, villain"></label>
         </div>
+        <div class="row"><button class="btn sm" id="eImg">${icon("image")} ${n.img ? "Change picture" : "Add a picture"}</button>${n.img ? `<button class="btn sm ghost" id="eImgX">Remove picture</button>` : ""}<input type="file" id="eFile" accept="image/*" hidden><span class="md-help">Shown on the page and in name cards on stream.</span></div>
         <textarea class="body-in" id="eB" placeholder="Write freely. [[Link another page]] by its title.">${esc(n.body)}</textarea>
         <div class="md-help"><code># Heading</code> · <code>**bold**</code> · <code>*italic*</code> · <code>- list</code> · <code>&gt; quote</code> · <code>[[Page title]]</code> links a page (missing ones are created when you click them)</div>
       </div>`;
@@ -106,12 +108,15 @@ export function createCodex(el, App) {
       $("#eC", body).onchange = e => { n.cat = e.target.value; touch(); };
       $("#eG", body).oninput = e => { n.tags = e.target.value; touch(); };
       $("#eB", body).oninput = e => { n.body = e.target.value; touch(); };
+      $("#eImg", body).onclick = () => $("#eFile", body).click();
+      $("#eFile", body).onchange = async e => { const f = e.target.files[0]; if (f) { n.img = await shrinkImage(f, 700); n.updated = Date.now(); save(); renderPage(); } };
+      $("#eImgX", body)?.addEventListener("click", () => { delete n.img; save(); renderPage(); });
       if (!n.title) $("#eT", body).focus();
     }
     $$("[data-m]", page).forEach(b => b.onclick = () => { st.mode = b.dataset.m; renderPage(); });
     $("#cxPin", page).onclick = () => App.pinToBoard({ type: "ref", ref: n.id, w: 240, color: { Locations: "lichen", NPCs: "rose", Quests: "mustard", Items: "plum", Factions: "sky" }[n.cat] || "paper" });
     $("#cxShow", page).onclick = () => App.showHandout({ id: "note:" + n.id, type: "text", style: "parchment", title: n.title, text: String(n.body || "").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\*\*|^#+\s*/gm, "") });
-    $("#cxIntro", page)?.addEventListener("click", () => App.lowerThird({ name: n.title, sub: n.tags || n.cat, color: CATS[n.cat] }));
+    $("#cxIntro", page)?.addEventListener("click", () => App.lowerThird({ name: n.title, sub: n.tags || n.cat, color: CATS[n.cat], portrait: n.img }));
     $("#cxStar", page).onclick = () => { n.pinned = !n.pinned; save(); renderList(); renderPage(); };
     $("#cxDel", page).onclick = () => App.confirm(`Delete "${n.title || "Untitled"}"?`, "The page is removed. Board cards that point to it will show as missing.", "Delete page", () => {
       C().notes = notes().filter(x => x.id !== n.id); st.sel = null; save(); renderCats(); renderList(); renderPage();

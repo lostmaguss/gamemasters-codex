@@ -57,7 +57,8 @@ export function createCombat(el, App) {
          <button class="btn icon" id="cbPost" title="Post the turn order to Discord">${icon("discord")}</button>
          <button class="btn" id="cbEnd">End combat</button>`
       : `<div><div class="eyebrow">Combat</div><h2>${b.list.length ? "Ready to fight" : "No fight yet"}</h2></div><div style="flex:1"></div>
-         <button class="btn" id="cbRollAll">${icon("dice")} Roll initiative for foes</button>
+         ${C().party.length ? `<label class="toggle" title="Roll the players' initiative from a sheet stat"><input type="checkbox" id="cbPcRoll" ${b.pcStat ? "checked" : ""}> Roll for players with</label><select id="cbPcStat" style="width:auto;height:32px" ${b.pcStat ? "" : "disabled"}>${(C().sheet?.stats || ["Agility"]).map(x => `<option ${x === b.pcStat ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>` : ""}
+         <button class="btn" id="cbRollAll">${icon("dice")} Roll initiative</button>
          <button class="btn primary roll-btn" id="cbStart" ${b.list.length ? "" : "disabled"}>Start combat</button>`;
     $("#cbNext", box)?.addEventListener("click", () => next(1));
     $("#cbPrev", box)?.addEventListener("click", () => next(-1));
@@ -68,16 +69,22 @@ export function createCombat(el, App) {
       b.active = false; b.list = b.list.filter(x => x.kind !== "foe" || Number(x.hp) > 0); b.list.forEach(x => x.conds = []); b.turn = 0; b.round = 1; log("Combat ended"); changed(); App.logBeat?.("combat", "The fight ends.", true);
     }));
     $("#cbRollAll", box)?.addEventListener("click", rollFoes);
+    $("#cbPcRoll", box)?.addEventListener("change", e => { b.pcStat = e.target.checked ? $("#cbPcStat", box).value : ""; save(); renderHead(); });
+    $("#cbPcStat", box)?.addEventListener("change", e => { b.pcStat = e.target.value; save(); });
     $("#cbStart", box)?.addEventListener("click", start);
+  }
+  function pcInit(x) {
+    const b = cb(), m = C().party.find(p => p.id === x.ref), v = parseInt(m?.stats?.[b.pcStat]) || 0;
+    return rnd(20) + 1 + v;
   }
   function rollFoes() {
     const b = cb(); let n = 0;
-    b.list.forEach(x => { if (x.kind !== "pc" && (x.init === "" || x.init == null)) { x.init = rnd(20) + 1 + (Number(x.initMod) || 0); x.tie = Math.random(); n++; } });
+    b.list.forEach(x => { if ((x.init === "" || x.init == null) && (x.kind !== "pc" || b.pcStat)) { x.init = x.kind === "pc" ? pcInit(x) : rnd(20) + 1 + (Number(x.initMod) || 0); x.tie = Math.random(); n++; } });
     sortCombat(b); changed(); toast(n ? `Rolled initiative for ${n}` : "Everyone already has initiative");
   }
   function start() {
     const b = cb();
-    b.list.forEach(x => { if (x.kind !== "pc" && (x.init === "" || x.init == null)) { x.init = rnd(20) + 1 + (Number(x.initMod) || 0); x.tie = Math.random(); } });
+    b.list.forEach(x => { if ((x.init === "" || x.init == null) && (x.kind !== "pc" || b.pcStat)) { x.init = x.kind === "pc" ? pcInit(x) : rnd(20) + 1 + (Number(x.initMod) || 0); x.tie = Math.random(); } });
     const missing = b.list.filter(x => x.init === "" || x.init == null);
     if (missing.length) { toast(`Enter initiative for ${missing.map(x => x.name).join(", ")}`); render(); return; }
     sortCombat(b); b.active = true; b.round = 1; b.turn = 0; log("Combat started"); changed();

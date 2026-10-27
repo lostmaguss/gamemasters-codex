@@ -236,7 +236,7 @@ export function createLive(el, App) {
     $("#lvFight", box)?.addEventListener("click", () => App.go("combat"));
     $$("[data-open]", box).forEach(b => b.onclick = () => App.go("bestiary", { creature: b.dataset.open }));
     $$("[data-note]", box).forEach(b => b.onclick = () => App.go("codex", { note: b.dataset.note }));
-    $$("[data-intro]", box).forEach(b => b.onclick = () => { const n = c.notes.find(x => x.id === b.dataset.intro); App.lowerThird({ name: n.title, sub: n.tags || n.cat, color: n.cat === "NPCs" ? "#f39da8" : "#b8d8a8" }); });
+    $$("[data-intro]", box).forEach(b => b.onclick = () => { const n = c.notes.find(x => x.id === b.dataset.intro); App.lowerThird({ name: n.title, sub: n.tags || n.cat, color: n.cat === "NPCs" ? "#f39da8" : "#b8d8a8", portrait: n.img }); });
   }
   function renderAll() { renderHead(); renderSound(); renderHand(); renderPlan(); }
   App.sound.onChange(() => { if (!el.closest("[hidden]")) renderSound(); });

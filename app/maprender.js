@@ -25,6 +25,8 @@ export function drawMap(ctx, W, H, { map, img, fog, view, gm, current, fogTex })
     ctx.stroke();
   }
   const cell = g.size || 70;
+  // area templates (circles, cones, lines) sit under the tokens
+  for (const a of map.areas || []) drawArea(ctx, a, view);
   for (const t of map.tokens || []) {
     if (t.hidden && !gm) continue;
     const r = (t.size || 1) * cell * .44;
@@ -58,6 +60,29 @@ export function drawMap(ctx, W, H, { map, img, fog, view, gm, current, fogTex })
     } else ctx.drawImage(fog, 0, 0, map.w, map.h);
     ctx.restore();
   }
+  ctx.restore();
+}
+export function drawArea(ctx, a, view, live) {
+  ctx.save();
+  const col = a.color || "#ff7a3d";
+  ctx.fillStyle = col + (live ? "40" : "33"); ctx.strokeStyle = col; ctx.lineWidth = 2.5 / view.z;
+  const dx = a.x2 - a.x1, dy = a.y2 - a.y1, len = Math.hypot(dx, dy), ang = Math.atan2(dy, dx);
+  ctx.beginPath();
+  if (a.shape === "circle") ctx.arc(a.x1, a.y1, len, 0, 7);
+  else if (a.shape === "cone") { ctx.moveTo(a.x1, a.y1); ctx.arc(a.x1, a.y1, len, ang - Math.PI / 6, ang + Math.PI / 6); ctx.closePath(); }
+  else if (a.shape === "line") { const w = (a.w || 1) * .5 * (a.cell || 70), nx = -Math.sin(ang) * w, ny = Math.cos(ang) * w; ctx.moveTo(a.x1 + nx, a.y1 + ny); ctx.lineTo(a.x2 + nx, a.y2 + ny); ctx.lineTo(a.x2 - nx, a.y2 - ny); ctx.lineTo(a.x1 - nx, a.y1 - ny); ctx.closePath(); }
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+export function drawRuler(ctx, p1, p2, view, label) {
+  ctx.save();
+  const a = { x: view.x + p1.x * view.z, y: view.y + p1.y * view.z }, b = { x: view.x + p2.x * view.z, y: view.y + p2.y * view.z };
+  ctx.strokeStyle = "#ffcf5a"; ctx.lineWidth = 3; ctx.setLineDash([10, 6]);
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = "#ffcf5a"; [a, b].forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 7); ctx.fill(); });
+  ctx.font = '700 16px "JetBrains Mono", monospace'; const tw = ctx.measureText(label).width + 16;
+  ctx.fillStyle = "rgba(20,15,17,.9)"; ctx.fillRect(b.x + 12, b.y - 14, tw, 28);
+  ctx.fillStyle = "#ffcf5a"; ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.fillText(label, b.x + 20, b.y);
   ctx.restore();
 }
 export function fitView(map, W, H, pad = 20) {
