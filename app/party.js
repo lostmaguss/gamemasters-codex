@@ -44,7 +44,8 @@ export function createParty(el, App) {
       <header>
         <button class="portrait" data-portrait title="Change portrait" style="${m.portrait ? `background-image:url(${m.portrait})` : ""}">${m.portrait ? "" : esc((m.character || m.player || "?")[0] || "?")}</button>
         <div class="who"><input class="cname" type="text" data-k="character" value="${esc(m.character)}" placeholder="Character name">
-          <div class="row" style="gap:6px"><input type="text" data-k="role" value="${esc(m.role)}" placeholder="Class / role" style="flex:1"><input type="text" data-k="player" value="${esc(m.player)}" placeholder="Player" style="width:110px"></div></div>
+          <div class="row" style="gap:6px"><input type="text" data-k="role" value="${esc(m.role)}" placeholder="Class / role" style="flex:1"><input type="text" data-k="player" value="${esc(m.player)}" placeholder="Player" style="width:110px"></div>
+          <input type="text" data-k="discord" value="${esc(m.discord || "")}" placeholder="Discord name (for /check, /init, /me)" class="dc-in"></div>
         <div class="pt-ops"><input type="color" data-k="color" value="${esc(m.color)}" title="Color"><button class="tb" data-rm title="Remove">${icon("trash")}</button></div>
       </header>
       <div class="resources">${L.resources.map(n => { const x = r(n), cur = Number(x.cur), max = Number(x.max), pct = max ? Math.max(0, Math.min(100, cur / max * 100)) : 0;
@@ -98,7 +99,7 @@ export function createParty(el, App) {
       $("[data-ok]", mm).onclick = () => {
         const lines = id => $(id, mm).value.split("\n").map(s => s.trim()).filter(Boolean);
         Object.assign(L, { stats: lines("#lS"), resources: lines("#lR"), fields: lines("#lF").length ? lines("#lF") : ["Notes"], roll: $("#lRoll", mm).value.trim() || "1d20+{value}" });
-        save(); close(); render();
+        save(); close(); render(); App.botConfig?.();
       };
     });
   }

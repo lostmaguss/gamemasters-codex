@@ -2,7 +2,7 @@
 // and the bot answers with the result. Runs in the main process with the GM's own bot token.
 const { ipcMain } = require("electron");
 
-let client = null, status = { state: "off" }, desk = null, appId = null;
+let client = null, status = { state: "off" }, desk = null, appId = null, stats = [];
 const pending = new Map();
 const COMMANDS = () => {
   const { SlashCommandBuilder } = require("discord.js");
@@ -13,17 +13,29 @@ const COMMANDS = () => {
     new SlashCommandBuilder().setName("r").setDescription("Short for /roll")
       .addStringOption(o => o.setName("dice").setDescription("Like 1d20+5").setRequired(true))
       .addStringOption(o => o.setName("for").setDescription("What it's for").setRequired(false)),
+    new SlashCommandBuilder().setName("check").setDescription("Roll one of your character's stats")
+      .addStringOption(o => { o.setName("stat").setDescription("Which stat").setRequired(true); if (stats.length) o.addChoices(...stats.slice(0, 25).map(x => ({ name: x, value: x }))); return o; })
+      .addIntegerOption(o => o.setName("bonus").setDescription("Extra bonus or penalty, like 2 or -1").setRequired(false)),
+    new SlashCommandBuilder().setName("init").setDescription("Roll your initiative into the GM's combat tracker")
+      .addStringOption(o => o.setName("dice").setDescription("Leave empty to use the table's rule").setRequired(false)),
+    new SlashCommandBuilder().setName("me").setDescription("See your character sheet (only you see it)"),
   ].map(c => c.toJSON());
 };
 const tell = () => desk && !desk.isDestroyed() && desk.webContents.send("bot:status", { ...status, invite: appId ? `https://discord.com/oauth2/authorize?client_id=${appId}&scope=bot%20applications.commands&permissions=2048` : null });
 
 function handle(i) {
-  const expr = i.options.getString("dice"), label = i.options.getString("for") || "";
+  const cmd = i.commandName === "r" ? "roll" : i.commandName || "roll";
   const who = i.member?.displayName || i.user?.globalName || i.user?.username || "Player";
+  const names = [i.member?.displayName, i.user?.globalName, i.user?.username].filter(Boolean);
   const id = "bot-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const t = setTimeout(() => { pending.delete(id); i.editReply({ content: "The GM's table didn't answer. Is Gamemaster's Codex open?" }).catch(() => {}); }, 30000);
   pending.set(id, { i, t });
-  return i.deferReply().then(() => desk && desk.webContents.send("bot:roll", { id, expr, label, who }));
+  const args = { dice: i.options.getString("dice"), label: i.options.getString("for") || "", stat: i.options.getString?.("stat"), bonus: i.options.getInteger?.("bonus") };
+  return i.deferReply({ ephemeral: cmd === "me" }).then(() => desk && desk.webContents.send("bot:roll", { id, cmd, expr: args.dice, label: args.label, args, who, names }));
+}
+async function register() {
+  if (!client?.isReady?.()) return;
+  for (const g of client.guilds.cache.values()) await g.commands.set(COMMANDS()).catch(() => {});
 }
 
 async function start(token) {
@@ -38,7 +50,7 @@ async function start(token) {
     for (const g of c.guilds.cache.values()) await g.commands.set(COMMANDS()).catch(e => { status = { ...status, warn: `Couldn't add /roll to ${g.name}: ${e.message}` }; tell(); });
   });
   client.on(Events.GuildCreate, g => { g.commands.set(COMMANDS()).catch(() => {}); status.servers = client.guilds.cache.size; tell(); });
-  client.on(Events.InteractionCreate, i => { if (i.isChatInputCommand?.() && (i.commandName === "roll" || i.commandName === "r")) handle(i).catch(() => {}); });
+  client.on(Events.InteractionCreate, i => { if (i.isChatInputCommand?.() && ["roll", "r", "check", "init", "me"].includes(i.commandName)) handle(i).catch(() => {}); });
   client.on(Events.Error, e => { status = { state: "error", error: String(e.message || e) }; tell(); });
   try { await client.login(token); }
   catch (e) {
@@ -53,16 +65,17 @@ function setup(getDesk) {
   ipcMain.on("bot:start", (_e, token) => { desk = getDesk(); start(token); });
   ipcMain.on("bot:stop", () => stop());
   ipcMain.handle("bot:status", () => ({ ...status }));
+  ipcMain.on("bot:config", (_e, cfg) => { const next = (cfg.stats || []).filter(Boolean); if (JSON.stringify(next) !== JSON.stringify(stats)) { stats = next; register(); } });
   ipcMain.on("bot:result", (_e, { id, ok, error, embed }) => {
     const p = pending.get(id); if (!p) return;
     clearTimeout(p.t); pending.delete(id);
-    p.i.editReply(ok ? { embeds: [embed] } : { content: error || "That roll didn't work." }).catch(() => {});
+    p.i.editReply(ok ? { embeds: [embed], content: "" } : { content: error || "That roll didn't work." }).catch(() => {});
   });
   // lets the test suite play a fake player without a real Discord connection
   if (process.env.CODEX_BOT_TEST) {
-    ipcMain.handle("bot:fake", (_e, { dice, label, who }) => new Promise(res => {
+    ipcMain.handle("bot:fake", (_e, { cmd = "roll", dice, label, who, stat, bonus }) => new Promise(res => {
       desk = getDesk();
-      const i = { options: { getString: k => k === "dice" ? dice : label }, member: { displayName: who }, deferReply: async () => {}, editReply: async m => res(m) };
+      const i = { commandName: cmd, options: { getString: k => ({ dice, for: label, stat })[k] ?? null, getInteger: k => k === "bonus" ? bonus ?? null : null }, member: { displayName: who }, user: { username: who.toLowerCase() }, deferReply: async () => {}, editReply: async m => res(m) };
       handle(i);
     }));
   }

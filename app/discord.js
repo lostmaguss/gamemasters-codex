@@ -75,7 +75,8 @@ export function discordModal(App) {
         <li>Open <b>discord.com/developers/applications</b> → <b>New Application</b>, name it (for example "Codex Dice").</li>
         <li>Go to <b>Bot</b> → <b>Reset Token</b> → copy the token and paste it below. Keep it private, like a password.</li>
         <li>Press <b>Connect</b>. When it says online, open the <b>invite link</b> that appears and add the bot to your server.</li>
-        <li>In Discord, type <code>/roll</code>. Rolls only work while this app is open.</li></ol></details>
+        <li>In Discord, type <code>/roll</code>. Rolls only work while this app is open.</li>
+        <li>Put each player's Discord name on their party sheet, and they can use <code>/check Agility</code> (their own stat and formula), <code>/init</code> (straight into your combat tracker) and <code>/me</code> (their sheet, only they see it).</li></ol></details>
       <div class="row"><input type="password" id="botTok" placeholder="Bot token" value="${esc(S.data.prefs.bot?.token || "")}" style="flex:1" autocomplete="off"><button class="btn" id="botGo">Connect</button><button class="btn ghost" id="botOff">Disconnect</button></div>
       <div id="botInv"></div>
     </div>

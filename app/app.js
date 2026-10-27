@@ -194,6 +194,7 @@ function rollToast(r) {
   setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 400); }, r.pending ? 15000 : 7000);
 }
 function onStageResult(r) {
+  if (App._initWait?.id === r.id) { const w = App._initWait; App._initWait = null; App.recordRoll(r); w.apply(r); const pend = document.querySelector(`.rtoast[data-id="${r.id}"]`); pend?.remove(); if (current !== "dice") rollToast(r); return; }
   App.recordRoll(r); botReply(r);
   const pend = document.querySelector(`.rtoast[data-id="${r.id}"]`); pend?.remove();
   if (current === "dice") mounted.dice?.showResult?.(r); else rollToast(r);
@@ -442,11 +443,49 @@ function wireBot() {
   const B = window.codex?.bot; if (!B) return;
   B.onStatus(st => { App._botStatus?.(st); if (st.state === "online" && !App._botToasted) { App._botToasted = true; toast(`Dice bot online as ${st.tag}`); } });
   B.onRoll(req => {
-    try { parseRoll(req.expr); } catch (e) { B.reply({ id: req.id, ok: false, error: `Couldn't read "${req.expr}": ${e.message}` }); return; }
+    const fail = error => B.reply({ id: req.id, ok: false, error });
+    const c = C(), names = (req.names || [req.who]).map(n => String(n).toLowerCase());
+    const member = c.party.find(m => m.discord && names.includes(String(m.discord).trim().replace(/^@/, "").toLowerCase()));
+    const unlinked = `I don't know which character you play. Ask the GM to put your Discord name (${req.who}) on your party sheet.`;
+    if (req.cmd === "check") {
+      if (!member) return fail(unlinked);
+      const stat = req.args.stat, v = parseInt(member.stats?.[stat]);
+      if (isNaN(v)) return fail(`${member.character || member.player} has no number for ${stat} yet.`);
+      const L = c.sheet || { roll: "1d20+{value}" };
+      let expr = (L.roll || "1d20+{value}").replace(/\{value\}/g, v).replace(/\+-/g, "-");
+      if (req.args.bonus) expr += (req.args.bonus > 0 ? "+" : "-") + Math.abs(req.args.bonus);
+      botPending.add(req.id);
+      const r = App.roll(expr, `${stat}${req.args.bonus ? ` (${req.args.bonus > 0 ? "+" : ""}${req.args.bonus})` : ""}`, { who: member.character || req.who, id: req.id });
+      if (r) botReply(r); return;
+    }
+    if (req.cmd === "init") {
+      if (!member) return fail(unlinked);
+      const cb = c.combat; const x = cb?.list.find(y => y.ref === member.id);
+      if (!x) return fail("You're not in the GM's combat tracker yet. Ask the GM to add the party.");
+      let expr = req.args.dice;
+      if (!expr) { const v = parseInt(member.stats?.[cb.pcStat || "Agility"]); expr = "1d20" + (isNaN(v) || !v ? "" : (v > 0 ? "+" : "-") + Math.abs(v)); }
+      try { parseRoll(expr); } catch (e) { return fail(`Couldn't read "${expr}": ${e.message}`); }
+      const r = App.roll(expr, "Initiative", { who: member.character || req.who, id: req.id });
+      const apply = res => { x.init = res.total; x.tie = Math.random(); import("./combat.js").then(m => { if (!cb.active) m.sortCombat(cb); save(); m.pushCombat(); mounted.combat?.refresh?.(); }); const order = cb.list.indexOf(x) + 1; B.reply({ id: req.id, ok: true, embed: { ...Discord.rollEmbed(res), footer: { text: `Initiative set${cb.active ? "" : ` · you're #${order} of ${cb.list.length}`}` } } }); };
+      if (r) apply(r); else App._initWait = { id: req.id, apply };
+      return;
+    }
+    if (req.cmd === "me") {
+      if (!member) return fail(unlinked);
+      const L = c.sheet || { stats: [], resources: [] };
+      const res = (L.resources || []).map(n => { const x = member.res?.[n] || {}; return `**${n}** ${x.cur ?? "?"}/${x.max ?? "?"}`; }).join("  ·  ");
+      const stats = (L.stats || []).map(n => `${n} **${member.stats?.[n] ?? "—"}**`).join("  ·  ");
+      B.reply({ id: req.id, ok: true, embed: { color: parseInt(String(member.color || "#ff7a3d").slice(1), 16) || 0xff7a3d, title: member.character || member.player, description: [member.role, res, stats, member.conds?.length ? `*${member.conds.join(", ")}*` : ""].filter(Boolean).join("\n\n") } });
+      return;
+    }
+    try { parseRoll(req.expr); } catch (e) { return fail(`Couldn't read "${req.expr}": ${e.message}`); }
     botPending.add(req.id);
-    const r = App.roll(req.expr, req.label, { who: req.who, id: req.id });
+    const r = App.roll(req.expr, req.label, { who: member?.character || req.who, id: req.id });
     if (r) botReply(r);
   });
+  const sendCfg = () => B.config({ stats: (C().sheet?.stats || []).slice(0, 25) });
+  B.onStatus(st => { if (st.state === "online") sendCfg(); });
+  App.botConfig = sendCfg;
   const p = S.data.prefs.bot; if (p?.token && p.on) B.start(p.token);
 }
 
