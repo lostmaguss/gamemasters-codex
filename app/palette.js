@@ -27,7 +27,12 @@ export function openPalette(App, VIEWS) {
     cmd("Take the handout off stream", "image", () => App.hideHandout(), "hide");
     ["npc", "place", "mission", "item"].forEach(k => cmd(`Generate ${k === "npc" ? "an NPC" : k === "item" ? "an item" : "a " + k}`, "forge", () => App.go("forge", { draw: k }), "forge random"));
     c.notes.forEach(n => out.push({ kind: n.cat, label: n.title || "Untitled", icon: "codex", sub: (n.body || "").slice(0, 80), run: () => App.go("codex", { note: n.id }) }));
-    c.sessions.forEach(s => out.push({ kind: "Session", label: `Session ${s.num}${s.title ? ": " + s.title : ""}`, icon: "chronicle", run: () => s.status === "planned" ? App.go("prep") : App.go("chronicle", { session: s.id }) }));
+    c.sessions.forEach(s => {
+      const open = () => s.status === "planned" ? App.go("prep") : App.go("chronicle", { session: s.id });
+      out.push({ kind: "Session", label: `Session ${s.num}${s.title ? ": " + s.title : ""}`, icon: "chronicle", run: open });
+      (s.beats || []).filter(b => b.text).forEach(b => out.push({ kind: `Session ${s.num} scene`, label: b.text.replace(/\[\[|\]\]/g, "").slice(0, 90), icon: b.type, run: open }));
+      (s.quotes || []).filter(q => q.line).forEach(q => out.push({ kind: `Quote · S${s.num}`, label: `“${q.line.slice(0, 80)}”`, sub: q.who, icon: "social", run: open }));
+    });
     c.bestiary.forEach(x => out.push({ kind: "Creature", label: x.name, icon: "death", sub: x.kind, run: () => App.go("bestiary", { creature: x.id }) }));
     c.party.forEach(m => out.push({ kind: "Party", label: m.character || m.player, icon: "social", sub: m.role, run: () => App.go("party") }));
     c.tables.forEach(t => out.push({ kind: "Roll table", label: t.name, icon: "tables", run: () => { const r = rollTable(c, t.id); toast(`${t.name}: ${r.text}`); } }));

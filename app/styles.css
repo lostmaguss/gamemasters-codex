@@ -934,3 +934,18 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .live-head { gap: 12px; }
 .lv-log { min-width: 240px; flex: 1 1 300px; }
 .live-head h2 { font-size: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
+.ck-list { overflow: visible; }
+.rep { padding: 0 24px 60px; }
+.rep .sec-h h3 { font-size: 24px; }
+.rep-row { display: grid; grid-template-columns: minmax(140px, 220px) auto 120px 24px; gap: 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.rep-row b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rep-bar { display: flex; gap: 3px; }
+.rep-bar button { width: 26px; height: 18px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
+.rep-bar button.neg:hover, .rep-bar button.neg.on { background: var(--bad); border-color: var(--bad); }
+.rep-bar button.pos:hover, .rep-bar button.pos.on { background: var(--good); border-color: var(--good); }
+.rep-bar button.mid:hover, .rep-bar button.mid.on { background: var(--dim); border-color: var(--dim); }
+.rep-w { font-size: 13px; color: var(--dim); }
+.rep-row .tb { border: 0; background: none; color: var(--faint); cursor: pointer; }
+.rep-row .ic { width: 13px; height: 13px; }
+.apply { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--ember); background: color-mix(in srgb, var(--ember) 10%, var(--surface)); }
+.apply .chip { color: var(--ink); }

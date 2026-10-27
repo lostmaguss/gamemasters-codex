@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.17.0", title: "Faster fights & reputation", items: ["Combat: roll a monster's damage, then tap who takes it (or half)", "Reputation: track how factions and people see the party, from Sworn enemies to Devoted (Clocks view)", "Ctrl+K now finds scenes and quotes inside your sessions"] },
   { v: "1.16.0", title: "Whispers", items: ["Send a secret to one player as a private Discord message from your dice bot", "Whisper from a party sheet (lock icon), from any handout in Live, or Ctrl+K → Whisper", "Players are linked automatically the first time they use a bot command"] },
   { v: "1.15.0", title: "Improv kit", items: ["Live: one-click NPC, place, loot or names, with Introduce, Save and Log buttons", "Spotlight tracker in Live: tap a player when they shine; whoever's waited longest glows", "Spotlight taps fill the Chronicle's stars when the session ends", "Discord: optional 'Previously on…' post at session start and a summary at the end"] },
   { v: "1.14.0", title: "Faster saving", items: ["Pictures (handouts, board images, portraits, creature art) are now kept as files beside your save, so saving stays quick", "Your existing pictures were moved automatically", "Exported backups still carry every picture inside"] },

@@ -97,13 +97,15 @@ export const App = {
   refreshAll() { for (const k in mounted) if (k !== current) mounted[k].refresh?.(); mounted[current]?.refresh?.(); },
 
   // ---- rolls from anywhere: stream window when open (unless secret), otherwise right here ----
-  roll(expr, label = "", { secret = false, who = "", id = uid() } = {}) {
+  roll(expr, label = "", { secret = false, who = "", id = uid(), onResult } = {}) {
     let terms; try { terms = parseRoll(expr); } catch (e) { toast(e.message); return; }
     const req = { id, expr, label, who, rules: C().rules };
+    if (onResult) App._rollCbs.set(id, onResult);
     if (!secret && App.streamLive) { Stage.roll(req); rollToast({ ...req, pending: true }); return; }
     const vals = diceGroups(terms).map(g => Array.from({ length: g.count }, () => rnd(g.sides) + 1));
     const r = buildResult(req, terms, vals); r.secret = secret;
     App.recordRoll(r); rollToast(r);
+    const cb = App._rollCbs.get(id); if (cb) { App._rollCbs.delete(id); cb(r); }
     return r;
   },
   recordRoll(r) {
@@ -111,6 +113,7 @@ export const App = {
     if (!r.secret && Discord.settings(c).autoRolls && Discord.connected(c)) Discord.postRoll(r, { quiet: true });
     mounted.dice?.addLog?.(r);
   },
+  _rollCbs: new Map(),
   logBeat(type, text, quiet) {
     const s = C().sessions.find(x => x.status === "live");
     if (!s) { toast("Start a session (Prep or Live) to log scenes"); return; }
@@ -196,6 +199,7 @@ function rollToast(r) {
 function onStageResult(r) {
   if (App._initWait?.id === r.id) { const w = App._initWait; App._initWait = null; App.recordRoll(r); w.apply(r); const pend = document.querySelector(`.rtoast[data-id="${r.id}"]`); pend?.remove(); if (current !== "dice") rollToast(r); return; }
   App.recordRoll(r); botReply(r);
+  const rcb = App._rollCbs.get(r.id); if (rcb) { App._rollCbs.delete(r.id); rcb(r); }
   const pend = document.querySelector(`.rtoast[data-id="${r.id}"]`); pend?.remove();
   if (current === "dice") mounted.dice?.showResult?.(r); else rollToast(r);
 }

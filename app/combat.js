@@ -217,10 +217,20 @@ export function createCombat(el, App) {
         : `<label class="f"><span>Note</span><textarea id="cbNote" rows="3" placeholder="Anything to remember about ${esc(x.name)}">${esc(x.note || "")}</textarea></label>`}
         <div class="row" style="margin-top:8px"><label class="f" style="width:90px"><span>Max HP</span><input type="number" id="cbMax" value="${esc(x.max)}"></label><label class="f" style="width:90px"><span>Defense</span><input type="text" id="cbDef" value="${esc(x.def || "")}"></label><label class="f" style="width:90px"><span>Init bonus</span><input type="number" id="cbMod" value="${esc(x.initMod || "")}"></label></div>
       </section>` : ""}
+      ${st.lastRoll ? `<section class="apply"><div class="eyebrow">Last roll: ${esc(st.lastRoll.label)} = <b class="mono">${st.lastRoll.total}</b></div>
+        <div class="chips" style="margin-top:6px">${b.list.filter(y => y.id !== st.lastRoll.by && y.max !== "" && y.max != null).map(y => `<button class="chip" data-apply="${y.id}" style="border-color:${esc(y.color || KIND[y.kind].color)}">${esc(y.name)}</button>`).join("")}</div>
+        <div class="row" style="gap:6px;margin-top:6px"><button class="btn sm" data-half>Half (${Math.floor(st.lastRoll.total / 2)})</button><button class="btn sm ghost" data-clear>Dismiss</button></div></section>` : ""}
       <section><div class="sec-h"><h3>Combat log</h3><div class="line"></div></div><ul class="cb-log">${b.log.slice(0, 40).map(l => `<li><span class="mono">R${l.r}</span>${esc(l.msg)}</li>`).join("") || `<li style="color:var(--faint)">Damage, conditions and turns are logged here.</li>`}</ul></section>`;
+    let half = false;
+    $("[data-half]", box)?.addEventListener("click", e => { half = !half; e.currentTarget.classList.toggle("on", half); });
+    $("[data-clear]", box)?.addEventListener("click", () => { st.lastRoll = null; renderSide(); });
+    $$("[data-apply]", box).forEach(btn => btn.onclick = () => { const y = b.list.find(z => z.id === btn.dataset.apply); const dmg = half ? Math.floor(st.lastRoll.total / 2) : st.lastRoll.total; applyHp(y, String(dmg)); st.lastRoll = null; changed(); });
     if (!x) return;
     $("#cbSec", box)?.addEventListener("change", e => { st.secret = e.target.checked; ls.set("cb.secret", st.secret); });
-    $$("[data-roll]", box).forEach(btn => btn.onclick = () => { const a = cr.abilities.find(y => y.id === btn.dataset.roll); App.roll(a.roll, `${x.name}: ${a.name}`, { secret: st.secret }); });
+    $$("[data-roll]", box).forEach(btn => btn.onclick = () => {
+      const a = cr.abilities.find(y => y.id === btn.dataset.roll);
+      App.roll(a.roll, `${x.name}: ${a.name}`, { secret: st.secret, onResult: r => { st.lastRoll = { total: r.total, label: a.name, by: x.id }; renderSide(); } });
+    });
     $("#cbNote", box)?.addEventListener("input", e => { x.note = e.target.value; save(); });
     $("#cbMax", box).onchange = e => { x.max = e.target.value === "" ? "" : Number(e.target.value); if (x.hp === "" || x.hp == null) x.hp = x.max; changed(); };
     $("#cbDef", box).onchange = e => { x.def = e.target.value; changed(); };

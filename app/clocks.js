@@ -12,13 +12,15 @@ export function clockSVG(segs, filled, color, size = 120) {
   }
   return `<svg class="clock-svg" viewBox="0 0 100 100" width="${size}" height="${size}">${parts.join("")}<circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3.5"/></svg>`;
 }
+const STANDING = ["Sworn enemies", "Hostile", "Wary", "Unfriendly", "Neutral", "Friendly", "Trusted", "Allied", "Devoted"];
+export const standing = v => STANDING[Math.max(0, Math.min(8, v + 4))];
 export function clocksStream(c = C()) { const list = (c.clocks || []).filter(k => k.onStream); return { kind: "clocks", show: list.length > 0, list: list.map(k => ({ name: k.name, segs: k.segs, filled: k.filled, color: k.color })) }; }
 const pushClocks = () => Stage.overlay(clocksStream());
 
 const DEFAULT_CAL = { months: ["Deepwinter", "Thawing", "Seedtime", "Greening", "Highsun", "Goldfall", "Harvest", "Ashfall", "Frostfall", "Longnight"].map(n => ({ name: n, days: 30 })), weekdays: ["Moonday", "Tideday", "Ashday", "Thornday", "Feastday", "Starday", "Restday"], year: 412, month: 7, day: 2, era: "AC", events: [] };
 
 export function createClocks(el, App) {
-  el.innerHTML = `<div class="clocksv"><header class="pt-head"><div><div class="eyebrow">World</div><h2>Clocks & calendar</h2></div><div style="flex:1"></div><button class="btn primary" id="ckAdd">${icon("plus")} New clock</button></header><div class="ck-grid"><section class="ck-list" id="ckList"></section><aside class="ck-cal" id="ckCal"></aside></div></div>`;
+  el.innerHTML = `<div class="clocksv"><header class="pt-head"><div><div class="eyebrow">World</div><h2>Clocks & calendar</h2></div><div style="flex:1"></div><button class="btn primary" id="ckAdd">${icon("plus")} New clock</button></header><div class="ck-grid"><div style="overflow:auto;min-width:0"><section class="ck-list" id="ckList"></section><section class="rep" id="ckRep"></section></div><aside class="ck-cal" id="ckCal"></aside></div></div>`;
   const clocks = () => (C().clocks ||= []);
   const cal = () => (C().calendar ||= JSON.parse(JSON.stringify(DEFAULT_CAL)));
   const touch = debounce(save, 300);
@@ -84,6 +86,25 @@ export function createClocks(el, App) {
     });
   }
   $("#ckAdd", el).onclick = () => { clocks().push({ id: uid(), name: "", segs: 6, filled: 0, color: ["#ff7a3d", "#f39da8", "#a8d3e4", "#b8d8a8", "#cfb2e2"][clocks().length % 5], note: "", onStream: false }); save(); renderClocks(); $$(".ck-name", el).pop()?.focus(); };
-  renderClocks(); renderCal(); pushClocks();
-  return { show() { renderClocks(); renderCal(); }, refresh() { renderClocks(); renderCal(); } };
+  function renderRep() {
+    const box = $("#ckRep", el), c = C(), R = (c.rep ||= []);
+    const factions = c.notes.filter(n => n.cat === "Factions" && !R.some(r => r.note === n.id));
+    box.innerHTML = `<div class="sec-h"><h3>Reputation</h3><div class="line"></div><button class="btn sm" id="repAdd">${icon("plus")} Add</button></div>
+      ${R.length ? R.map(r => { const n = r.note && c.notes.find(x => x.id === r.note); const name = n ? n.title : r.name; return `<div class="rep-row" data-id="${r.id}"><b>${esc(name)}</b>
+        <div class="rep-bar">${[-4, -3, -2, -1, 0, 1, 2, 3, 4].map(v => `<button data-v="${v}" class="${v === r.v ? "on" : ""} ${v < 0 ? "neg" : v > 0 ? "pos" : "mid"}" title="${standing(v)}"></button>`).join("")}</div>
+        <span class="rep-w">${standing(r.v)}</span><button class="tb" data-x title="Remove">${icon("x")}</button></div>`; }).join("")
+      : `<p class="md-help" style="margin:0">How the party stands with factions, towns and powerful people. Factions from your Codex can be added in one click.</p>`}`;
+    $("#repAdd", box).onclick = () => App.modal(`<h2>Track reputation with…</h2>${factions.length ? `<div class="chips">${factions.map(n => `<button class="chip" data-n="${n.id}">${esc(n.title)}</button>`).join("")}</div>` : ""}<label class="f"><span>Or type a name</span><input type="text" id="rN" placeholder="The Salt Kings"></label><div class="foot"><button class="btn primary" data-ok>Add</button></div>`, (m, close) => {
+      $$("[data-n]", m).forEach(b => b.onclick = () => { R.push({ id: uid(), note: b.dataset.n, v: 0 }); save(); close(); renderRep(); });
+      const ok = () => { const v = $("#rN", m).value.trim(); if (v) { R.push({ id: uid(), name: v, v: 0 }); save(); } close(); renderRep(); };
+      $("[data-ok]", m).onclick = ok; $("#rN", m).onkeydown = e => e.key === "Enter" && ok();
+    });
+    $$(".rep-row", box).forEach(row => {
+      const r = R.find(x => x.id === row.dataset.id);
+      $$("[data-v]", row).forEach(b => b.onclick = () => { const old = r.v; r.v = +b.dataset.v; save(); renderRep(); if (old !== r.v) toast(`${row.querySelector("b").textContent}: ${standing(r.v)}`); });
+      $("[data-x]", row).onclick = () => { c.rep = R.filter(x => x !== r); save(); renderRep(); };
+    });
+  }
+  renderClocks(); renderCal(); renderRep(); pushClocks();
+  return { show() { renderClocks(); renderCal(); renderRep(); }, refresh() { renderClocks(); renderCal(); renderRep(); } };
 }
