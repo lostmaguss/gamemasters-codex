@@ -90,7 +90,11 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           export CODEX_SMOKE="$RUNNER_TEMP/smoke.txt"
-          perl -e 'alarm 180; exec @ARGV' "dist-installer/mac-arm64/Gamemasters Codex.app/Contents/MacOS/Gamemasters Codex" > "$RUNNER_TEMP/app.log" 2>&1 || echo "exit code $?" >> "$RUNNER_TEMP/app.log"
+          # start it directly (macOS has no `timeout`) and stop it if it hangs for 3 minutes
+          "dist-installer/mac-arm64/Gamemasters Codex.app/Contents/MacOS/Gamemasters Codex" > "$RUNNER_TEMP/app.log" 2>&1 & pid=$!
+          for i in $(seq 1 180); do kill -0 $pid 2>/dev/null || break; sleep 1; done
+          kill -0 $pid 2>/dev/null && { kill $pid; echo "stopped after 3 minutes" >> "$RUNNER_TEMP/app.log"; }
+          wait $pid || echo "exit code $?" >> "$RUNNER_TEMP/app.log"
           bash scripts/report.sh "$CODEX_SMOKE" "$RUNNER_TEMP/app.log" macOS
 
       - name: Build installers
