@@ -1010,3 +1010,4 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .tl-seg button.on { background: var(--ember); color: var(--ember-ink); }
 .tl-qr.off { background: var(--surface); display: grid; place-items: center; aspect-ratio: 1; } .tl-noqr .ic { width: 48px; height: 48px; opacity: .3; }
 .tl-wait { display: flex; flex-direction: column; gap: 4px; } .tl-wait .dbar { position: relative; height: 8px; border-radius: 6px; background: var(--surface-3); overflow: hidden; } .tl-wait .dbar i { position: absolute; inset: 0 auto 0 0; background: var(--ember); }
+.jn-btn { position: relative; } .jn-dot { position: absolute; top: 3px; right: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 0 2px var(--surface); }

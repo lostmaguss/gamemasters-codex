@@ -31,6 +31,8 @@ function state() {
 const push = debounce(() => { if (status.on) T()?.players(state()); }, 250);
 export const playersOnline = () => online;
 
+export const journal = m => (m.journal ||= { entries: [], goals: [], updated: 0, seen: 0 });
+function sendJournal(m) { const J = journal(m); T()?.mine(m.id, "journal", { entries: J.entries, goals: J.goals }); }
 function inbox(c, id) { return ((c.ui.inbox ||= {})[id] ||= []); }
 // a secret for one player's phone; kept so it's still there if they reconnect
 export function phoneWhisper(member, { text, title, image }) {
@@ -58,6 +60,16 @@ function act(a) {
     r.cur = (Number(r.cur) || 0) + Number(a.delta || 0); if (r.max !== "" && r.cur > Number(r.max)) r.cur = Number(r.max);
     save(); App.refreshAll(); import("./party.js").then(x => x.pushParty()); return;
   }
+  // the player's own journal: goals and entries, private to them and the GM
+  if (a.type === "journal") {
+    const J = journal(m), clip = (s, n) => String(s || "").trim().slice(0, n);
+    if (a.op === "add" && clip(a.text, 4000)) { J.entries.unshift({ id: uid(), t: Date.now(), text: clip(a.text, 4000) }); J.entries.length = Math.min(J.entries.length, 300); }
+    if (a.op === "del") J.entries = J.entries.filter(e => e.id !== a.id);
+    if (a.op === "goal" && clip(a.text, 300) && J.goals.length < 60) J.goals.push({ id: uid(), text: clip(a.text, 300), done: false });
+    if (a.op === "goalToggle") { const g = J.goals.find(x => x.id === a.id); if (g) g.done = !g.done; }
+    if (a.op === "goalDel") J.goals = J.goals.filter(x => x.id !== a.id);
+    J.updated = Date.now(); save(); sendJournal(m); App.refreshAll?.(); return;
+  }
   if (a.type === "vote") import("./poll.js").then(x => x.phoneVote(m, a.pollId, a.idx));
 }
 
@@ -75,7 +87,7 @@ export async function startTable() {
   const r = await T().start({ port: P.port, key: P.key });
   if (r.error) { toast(`Couldn't start the table link: ${r.error}`); return r; }
   status = r; P.on = true; save(); push();
-  for (const m of C().party) { const l = C().ui.inbox?.[m.id]; if (l?.length) T().inbox(m.id, l); }
+  for (const m of C().party) { const l = C().ui.inbox?.[m.id]; if (l?.length) T().inbox(m.id, l); if (m.journal) sendJournal(m); }
   return r;
 }
 

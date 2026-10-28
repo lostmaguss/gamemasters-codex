@@ -6,7 +6,7 @@ const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [..
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const key = new URLSearchParams(location.search).get("k");
 const store = { get: k => { try { return JSON.parse(localStorage.getItem("codex-player:" + k)); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem("codex-player:" + k, JSON.stringify(v)); } catch {} } };
-const S = { players: null, me: store.get("me"), tab: "table", show: null, inbox: [], seen: store.get("seen") || 0, map: null, mapImg: null, ms: null, fog: null, turnWasMine: false };
+const S = { journal: { entries: [], goals: [] }, players: null, me: store.get("me"), tab: "table", show: null, inbox: [], seen: store.get("seen") || 0, map: null, mapImg: null, ms: null, fog: null, turnWasMine: false };
 const post = a => fetch(`/act?k=${encodeURIComponent(key)}`, { method: "POST", body: JSON.stringify({ ...a, member: S.me }) }).catch(() => {});
 const me = () => S.players?.party.find(p => p.id === S.me) || null;
 
@@ -31,6 +31,7 @@ const on = {
   hide() { S.show = null; render(); },
   inbox(list) { S.inbox = list || []; if (list?.[0] && list[0].t > S.seen) navigator.vibrate?.(200); render(); },
   result(r) { showResult(r); },
+  journal(v) { S.journal = v || { entries: [], goals: [] }; if (S.tab === "journal") render(); },
   async overlay(o) {
     if (o.kind === "map") {
       if (!o.show) { S.map = null; render(); return; }
@@ -60,7 +61,16 @@ let pending = 0;
 function rolled(label) { showResult({ label, total: "…", note: "Rolling on the table", breakdown: "" }); clearTimeout(pending); }
 
 // ---- views ----
+// live updates redraw the screen; keep what the player is typing
+const drafts = {};
 function render() {
+  const keep = $$("#main input[id], #main textarea[id]").map(i => (drafts[i.id] = i.value, i)).find(i => i === document.activeElement);
+  const sel = keep ? [keep.id, keep.selectionStart, keep.selectionEnd] : null;
+  draw();
+  for (const [id, v] of Object.entries(drafts)) { const i = document.getElementById(id); if (i && v) i.value = v; }
+  if (sel) { const i = document.getElementById(sel[0]); if (i) { i.focus(); try { i.setSelectionRange(sel[1], sel[2]); } catch {} } }
+}
+function draw() {
   const main = $("#main"), P = S.players;
   if (!P) { main.innerHTML = `<div class="empty-p">Connecting to the table…</div>`; return; }
   if (!me()) {
@@ -79,6 +89,7 @@ function render() {
   $$("nav [data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === S.tab));
   if (S.tab === "table") main.innerHTML = tableView(P, m);
   if (S.tab === "me") main.innerHTML = meView(P, m);
+  if (S.tab === "journal") main.innerHTML = journalView(m);
   if (S.tab === "inbox") { main.innerHTML = inboxView(); S.seen = Math.max(S.seen, ...S.inbox.map(x => x.t), 0); store.set("seen", S.seen); badge.hidden = true; }
   bind(main, P, m);
   if (S.tab === "table") drawMapNow();
@@ -114,11 +125,26 @@ function meView(P, m) {
       <div class="rollrow"><input id="expr" placeholder="2d6+1" inputmode="text" autocomplete="off" spellcheck="false"><button class="btn primary big" id="rollGo">Roll</button></div></div>
     ${m.text.map(t => `<div class="card"><div class="eyebrow" style="margin-bottom:6px">${esc(t.name)}</div><div class="txt">${esc(t.body)}</div></div>`).join("")}`;
 }
+function journalView(m) {
+  const J = S.journal;
+  return `<div class="card"><div class="eyebrow" style="margin-bottom:4px">Only you and the GM see this</div><h2>Goals</h2>
+      <ul class="goals">${J.goals.map(g => `<li class="${g.done ? "done" : ""}" data-g="${esc(g.id)}"><button class="ck" data-gt>${g.done ? "✓" : ""}</button><span>${esc(g.text)}</span><button class="x" data-gd aria-label="Remove">×</button></li>`).join("") || `<li style="background:none;color:var(--faint);padding:0">What does ${esc(m.name)} want?</li>`}</ul>
+      <div class="rollrow"><input id="jGoal" placeholder="Add a goal" maxlength="300" style="font:16px var(--body)"><button class="btn big" id="jGoalAdd">Add</button></div></div>
+    <div class="card"><h2>Journal</h2><textarea class="jt" id="jText" placeholder="What happened tonight, what you suspect, who you owe…" maxlength="4000"></textarea>
+      <div class="rollrow" style="justify-content:flex-end"><button class="btn primary big" id="jAdd">Write it down</button></div></div>
+    ${J.entries.map(e => `<div class="card entry" style="--mc:${esc(m.color)}"><div class="when"><span>${new Date(e.t).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span><button class="x" data-je="${esc(e.id)}" aria-label="Delete">×</button></div><div class="txt">${esc(e.text)}</div></div>`).join("")}`;
+}
 function inboxView() {
   if (!S.inbox.length) return `<div class="empty-p">No secrets yet.<br>When the GM whispers to you, it lands here, and only you see it.</div>`;
   return S.inbox.map(x => `<div class="card msg"><span class="when">${new Date(x.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>${x.title ? `<h2>${esc(x.title)}</h2>` : `<div class="eyebrow" style="margin-bottom:6px">From the GM</div>`}${x.src ? `<img src="${esc(x.src)}" style="width:100%;border-radius:10px;margin-bottom:8px">` : ""}<div class="txt">${esc(x.text)}</div></div>`).join("");
 }
 function bind(main, P, m) {
+  const jPost = o => post({ type: "journal", ...o });
+  $("#jGoalAdd", main)?.addEventListener("click", () => { const i = $("#jGoal", main); if (i.value.trim()) { jPost({ op: "goal", text: i.value }); i.value = ""; drafts.jGoal = ""; } });
+  $("#jGoal", main)?.addEventListener("keydown", e => { if (e.key === "Enter") $("#jGoalAdd", main).click(); });
+  $$("[data-g]", main).forEach(li => { $("[data-gt]", li).onclick = () => jPost({ op: "goalToggle", id: li.dataset.g }); $("[data-gd]", li).onclick = () => jPost({ op: "goalDel", id: li.dataset.g }); });
+  $("#jAdd", main)?.addEventListener("click", () => { const t = $("#jText", main); if (t.value.trim()) { jPost({ op: "add", text: t.value }); t.value = ""; drafts.jText = ""; navigator.vibrate?.(30); } });
+  $$("[data-je]", main).forEach(b => b.onclick = () => { if (confirm("Delete this entry?")) jPost({ op: "del", id: b.dataset.je }); });
   $$("[data-vote]", main).forEach(b => b.onclick = () => { post({ type: "vote", pollId: P.poll.id, idx: +b.dataset.vote }); navigator.vibrate?.(30); });
   $$("[data-stat]", main).forEach(b => b.onclick = () => { post({ type: "check", stat: b.dataset.stat }); rolled(b.dataset.stat); });
   $$("[data-hp]", main).forEach(b => b.onclick = () => { post({ type: "hp", res: b.dataset.hp, delta: +b.dataset.d }); navigator.vibrate?.(20); });

@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld("codex", {
     players: v => ipcRenderer.send("table:players", v),
     inbox: (member, list) => ipcRenderer.send("table:inbox", { member, list }),
     to: (member, t, v) => ipcRenderer.send("table:to", { member, t, v }),
+    mine: (member, t, v) => ipcRenderer.send("table:mine", { member, t, v }),
     online: () => ipcRenderer.invoke("table:online"),
     onStatus: fn => on("table:status", fn),
     onAct: fn => on("table:act", fn),

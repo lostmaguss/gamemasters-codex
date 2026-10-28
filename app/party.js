@@ -49,7 +49,7 @@ export function createParty(el, App) {
         <div class="who"><input class="cname" type="text" data-k="character" value="${esc(m.character)}" placeholder="Character name">
           <div class="row" style="gap:6px"><input type="text" data-k="role" value="${esc(m.role)}" placeholder="Class / role" style="flex:1"><input type="text" data-k="player" value="${esc(m.player)}" placeholder="Player" style="width:110px"></div>
           <input type="text" data-k="discord" value="${esc(m.discord || "")}" placeholder="Discord name (for /check, /init, /me)" class="dc-in" title="${m.discordId ? "Linked: whispers reach this player" : "Not linked yet: the player uses any bot command once"}"></div>
-        <div class="pt-ops"><input type="color" data-k="color" value="${esc(m.color)}" title="Color"><button class="tb" data-wh title="${m.discordId ? "Whisper (private Discord message)" : "Whisper: they need to use the dice bot once first"}">${icon("lock")}</button><button class="tb" data-rm title="Remove">${icon("trash")}</button></div>
+        <div class="pt-ops"><input type="color" data-k="color" value="${esc(m.color)}" title="Color"><button class="tb jn-btn" data-jn title="Their journal (written on their phone)">${icon("book")}${m.journal && m.journal.updated > (m.journal.seen || 0) ? `<i class="jn-dot"></i>` : ""}</button><button class="tb" data-wh title="${m.discordId ? "Whisper (private Discord message)" : "Whisper: they need to use the dice bot once first"}">${icon("lock")}</button><button class="tb" data-rm title="Remove">${icon("trash")}</button></div>
       </header>
       <div class="resources">${L.resources.map(n => { const x = r(n), cur = Number(x.cur), max = Number(x.max), pct = max ? Math.max(0, Math.min(100, cur / max * 100)) : 0;
         return `<div class="resrc" data-res="${esc(n)}"><div class="rh"><span>${esc(n)}</span><span class="mono"><input type="number" data-cur value="${esc(x.cur)}">/<input type="number" data-max value="${esc(x.max)}"></span></div><div class="bar"><i style="width:${pct}%"></i></div><div class="rb"><button data-d="-5">−5</button><button data-d="-1">−1</button><button data-d="1">+1</button><button data-d="5">+5</button></div></div>`; }).join("")}</div>
@@ -65,6 +65,16 @@ export function createParty(el, App) {
       $("[data-x]", mm).onclick = close;
       $("[data-ok]", mm).onclick = async () => { const t = $("#wT", mm).value.trim(); if (!t) return toast("Write the message first"); const r = await App.whisper(m, { text: t }); if (r?.ok) close(); };
     });
+    $("[data-jn]", card).onclick = () => {
+      const J = m.journal || { entries: [], goals: [] }; if (m.journal) { m.journal.seen = Date.now(); save(); }
+      App.modal(`<h2>${esc(m.character || m.player)}'s journal</h2><p style="margin:0;color:var(--dim)">Written on their phone through the table link. Only you and they can see it.</p>
+        <div class="sec-h"><h3>Goals</h3><div class="line"></div></div>
+        <ul class="checks">${J.goals.map(g => `<li class="${g.done ? "done" : ""}" style="display:block">${g.done ? "✓ " : "○ "}${esc(g.text)}</li>`).join("") || `<li style="display:block;color:var(--faint)">No goals yet.</li>`}</ul>
+        <div class="sec-h"><h3>Entries</h3><div class="line"></div></div>
+        <div style="display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow:auto">${J.entries.map(e => `<div style="border-left:3px solid ${esc(m.color)};padding:4px 10px"><div class="eyebrow">${new Date(e.t).toLocaleString()}</div><div style="white-space:pre-wrap">${esc(e.text)}</div></div>`).join("") || `<span style="color:var(--faint)">Nothing written yet. Players write in the Journal tab of the table link.</span>`}</div>
+        <div class="foot"><button class="btn primary" data-x>Close</button></div>`, (mm, close) => { $("[data-x]", mm).onclick = close; });
+      render();
+    };
     $("[data-rm]", card).onclick = () => App.confirm(`Remove ${m.character || m.player || "this character"}?`, "Their sheet is deleted. Past sessions keep their history.", "Remove", () => { C().party = C().party.filter(x => x !== m); save(); render(); pushParty(); });
     $("[data-portrait]", card).onclick = () => { const f = h(`<input type="file" accept="image/*">`); f.onchange = async () => { if (f.files[0]) { m.portrait = await shrinkImage(f.files[0], 320); save(); render(); pushParty(); } }; f.click(); };
     $$(".resrc", card).forEach(rd => {

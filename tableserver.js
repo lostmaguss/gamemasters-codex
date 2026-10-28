@@ -17,7 +17,7 @@ const PUBLIC = [/^app\/[\w./-]+$/, /^node_modules\/(three|cannon-es|@fontsource)
 let server = null, port = 0, key = "", desk = null, mediaDir = null;
 const clients = new Set(); // { res, role, member, only, dice }
 let primary = null; // the OBS dice source that throws the physics when no stream window is open
-const last = { overlay: {}, show: null, players: null, inbox: {} };
+const last = { overlay: {}, show: null, players: null, inbox: {}, mine: {} }; // mine: per-player private state (journal)
 let stageOpen = () => false;
 
 function lanAddresses() {
@@ -39,7 +39,7 @@ const remap = v => JSON.parse(JSON.stringify(v ?? null).replace(/codexmedia:\/\/
 
 function send(c, t, v) { try { c.res.write(`data: ${JSON.stringify({ t, v: remap(v) })}\n\n`); } catch {} }
 function wants(c, t, v) {
-  if (c.role === "player") return ["overlay", "show", "hide", "players", "inbox", "result", "you"].includes(t);
+  if (c.role === "player") return ["overlay", "show", "hide", "players", "inbox", "result", "you", "journal"].includes(t);
   if (!c.only) return true;
   if (t === "overlay") return c.only.has(v.kind) || (v.kind === "mapstate" && c.only.has("map"));
   if (["roll", "rollShow", "clear"].includes(t)) return c.only.has("dice");
@@ -96,7 +96,7 @@ async function handle(req, res) {
     clients.add(c); res.write(": hi\n\n");
     // catch the newcomer up
     for (const v of Object.values(last.overlay)) if (!v.secs || Date.now() - v._at < v.secs * 1000) if (wants(c, "overlay", v)) send(c, "overlay", v);
-    if (c.role === "player") { if (last.players) send(c, "players", last.players); if (last.show) send(c, "show", last.show); if (c.member && last.inbox[c.member]) send(c, "inbox", last.inbox[c.member]); }
+    if (c.role === "player") { if (last.players) send(c, "players", last.players); if (last.show) send(c, "show", last.show); if (c.member && last.inbox[c.member]) send(c, "inbox", last.inbox[c.member]); if (c.member) for (const [t, v] of Object.entries(last.mine[c.member] || {})) send(c, t, v); }
     const ping = setInterval(() => { try { res.write(": ping\n\n"); } catch {} }, 20000);
     req.on("close", () => { clearInterval(ping); clients.delete(c); if (primary === c) primary = null; tellDesk(); desk && desk.webContents.send("stage:state", stageOpen() || obsDice()); });
     tellDesk(); desk && desk.webContents.send("stage:state", stageOpen() || obsDice());
@@ -162,6 +162,8 @@ function setup(getDesk, getMediaDir, isStageOpen) {
   // the desk pushes player-facing state: party sheets, whispers, roll results
   ipcMain.on("table:players", (_e, v) => { last.players = v; broadcast("players", v, c => c.role === "player"); });
   ipcMain.on("table:inbox", (_e, { member, list }) => { last.inbox[member] = list; broadcast("inbox", list, c => c.role === "player" && c.member === member); });
+  // private to one player, and replayed when they reconnect
+  ipcMain.on("table:mine", (_e, { member, t, v }) => { (last.mine[member] ||= {})[t] = v; broadcast(t, v, c => c.role === "player" && c.member === member); });
   ipcMain.on("table:to", (_e, { member, t, v }) => broadcast(t, v, c => c.role === "player" && (!member || c.member === member)));
   ipcMain.handle("table:online", () => [...clients].filter(c => c.role === "player").map(c => c.member).filter(Boolean));
 }
