@@ -201,8 +201,8 @@ import { createFx } from "./fx.js";
   addEventListener("keydown", e => { if (e.key === "Escape" && document.body.classList.contains("table-mode")) window.codex?.stage?.windowed(); });
 
   const q = $("#quick");
-  q.innerHTML = [4, 6, 8, 10, 12, 20, 100].map(s => `<button class="dpick" data-s="${s}" title="Roll a d${s}">${dieIcon(s)}d${s}</button>`).join("");
-  $$("[data-s]", q).forEach(b => b.onclick = () => roll({ id: uid(), expr: "1d" + b.dataset.s, label: "", rules: ls.get("rules", null) }));
+  q.innerHTML = [4, 6, 8, 10, 12, 20, 100, "F"].map(s => `<button class="dpick" data-s="${s}" title="${s === "F" ? "Roll 4 Fate dice" : "Roll a d" + s}">${dieIcon(s)}d${s}</button>`).join("");
+  $$("[data-s]", q).forEach(b => b.onclick = () => roll({ id: uid(), expr: (b.dataset.s === "F" ? "4d" : "1d") + b.dataset.s, label: "", rules: ls.get("rules", null) }));
   const th = $("#theme"), fe = $("#felt");
   th.innerHTML = Object.entries(THEMES).map(([k, t]) => `<option value="${k}">${t.label}</option>`).join(""); th.value = ls.get("dice.theme", "ember");
   fe.innerHTML = Object.entries(FELTS).map(([k, t]) => `<option value="${k}">${t.label}</option>`).join(""); fe.value = ls.get("dice.felt", "oxblood");

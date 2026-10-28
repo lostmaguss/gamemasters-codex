@@ -15,7 +15,7 @@ export function createDice(el, App) {
     <aside class="dice-side">
       <div>
         <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 class="side-h" style="margin:0">Build a roll</h3><span class="eyebrow">click adds · right-click removes</span></div>
-        <div class="dgrid">${[4, 6, 8, 10, 12, 20, 100].map(s => `<button class="dpick" data-s="${s}" title="d${s}">${dieIcon(s)}d${s}<span class="cnt" data-cnt="${s}"></span></button>`).join("")}<button class="dpick" id="dClr" title="Clear the pool">${icon("x")}<span style="font-size:13px;font-family:var(--body)">Clear</span></button></div>
+        <div class="dgrid">${[4, 6, 8, 10, 12, 20, 100, "F"].map(s => `<button class="dpick" data-s="${s}" title="${s === "F" ? "Fate dice (+, blank, −). First click adds four" : "d" + s}">${dieIcon(s)}d${s}<span class="cnt" data-cnt="${s}"></span></button>`).join("")}<button class="dpick" id="dClr" title="Clear the pool">${icon("x")}<span style="font-size:13px;font-family:var(--body)">Clear</span></button></div>
       </div>
       <div class="row">
         <label class="f" style="flex:1"><span>Roll</span><input type="text" id="dExpr" class="mono" spellcheck="false" value="1d20" placeholder="2d6+3, 4d6dl1, 2d20kh1"></label>
@@ -63,7 +63,7 @@ export function createDice(el, App) {
   const exprIn = $("#dExpr", el), labelIn = $("#dLabel", el), err = $("#dErr", el);
 
   function exprFromPool() {
-    const parts = Object.entries(st.pool).filter(([, n]) => n > 0).sort((a, b) => b[0] - a[0]).map(([s, n]) => `${n}d${s}`);
+    const parts = Object.entries(st.pool).filter(([, n]) => n > 0).sort((a, b) => (b[0] === "F" ? -1 : b[0]) - (a[0] === "F" ? -1 : a[0])).map(([s, n]) => `${n}d${s}`);
     let e = parts.join("+") || "1d20";
     if (st.mod) e += (st.mod > 0 ? "+" : "-") + Math.abs(st.mod);
     return e;
@@ -74,7 +74,7 @@ export function createDice(el, App) {
     if (!st.custom) exprIn.value = exprFromPool();
   }
   $$(".dpick[data-s]", el).forEach(b => {
-    b.onclick = e => { if (st.custom) { st.pool = {}; st.custom = false; } const s = b.dataset.s; st.pool[s] = Math.min(20, (st.pool[s] || 0) + 1); syncPool(); if (e.shiftKey) roll(); };
+    b.onclick = e => { if (st.custom) { st.pool = {}; st.custom = false; } const s = b.dataset.s; st.pool[s] = Math.min(20, (st.pool[s] || 0) + (s === "F" && !st.pool[s] ? 4 : 1)); syncPool(); if (e.shiftKey) roll(); };
     b.oncontextmenu = e => { e.preventDefault(); const s = b.dataset.s; st.pool[s] = Math.max(0, (st.pool[s] || 0) - 1); st.custom = false; syncPool(); };
   });
   $("#dClr", el).onclick = () => { st.pool = {}; st.mod = 0; st.custom = false; syncPool(); };

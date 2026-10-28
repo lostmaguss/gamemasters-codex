@@ -196,7 +196,7 @@ The bot only answers while the app is open.
 | `3d6!` | Exploding: a max rolls again |
 | `4d6r1` | Reroll 1s once |
 | `3d[Boon]` | Custom dice with your own faces (make them in the Dice view) |
-| `4dF` | Fate/Fudge dice |
+| `4dF`, `4dF+3` | Fate/Fudge dice, read off the ladder (+3 Good). There's a dF button, and *Party → Sheet layout* has Fate Core and Fate Accelerated presets |
 | `1d100<=45` | Roll-under target: Success or Failure |
 | `8d6>=5` | Dice pool: count the hits |
 

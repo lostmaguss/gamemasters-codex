@@ -5,6 +5,7 @@ import { breakdown, critLabel, shownTotal, successWord } from "./roll.js";
 const SHAPES = {
   4: `<polygon class="f" points="50,8 94,88 6,88"/><line class="e" x1="50" y1="8" x2="50" y2="88"/>`,
   6: `<rect class="f" x="12" y="12" width="76" height="76" rx="12"/>`,
+  F: `<rect class="f" x="12" y="12" width="76" height="76" rx="12"/><line class="e" x1="32" y1="50" x2="68" y2="50" style="stroke-width:9"/><line class="e" x1="50" y1="32" x2="50" y2="68" style="stroke-width:9"/>`,
   8: `<polygon class="f" points="50,5 92,50 50,95 8,50"/><polyline class="e" points="8,50 50,62 92,50"/><line class="e" x1="50" y1="5" x2="50" y2="62"/>`,
   10: `<polygon class="f" points="50,5 92,42 50,95 8,42"/><polyline class="e" points="8,42 50,60 92,42"/><line class="e" x1="50" y1="60" x2="50" y2="95"/>`,
   12: `<polygon class="f" points="50,5 94,37 77,92 23,92 6,37"/><polygon class="e" points="50,24 73,41 64,71 36,71 27,41"/>`,

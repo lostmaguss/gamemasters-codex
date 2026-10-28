@@ -142,8 +142,13 @@ function faceTexture(type, label, theme, uvPts, mode, vertexLabels) {
     const fs = n > 3 ? DEF.font * Math.min(.62, 2 / n) : n > 2 ? DEF.font * .62 : n > 1 ? DEF.font * .82 : DEF.font;
     g.font = `700 ${fs * (font.includes("Grenze") ? 1 : .82)}px ${font}`;
     const oy = type === 10 || type === 100 ? -S * .06 : 0;
-    g.fillText(label, cx, cy + oy + fs * .04);
-    if (label === "6" || label === "9") { g.fillRect(cx - fs * .2, cy + oy + fs * .42, fs * .4, Math.max(4, fs * .06)); }
+    // Fate faces: bold bars that read from any angle (a font's thin "−" looks like "/" on a tilted die)
+    if (mode === "fate") {
+      const L = S * .5, T = S * .13;
+      if (label) { g.beginPath(); g.roundRect(cx - L / 2, cy - T / 2, L, T, T / 3); g.fill(); }
+      if (label === "+") { g.beginPath(); g.roundRect(cx - T / 2, cy - L / 2, T, L, T / 3); g.fill(); }
+    } else g.fillText(label, cx, cy + oy + fs * .04);
+    if (mode !== "fate" && (label === "6" || label === "9")) { g.fillRect(cx - fs * .2, cy + oy + fs * .42, fs * .4, Math.max(4, fs * .06)); }
   }
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
@@ -179,7 +184,7 @@ function buildDie(type, themeKey, variant, faces) {
     geo.addGroup(start, 3 * (pts.length - 2), fi);
     const tex = def.read === "vertex"
       ? faceTexture(type, "", T, uvs, "vertex", f.map(i => faces ? faces[def.vertexValues[i] - 1] || "" : String(def.vertexValues[i])))
-      : faceTexture(variant && variant !== "fate" && variant !== "custom" ? 100 : type, faces ? faces[def.values[fi] - 1] || "" : labelFor(type, def.values[fi], variant), T, uvs, "face");
+      : faceTexture(variant && variant !== "fate" && variant !== "custom" ? 100 : type, faces ? faces[def.values[fi] - 1] || "" : labelFor(type, def.values[fi], variant), T, uvs, variant === "fate" ? "fate" : "face");
     const m = new THREE.MeshStandardMaterial({ map: tex, roughness: T.rough, metalness: T.metal, flatShading: true, transparent: true, opacity: T.alpha || 1 });
     if (T.glow) { m.emissive = new THREE.Color(T.glow); m.emissiveMap = tex; m.emissiveIntensity = .55; }
     m.userData.baseOpacity = T.alpha || 1; m.userData.glow = T.glow;

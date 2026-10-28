@@ -408,7 +408,7 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .flash.fumble { background: radial-gradient(circle at 50% 45%, rgba(255,40,40,.45), transparent 65%); }
 @keyframes flash { 10% { opacity: 1; } 100% { opacity: 0; } }
 .dice-side { border-left: 1px solid var(--line-soft); background: var(--bg-2); overflow: auto; padding: 18px; display: flex; flex-direction: column; gap: 18px; }
-.dgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.dgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .dpick { height: 64px; border-radius: 10px; border: 1px solid var(--line-soft); background: var(--surface); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: 700 17px var(--display); position: relative; }
 .dpick:hover { border-color: var(--ember); }
 .dpick svg { width: 30px; height: 30px; }

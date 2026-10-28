@@ -96,14 +96,19 @@ export function buildResult({ id, expr, label, who, rules, color }, terms, value
 }
 const fmt = (s, v) => v ? s.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m) : s;
 // tr: a translator for what players see (i18n.js t); the GM's screens use English
+// the Fate ladder: what a Fate roll's total means
+export const LADDER = { 8: "Legendary", 7: "Epic", 6: "Fantastic", 5: "Superb", 4: "Great", 3: "Good", 2: "Fair", 1: "Average", 0: "Mediocre", "-1": "Poor", "-2": "Terrible", "-3": "Catastrophic", "-4": "Horrifying" };
+export const ladder = n => LADDER[Math.max(-4, Math.min(8, n))];
+const isFate = r => r.groups?.some(g => g.fate) && !r.successMode;
 export function critLabel(r, tr = fmt) {
   if (r.tally && !r.symbolic) return r.tally;
+  if (isFate(r)) return tr(ladder(r.total));
   if (r.success != null && !r.crit && !r.fumble) return tr(r.success ? "Success" : "Failure");
   const v = r.groups[0]?.rolls.find(x => !x.dropped)?.v;
   return r.crit ? tr("Critical · natural {v}", { v }) : r.fumble ? tr("Fumble · natural {v}", { v }) : r.success != null ? tr(r.success ? "Success" : "Failure") : "";
 }
 export const successWord = (r, tr = fmt) => tr(r.total === 1 ? "success" : "successes");
-export function shownTotal(r) { return r.symbolic ? (r.tally || "—") : r.single != null ? r.single : r.total; }
+export function shownTotal(r) { return r.symbolic ? (r.tally || "—") : r.single != null ? r.single : isFate(r) && r.total > 0 ? "+" + r.total : r.total; }
 export function breakdown(r) {
   const parts = r.groups.map((g, i) => {
     const show = x => g.custom ? (x.sym || "·") : g.fate ? (x.v > 0 ? "+" : x.v < 0 ? "−" : "0") : (x.was != null ? `${x.was}→` : "") + x.v + (g.explode && x.v === g.sides ? "!" : "");

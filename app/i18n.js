@@ -47,6 +47,9 @@ const TR = {
   // dice
   "Critical · natural {v}": "Kritik · doğal {v}", "Fumble · natural {v}": "Felaket · doğal {v}",
   "Success": "Başarılı", "Failure": "Başarısız", "success": "başarı", "successes": "başarı",
+  // Fate ladder
+  "Legendary": "Efsanevi", "Epic": "Destansı", "Fantastic": "Fantastik", "Superb": "Muhteşem", "Great": "Harika", "Good": "İyi", "Fair": "Fena değil",
+  "Average": "Ortalama", "Mediocre": "Vasat", "Poor": "Zayıf", "Terrible": "Berbat", "Catastrophic": "Felaket", "Horrifying": "Korkunç",
   // Discord
   "Highlights": "Öne çıkanlar", "What happened": "Neler oldu", "Said at the table": "Masada söylenenler",
   "MVP": "Oturumun yıldızı", "Where we left off": "Kaldığımız yer", "Next session": "Sonraki oturum",
