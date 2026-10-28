@@ -99,7 +99,12 @@ jobs:
 
       - name: Build installers
         shell: bash
-        run: npx electron-builder ${{ matrix.installers }} --publish never
+        run: |
+          set -o pipefail
+          if ! npx electron-builder ${{ matrix.installers }} --publish never 2>&1 | tee "$RUNNER_TEMP/build.log"; then
+            grep -v '^\s*$' "$RUNNER_TEMP/build.log" | tail -9 | while IFS= read -r l; do echo "::warning title=Build output::${l:0:300}"; done
+            exit 1
+          fi
 
       - name: Self-test the installed .deb and the AppImage (Linux)
         if: runner.os == 'Linux'
