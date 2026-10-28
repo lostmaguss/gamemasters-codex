@@ -90,9 +90,8 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           export CODEX_SMOKE="$RUNNER_TEMP/smoke.txt"
-          perl -e 'alarm 180; exec @ARGV' "dist-installer/mac-arm64/Gamemasters Codex.app/Contents/MacOS/Gamemasters Codex" || true
-          cat "$CODEX_SMOKE"
-          test "$(head -1 "$CODEX_SMOKE")" = "OK"
+          perl -e 'alarm 180; exec @ARGV' "dist-installer/mac-arm64/Gamemasters Codex.app/Contents/MacOS/Gamemasters Codex" > "$RUNNER_TEMP/app.log" 2>&1 || echo "exit code $?" >> "$RUNNER_TEMP/app.log"
+          bash scripts/report.sh "$CODEX_SMOKE" "$RUNNER_TEMP/app.log" macOS
 
       - name: Build installers
         shell: bash
@@ -105,13 +104,13 @@ jobs:
           sudo apt-get install -y ./dist-installer/*.deb
           # the installed app, sandbox on: this checks the AppArmor profile on Ubuntu 24.04
           export CODEX_SMOKE="$RUNNER_TEMP/smoke-deb.txt"
-          timeout 180 xvfb-run -a gamemasters-codex || true
-          cat "$CODEX_SMOKE"; test "$(head -1 "$CODEX_SMOKE")" = "OK"
+          timeout 180 xvfb-run -a gamemasters-codex > "$RUNNER_TEMP/deb.log" 2>&1 || echo "exit code $?" >> "$RUNNER_TEMP/deb.log"
+          bash scripts/report.sh "$CODEX_SMOKE" "$RUNNER_TEMP/deb.log" "Linux .deb"
           # the AppImage through its launcher
           export CODEX_SMOKE="$RUNNER_TEMP/smoke-appimage.txt"
           chmod +x dist-installer/*.AppImage
-          timeout 180 xvfb-run -a dist-installer/*.AppImage --appimage-extract-and-run || true
-          cat "$CODEX_SMOKE"; test "$(head -1 "$CODEX_SMOKE")" = "OK"
+          timeout 180 xvfb-run -a dist-installer/*.AppImage --appimage-extract-and-run > "$RUNNER_TEMP/ai.log" 2>&1 || echo "exit code $?" >> "$RUNNER_TEMP/ai.log"
+          bash scripts/report.sh "$CODEX_SMOKE" "$RUNNER_TEMP/ai.log" "Linux AppImage"
 
       - uses: actions/upload-artifact@v4
         with:
