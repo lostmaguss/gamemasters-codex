@@ -1024,3 +1024,15 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .syscard em { font-style: normal; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin-top: 2px; }
 .syscard:hover { border-color: var(--ember); }
 .syscard.on { border-color: var(--ember); box-shadow: inset 0 0 0 1px var(--ember); background: color-mix(in srgb, var(--ember) 12%, transparent); }
+
+/* library (ready-made creatures and spells) */
+.lib-list { display: flex; flex-direction: column; gap: 6px; max-height: 52vh; overflow: auto; padding-right: 2px; }
+.lib-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.lib-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lib-txt b { font-size: 14px; }
+.lib-txt span { font-size: 11.5px; color: var(--faint); letter-spacing: .02em; }
+.lib-txt p { margin: 2px 0 0; font-size: 12.5px; color: var(--dim); line-height: 1.4; }
+.lib-txt code, .prose code, .mabil code { font-family: var(--mono); font-size: .92em; }
+.prose .rollchip, .mabil p .rollchip { vertical-align: baseline; margin: 0 2px; }
+.prose .rollchip, .mabil p .rollchip { height: 24px; padding: 0 8px; font-size: 12px; }
+.prose.nocap > p:first-of-type::first-letter { font: inherit; float: none; margin: 0; color: inherit; }

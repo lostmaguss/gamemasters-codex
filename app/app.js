@@ -2,6 +2,7 @@ import { stashSummary, UNIT as STASH_UNIT } from "./stash.js";
 import { t, setLang, LANGS } from "./i18n.js";
 import { initPoll } from "./poll.js";
 import { SYSTEMS, systemById, applySystem } from "./systems.js";
+import { loadLibrary, toCreature, toSpell } from "./library.js";
 import { syncCustomDice } from "./customdice.js";
 import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
 import { $, $$, esc, h, icon, toast, uid, keys, isMac } from "./util.js";
@@ -251,18 +252,21 @@ export function newCampaignModal() {
     <label class="f"><span>Tagline</span><input type="text" id="ncTag" placeholder="Grim frontier fantasy · Fridays on Discord"></label>
     <div class="f"><span>Game system</span><div class="sysgrid" id="ncSys">${sysCards(pick)}</div></div>
     <p class="md-help" id="ncNote" style="margin:0"></p>
+    <label class="toggle"><input type="checkbox" id="ncLib" checked> ${icon("book")} Fill the Bestiary and Codex from the system's library (monsters, spells, gear)</label>
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Create campaign</button></div>`, (m, close) => {
     const note = () => { const s = systemById(pick); $("#ncNote", m).textContent = `Sets the dice and crits, the party sheet (${s.sheet.stats.slice(0, 4).join(", ")}…), the bestiary's stat block and quick rolls${s.genre !== "fantasy" ? `, plus ${GENRE_NAME[s.genre].toLowerCase()} generators and look` : ""}. ${s.note} You can change all of it later.`; };
     $$("[data-sys]", m).forEach(b => b.onclick = () => { pick = b.dataset.sys; $$("[data-sys]", m).forEach(x => x.classList.toggle("on", x === b)); note(); });
     note();
     $("[data-x]", m).onclick = close;
-    const ok = () => {
+    const ok = async () => {
       const s = systemById(pick), n = blankCampaign($("#ncName", m).value.trim() || "New campaign");
+      const L = $("#ncLib", m).checked && (await loadLibrary())[s.id];
+      if (L) { n.bestiary = L.creatures.map(r => toCreature(s, r)); n.notes = L.spells.map(r => toSpell(s, r)); }
       n.tagline = $("#ncTag", m).value.trim() || `${s.name} · ${GENRE_NAME[s.genre].toLowerCase()}`;
       n.genre = s.genre; n.tables = starterTables(s.genre); n.presets = [];
       applySystem(n, s.id, uid);
       S.data.campaigns.push(n); close(); App.genreChanged(n, true); switchCampaign(n.id);
-      toast(`${n.name} is ready: ${s.name}`);
+      toast(`${n.name} is ready: ${s.name}${L ? `, with ${n.bestiary.length} creatures and ${n.notes.length} ${L.label.toLowerCase()}` : ""}`);
     };
     $("[data-ok]", m).onclick = ok; $("#ncName", m).onkeydown = e => { if (e.key === "Enter") ok(); }; $("#ncName", m).focus();
   });

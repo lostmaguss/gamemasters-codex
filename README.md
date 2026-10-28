@@ -206,6 +206,8 @@ Which die makes a critical, whether high or low is good, and initiative order ar
 
 Pick your game when you create a campaign and the Codex sets up the dice rules, the party sheet, the bestiary's stat block, quick rolls and the genre (generators, sounds, look). Change systems later in *Rules & genre*, or just borrow a sheet in *Party → Sheet layout → Start from a system*. Everything stays editable.
 
+Each system also has a **Library**: ready-made creatures for the Bestiary (with clickable attack and damage rolls) and spells, powers or gear for the Codex, about 270 entries in all. Tick *Fill from the library* when you create the campaign, or open it later from the book button in the Bestiary and the Codex. Write `` `8d6` `` in any Codex page and it becomes a roll button. D&D 5e entries include material from the System Reference Document 5.1 by Wizards of the Coast LLC, licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/); everything else is written for the Codex as a starting point, so check numbers against your book.
+
 D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Daggerheart · Call of Cthulhu 7e · Powered by the Apocalypse · Blades in the Dark · Vampire V5 · Savage Worlds · Fate Core · Fate Accelerated · Cyberpunk RED · Shadowrun 6e · Mothership · Traveller · Star Wars-style d6 · Homebrew d20
 </details>
 

@@ -1,15 +1,17 @@
+import { libraryModal, inlineRolls } from "./library.js";
 // The Codex: world notes as a small wiki. [[Title]] links notes together; backlinks show who mentions a page.
 import { $, $$, esc, h, icon, toast, uid, debounce } from "./util.js";
 import { C, save } from "./store.js";
 import { shrinkImage } from "./board.js";
 
-export const CATS = { Locations: "#b8d8a8", NPCs: "#f39da8", Factions: "#a8d3e4", Quests: "#f2c75c", Items: "#cfb2e2", Lore: "#efe4cf", Other: "#8a7d78" };
+export const CATS = { Locations: "#b8d8a8", NPCs: "#f39da8", Factions: "#a8d3e4", Quests: "#f2c75c", Items: "#cfb2e2", Spells: "#9fb8f5", Lore: "#efe4cf", Other: "#8a7d78" };
 
 // Markdown-lite: # headings, **bold**, *italic*, - lists, > quotes, [[wiki links]]
-export function md(src, notes) {
+export function md(src, notes, { rolls = false } = {}) {
   const titles = new Map(notes.map(n => [String(n.title).toLowerCase(), n]));
   const inline = s => esc(s)
     .replace(/\[\[([^\]]+)\]\]/g, (_, t) => { const n = titles.get(t.trim().toLowerCase()); return `<a class="wl ${n ? "" : "missing"}" data-wl="${esc(t.trim())}">${esc(t.trim())}</a>`; })
+    .replace(/`([^`]+)`/g, m => rolls ? inlineRolls(m) : `<code>${m.slice(1, -1)}</code>`)
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
   const out = []; let list = null;
   for (const raw of String(src || "").split("\n")) {
@@ -32,7 +34,7 @@ export function createCodex(el, App) {
   el.innerHTML = `<div class="codex">
     <nav class="cx-cats" id="cxCats"></nav>
     <div class="cx-list">
-      <div class="head"><button class="btn primary" id="cxNew">${icon("plus")} New page</button><button class="btn sm ghost" id="cxImp" title="Import notes from a folder (Obsidian vault or Markdown files)">${icon("book")} Import notes</button><input type="search" id="cxQ" placeholder="Search the Codex"></div>
+      <div class="head"><button class="btn primary" id="cxNew">${icon("plus")} New page</button><div class="row" style="gap:4px"><button class="btn sm ghost" style="flex:1" id="cxLib" title="Spells, powers and gear for your game system">${icon("book")} Library</button><button class="btn sm ghost" style="flex:1" id="cxImp" title="Import notes from a folder (Obsidian vault or Markdown files)">${icon("book")} Import notes</button></div><input type="search" id="cxQ" placeholder="Search the Codex"></div>
       <ul class="cx-items" id="cxItems"></ul>
     </div>
     <div class="cx-page" id="cxPage"></div>
@@ -89,8 +91,9 @@ export function createCodex(el, App) {
     if (st.mode === "read") {
       body.innerHTML = `${n.img ? `<img class="cx-img" src="${n.img}" alt="">` : ""}<h1 class="cx-title">${esc(n.title || "Untitled")}</h1>
         <div class="meta"><span class="tag" style="border-color:${CATS[n.cat]};color:${CATS[n.cat]}">${esc(n.cat)}</span>${(n.tags || "").split(",").map(t => t.trim()).filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join("")}<span>Edited ${new Date(n.updated || Date.now()).toLocaleDateString()}</span></div>
-        <div class="prose">${md(n.body, notes()) || `<p style="color:var(--faint)">Nothing written yet. Switch to Write.</p>`}</div>
+        <div class="prose${n.cat === "Spells" ? " nocap" : ""}">${md(n.body, notes(), { rolls: true }) || `<p style="color:var(--faint)">Nothing written yet. Switch to Write.</p>`}</div>
         <div class="backlinks"><div class="eyebrow" style="margin-bottom:8px">Mentioned in</div><div class="chips">${bl.length ? bl.map(b => `<button class="chip" data-bl="${b.kind}:${b.id}">${icon(b.kind === "note" ? "codex" : "chronicle")} ${esc(b.label)}</button>`).join("") : `<span style="color:var(--faint);font-size:14px">Nothing links here yet. Write [[${esc(n.title)}]] anywhere to connect it.</span>`}</div></div>`;
+      $$("[data-mdroll]", body).forEach(b => b.onclick = () => App.roll(b.dataset.mdroll, n.title));
       body.ondblclick = e => { if (!e.target.closest("a,button")) { st.mode = "write"; renderPage(); } };
     } else {
       body.innerHTML = `<div class="cx-edit">
@@ -146,6 +149,7 @@ export function createCodex(el, App) {
   $("#cxNew", el).onclick = e => App.menu(e.currentTarget, Object.keys(TEMPLATES).map(t => ({ text: t === "Blank" ? "Blank page" : `${t} template`, icon: { Blank: "codex", NPC: "social", Location: "explore", Faction: "board", Quest: "travel", Item: "loot" }[t], run: () => newPage(t) })));
   $("#cxQ", el).oninput = e => { st.q = e.target.value; renderList(); };
   st.sel = C().ui.note && notes().some(n => n.id === C().ui.note) ? C().ui.note : notes()[0]?.id;
+  $("#cxLib", el).onclick = () => libraryModal(App, { tab: "spells", onAdd: () => { if (st.cat !== "All") st.cat = "Spells"; renderCats(); renderList(); } });
   // bring in an Obsidian vault or any folder of Markdown notes
   $("#cxImp", el).onclick = async () => {
     if (!window.codex?.importNotes) return toast("Importing works in the desktop app");

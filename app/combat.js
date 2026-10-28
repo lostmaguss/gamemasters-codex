@@ -11,6 +11,12 @@ export const CONDITIONS = ["Stunned", "Prone", "Bleeding", "Poisoned", "Blinded"
 const KIND = { pc: { label: "Player", color: "#a8d3e4" }, ally: { label: "Ally", color: "#b8d8a8" }, foe: { label: "Foe", color: "#f39da8" } };
 
 export function combat(c = C()) { return (c.combat ||= { active: false, round: 1, turn: 0, list: [], log: [], showOnStream: true, autoSkip: true }); }
+// "14 (+2)" reads as +2; "+3" or "3" as-is. D&D and PF use DEX/Perception, others their own stat.
+const modOf = v => { const m = String(v ?? "").match(/\(([+−-]?\d+)\)/) || String(v ?? "").match(/^\s*([+−-]?\d+)/); return m ? parseInt(m[1].replace("−", "-")) || 0 : null; };
+export function initModOf(s = {}) {
+  for (const k of ["Initiative", "Agility", "DEX", "Dex", "Perception", "REF", "Reaction"]) { const v = modOf(s[k]); if (v != null) return v; }
+  return 0;
+}
 export function sortCombat(cb) { const dir = C().rules?.initHigh === false ? -1 : 1; cb.list.sort((a, b) => dir * ((Number(b.init) || 0) - (Number(a.init) || 0)) || (b.tie || 0) - (a.tie || 0)); }
 const hpWord = (hp, max) => t(!max ? "" : hp <= 0 ? "Down" : hp <= max * .25 ? "Near death" : hp <= max * .5 ? "Bloodied" : hp < max ? "Hurt" : "Unhurt");
 
@@ -30,7 +36,7 @@ export function pushCombat() { clearTimeout(pushT); pushT = setTimeout(() => { S
 
 function fromCreature(x, n, hp) {
   const max = parseInt(x.stats?.HP || x.hp) || 0;
-  const initMod = parseInt(x.stats?.Initiative || x.stats?.Agility || x.stats?.Speed) || 0;
+  const initMod = initModOf(x.stats);
   return { id: uid(), kind: "foe", name: n ? `${x.name} ${n}` : x.name, ref: x.id, init: "", initMod, hp: hp ?? max, max, def: x.stats?.Defense || "", conds: [], hidden: false };
 }
 

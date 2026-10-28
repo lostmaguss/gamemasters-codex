@@ -2,6 +2,7 @@
 import { $, $$, esc, h, icon, toast, uid, debounce, ls } from "./util.js";
 import { C, save } from "./store.js";
 import { shrinkImage } from "./board.js";
+import { libraryModal, inlineRolls } from "./library.js";
 
 const skull = on => `<svg class="ic skull ${on ? "on" : ""}" viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-7 7c0 2.5 1.3 4 3 5v3h8v-3c1.7-1 3-2.5 3-5a7 7 0 0 0-7-7zM9.5 10h.01M14.5 10h.01M10 21h4"/></svg>`;
 
@@ -19,7 +20,7 @@ export function nextPlanned(c, create = true) {
 export function createBestiary(el, App) {
   const st = { sel: C().ui.creature, q: "", edit: false, secret: ls.get("bst.secret", false) };
   el.innerHTML = `<div class="bestiary">
-    <aside class="tb-list"><div class="head"><div class="row"><button class="btn primary" id="bNew" style="flex:1">${icon("plus")} New creature</button><button class="btn icon" id="bTpl" title="Stat block layout">${icon("gear")}</button></div><input type="search" id="bQ" placeholder="Search the bestiary"></div><div class="tb-items" id="bItems"></div></aside>
+    <aside class="tb-list"><div class="head"><div class="row"><button class="btn primary" id="bNew" style="flex:1">${icon("plus")} New creature</button><button class="btn icon" id="bLib" title="Library: ready-made creatures for your game system">${icon("book")}</button><button class="btn icon" id="bTpl" title="Stat block layout">${icon("gear")}</button></div><input type="search" id="bQ" placeholder="Search the bestiary"></div><div class="tb-items" id="bItems"></div></aside>
     <section class="bst-stage" id="bStage"></section>
   </div>`;
   const B = () => C().bestiary;
@@ -36,7 +37,7 @@ export function createBestiary(el, App) {
   function rollAbility(x, a) { if (!a.roll) return; App.roll(a.roll, `${x.name}: ${a.name}`, { secret: st.secret }); }
   function renderCard() {
     const box = $("#bStage", el), x = cur(), tpl = C().statTemplate;
-    if (!x) { box.innerHTML = `<div class="empty"><h3>A bestiary for your own system</h3><p>Set the stat block layout your homebrew uses (the gear button), then make creatures. Ability rolls become one-click buttons.</p><button class="btn primary" id="bE">${icon("plus")} First creature</button></div>`; $("#bE", box).onclick = newCreature; return; }
+    if (!x) { box.innerHTML = `<div class="empty"><h3>A bestiary for your system</h3><p>Pull ready-made creatures for your game from the Library, or set your own stat block (the gear button) and make them. Ability rolls become one-click buttons.</p><div class="row" style="gap:8px;justify-content:center"><button class="btn primary" id="bL">${icon("book")} Open the Library</button><button class="btn" id="bE">${icon("plus")} First creature</button></div></div>`; $("#bE", box).onclick = newCreature; $("#bL", box).onclick = () => $("#bLib", el).click(); return; }
     x.stats ||= {}; x.abilities ||= [];
     const bar = `<div class="bst-bar"><div class="mode-seg"><button data-m="view" class="${!st.edit ? "on" : ""}">View</button><button data-m="edit" class="${st.edit ? "on" : ""}">Edit</button></div>
       <label class="toggle"><input type="checkbox" id="bSecret" ${st.secret ? "checked" : ""}> ${icon("lock")} Secret rolls</label><div style="flex:1"></div>
@@ -47,11 +48,12 @@ export function createBestiary(el, App) {
         ${x.img ? `<div class="mimg" style="background-image:url(${x.img})"></div>` : ""}
         <div class="mhead"><div><h2>${esc(x.name || "Unnamed")}</h2><div class="mkind">${esc(x.kind || "")}${x.tags ? ` · ${esc(x.tags)}` : ""}</div></div><div class="threat" title="Threat ${x.threat || 0}/5">${[1, 2, 3, 4, 5].map(i => skull(i <= (x.threat || 0))).join("")}</div></div>
         <div class="mstats">${tpl.map(k => `<div class="mstat ${k.toLowerCase() === "hp" ? "hp" : ""}"><span>${esc(k)}</span><b>${esc(x.stats[k] ?? "—")}</b></div>`).join("")}</div>
-        <div class="mabil">${x.abilities.map(a => `<div class="ab"><div class="ab-h"><b>${esc(a.name)}</b>${a.roll ? `<button class="rollchip" data-roll="${a.id}" title="Roll ${esc(a.roll)}${st.secret ? " secretly" : ""}">${icon("dice")} ${esc(a.roll)}</button>` : ""}</div>${a.text ? `<p>${esc(a.text)}</p>` : ""}</div>`).join("") || `<p style="opacity:.6">No abilities yet. Switch to Edit.</p>`}</div>
+        <div class="mabil">${x.abilities.map(a => `<div class="ab"><div class="ab-h"><b>${esc(a.name)}</b>${a.roll ? `<button class="rollchip" data-roll="${a.id}" title="Roll ${esc(a.roll)}${st.secret ? " secretly" : ""}">${icon("dice")} ${esc(a.roll)}</button>` : ""}</div>${a.text ? `<p>${inlineRolls(esc(a.text))}</p>` : ""}</div>`).join("") || `<p style="opacity:.6">No abilities yet. Switch to Edit.</p>`}</div>
         ${x.notes ? `<div class="msec"><span class="eyebrow">Tactics & notes</span><p>${esc(x.notes)}</p></div>` : ""}
         ${x.loot ? `<div class="msec"><span class="eyebrow">Loot</span><p>${esc(x.loot)}</p></div>` : ""}
       </article>`;
       $$("[data-roll]", box).forEach(b => b.onclick = () => rollAbility(x, x.abilities.find(a => a.id === b.dataset.roll)));
+      $$("[data-mdroll]", box).forEach(b => b.onclick = () => App.roll(b.dataset.mdroll, x.name, { secret: st.secret }));
     } else {
       box.innerHTML = bar + `<article class="mcard editing">
         <div class="mhead"><div style="flex:1;display:flex;flex-direction:column;gap:6px"><input class="m-name" type="text" data-k="name" value="${esc(x.name)}" placeholder="Creature name"><div class="row"><input type="text" data-k="kind" value="${esc(x.kind)}" placeholder="Kind (undead beast, elite soldier…)" style="flex:1"><input type="text" data-k="tags" value="${esc(x.tags)}" placeholder="tags" style="flex:1"></div></div>
@@ -94,6 +96,7 @@ export function createBestiary(el, App) {
   }
   $("#bNew", el).onclick = newCreature;
   $("#bQ", el).oninput = e => { st.q = e.target.value; renderList(); };
+  $("#bLib", el).onclick = () => libraryModal(App, { tab: "creatures", onAdd: () => { renderList(); renderCard(); } });
   $("#bTpl", el).onclick = () => {
     const c = C();
     App.modal(`<h2>Stat block layout</h2><p style="margin:0;color:var(--dim)">The stats every creature in this campaign has, in order. Match your homebrew system. Name one of them <b>HP</b> and it's used for hit point tracking in Live.</p>

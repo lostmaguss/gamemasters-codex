@@ -1,0 +1,127 @@
+// Library for horror, narrative and pool systems. Original write-ups in each game's style;
+// creatures from Lovecraft's public-domain stories are named as he named them.
+// Creature: [name, kind, threat 1-5, stats in the system's bestiary order, abilities, tactics]
+// Ability: [name, roll, text, damage roll]. Spell: [name, tags, text]; `dice` in text become roll buttons.
+const fateNPCs = (withSkills) => [
+  ["Thug", "Nameless NPC · average", 1, ["1", "+1", "Hired muscle", withSkills ? "Fight +1" : ""], [["Attack", "4dF+1", "Taken out by one solid hit."]], "Comes in groups. Treat a group as one character with +1 per extra thug."],
+  ["Bodyguard", "Nameless NPC · fair", 2, ["2", "+2", "Loyal to the end; Big and slow", withSkills ? "Fight +2, Physique +1" : ""], [["Attack", "4dF+2", ""], ["Interpose", "", "Takes a hit meant for the boss."]], ""],
+  ["Rival Investigator", "Supporting NPC", 3, ["3", "+2", "Always a step ahead; Owes the wrong people", withSkills ? "Investigate +3, Notice +2, Shoot +1" : ""], [["Create an advantage", "4dF+3", "Finds the clue first."]], "Wants the same thing as the PCs, for a different reason."],
+  ["Cult Leader", "Main NPC", 4, ["4", "+3", "Voice of the drowned god; Believes every word; Afraid of the light", withSkills ? "Provoke +4, Will +3, Lore +3, Deceive +2" : ""], [["Provoke", "4dF+4", "Mental attack."], ["Consequence", "", "Mild, moderate and severe consequence slots."]], ""],
+  ["Beast of the Moor", "Monster · main NPC", 5, ["5", "+3", "Hungry shape in the fog; Fears fire", withSkills ? "Fight +4, Stealth +4, Physique +3" : ""], [["Maul", "4dF+4", "Weapon:2."]], ""],
+];
+const fateStunts = [
+  ["Backup Plan", "Stunt", "Once per session, declare you prepared for exactly this. Create an advantage with a free invoke, no roll."],
+  ["Hard to Kill", "Stunt", "Once per session, take a mild consequence instead of being taken out."],
+  ["Silver Tongue", "Stunt", "+2 when you use Rapport (or Flashy) to change someone's mind. `4dF+2`"],
+  ["Killing Stroke", "Stunt", "Once per scene, when you succeed with style on an attack, you can force a consequence instead of the boost."],
+  ["Called Shot", "Stunt", "Attacks with a weapon get +2 when you spent your previous action aiming. `4dF+2`"],
+  ["The Ladder", "Reference", "+8 Legendary · +7 Epic · +6 Fantastic · +5 Superb · +4 Great · +3 Good · +2 Fair · +1 Average · 0 Mediocre · −1 Poor · −2 Terrible"],
+];
+export default {
+  coc: {
+    label: "Spells & rites",
+    creatures: [
+      ["Cultist", "Human, fanatic", 1, ["11", "0", "8", "55", "50", "60", "0/0"], [["Knife", "1d100<=40", "Fighting.", "1d4+2"], ["Revolver", "1d100<=35", "Firearms (handgun).", "1d10"]], "Flees when the priest falls. Knows one spell, maybe."],
+      ["Reanimated Corpse", "Undead", 2, ["14", "0", "6", "80", "80", "5", "1/1d8"], [["Grab and bite", "1d100<=30", "Fighting.", "1d6+1d4"]], "Takes only 1 damage from bullets and impaling weapons."],
+      ["Ghoul", "Monster, graveyard", 2, ["13", "6", "9", "80", "65", "65", "0/1d6"], [["Claws ×2", "1d100<=40", "Fighting.", "1d6+1d4"], ["Bite", "1d100<=40", "Then worries the target for `1d4` a round.", "1d6+1d4"]], "Firearms do half damage. Rubbery hide counts as 6 armor."],
+      ["Deep One", "Monster, sea", 3, ["15", "1", "8 / swim 10", "70", "50", "50", "0/1d6"], [["Claw", "1d100<=45", "Fighting.", "1d6+1d4"], ["Spear", "1d100<=45", "Fighting.", "1d8+1d4"]], "Lives forever unless killed. Interbreeds with coastal villages."],
+      ["Byakhee", "Monster, winged", 3, ["11", "2", "5 / fly 20", "90", "55", "50", "1/1d6"], [["Claw", "1d100<=55", "Fighting.", "1d6+1d6"], ["Bite and drain", "1d100<=55", "Stays attached, draining `1d6` STR a round.", "1d6"]], "Summoned with a whistle and a golden mead."],
+      ["Mi-Go", "Monster, fungi from Yuggoth", 3, ["11", "0", "7 / fly 9", "50", "50", "65", "0/1d6"], [["Nippers", "1d100<=45", "Grapple to fly off with the victim.", "1d6"], ["Electric gun", "1d100<=40", "Paralyzes on 1d10 roll of damage beyond CON.", "1d10"]], "Surgeons. They collect brains in cylinders."],
+      ["Shoggoth", "Monster, ancient servitor", 5, ["66", "0", "10", "315", "200", "70", "1d6/1d20"], [["Crush", "1d100<=70", "Everyone within its mass.", "8d6"], ["Engulf", "1d100<=70", "Victims taken in are crushed each round and suffocate."]], "Regenerates 2 HP a round. Fire and electricity do half."],
+    ],
+    spells: [
+      ["Elder Sign", "Ward · 1 POW · 1d4 SAN", "A carved stone sign. Lesser servitors cannot pass it. Costs `1d4` Sanity to make."],
+      ["Banishing Rite", "Rite · varies", "The caster and helpers pour Magic Points into a contest with the creature's POW. `1d100`"],
+      ["Dread Whisper", "Enchantment · 5 MP · 1d6 SAN", "Speak one sentence into a mind from a mile away. The target hears it as their own thought."],
+      ["Withering Touch", "Curse · 8 MP · 1d6 SAN", "Touch, opposed POW. On a win, the target loses `2d6` HP as their flesh puckers."],
+      ["Calling the Fog", "Rite · 6 MP · 1d4 SAN", "A thick fog rolls in over a quarter mile for an hour. Spot Hidden is Hard."],
+      ["Sight Beyond", "Divination · 3 MP · 1 SAN", "For a minute you see what is unseen nearby, and it sees you. Roll Sanity: `1d100`"],
+      ["Sanity check", "Reference", "Roll `1d100` under current Sanity. Lose the small number on a success, the big one on a failure. Lose 5+ at once: roll Intelligence or go temporarily insane."],
+    ],
+  },
+  pbta: {
+    label: "Moves",
+    creatures: [
+      ["Scavenger", "Grotesque · scrounger", 1, ["3", "0", "1d6", "To take what's left"], [["Knife", "", "1 harm, hand.", "1d6"]], "Offers trades it can't honor."],
+      ["Raider Gang", "Warlord's crew · small gang", 2, ["6", "1", "2 harm", "To plunder"], [["Overrun", "", "2 harm, small gang.", "1d6"]], ""],
+      ["Feral Hound Pack", "Landscape · pit", 2, ["4", "0", "2 harm", "To hunt the weak"], [["Tear", "", "2 harm, close, messy.", "1d6"]], ""],
+      ["Cult Prophet", "Brute · cult", 3, ["6", "1", "1 harm", "To convert"], [["Sermon", "", "Everyone listening acts under fire to resist."]], "Speaks in the voice of your dead."],
+      ["Warlord", "Warlord · slaver", 4, ["10", "2", "3 harm", "To own everything"], [["Hammer", "", "3 harm, hand, messy.", "1d8"]], ""],
+      ["The Thing in the Static", "Affliction · disease", 5, ["—", "—", "—", "To spread"], [["Whisper", "", "Anyone who opens their brain to it takes 1 harm (ap)."]], ""],
+    ],
+    spells: [
+      ["Act Under Fire", "Basic move", "Roll `2d6`+Cool. 10+ you do it. 7–9 you stumble, hesitate or flinch: the GM offers a worse outcome, a hard bargain or an ugly choice."],
+      ["Go Aggro", "Basic move", "Roll `2d6`+Hard. 10+ they have to choose: force your hand and suck it up, or cave and do what you want. 7–9 they can also get out of the way, barricade, or give you something they think you want."],
+      ["Read a Situation", "Basic move", "Roll `2d6`+Sharp. 10+ ask the GM 3 questions, 7–9 ask 1. Act on the answers for +1 forward."],
+      ["Help or Interfere", "Basic move", "Roll `2d6`+History. 10+ they take +2 (or −2) on their roll. 7–9 +1 (or −1), and you expose yourself."],
+      ["Seduce or Manipulate", "Basic move", "Roll `2d6`+Hot. On a hit, they do it if you give them a reason. 7–9 they want something first."],
+      ["GM moves", "Reference", "Separate them · Capture someone · Put someone in a spot · Trade harm for harm · Announce off-screen badness · Announce future badness · Inflict harm · Take away their stuff · Make them buy · Activate their stuff's downside · Tell them the possible consequences and ask · Offer an opportunity, with or without a cost · Turn their move back on them"],
+    ],
+  },
+  blades: {
+    label: "Rituals & abilities",
+    creatures: [
+      ["Bluecoat Patrol", "City Watch · tier II gang", 2, ["Level 2", "Armor", "II", "Standard"], [["Clubs and crossbows", "", "Harm 2. Calls for backup when outnumbered."]], "Take a bribe if no sergeant is watching."],
+      ["Dock Gang", "Thugs · tier I gang", 1, ["Level 1", "—", "I", "Standard"], [["Hooks and knives", "", "Harm 1–2."]], ""],
+      ["Hollow", "Undead body, spirit-bound", 3, ["Level 3", "Tough", "II", "Risky"], [["Rending grip", "", "Harm 3. Ignores harm short of fire or electroplasm."]], ""],
+      ["Restless Ghost", "Spirit", 3, ["—", "Ethereal", "II", "Desperate"], [["Possess", "", "Attune to resist. On a failure the ghost takes the body for a scene."], ["Chill", "", "Harm 2, cold. Weapons pass through."]], "Wants one thing it lost."],
+      ["Spirit Warden", "Order of the Dead", 4, ["Level 3", "Heavy", "IV", "Desperate"], [["Lightning hook", "", "Harm 3. Binds spirits into a bottle."]], "Shows up when anyone dies near a ghost field."],
+      ["Lesser Demon", "Demon of the deep", 5, ["Level 4", "Armor ×2", "V", "Desperate"], [["Claws and will", "", "Harm 4. Bargains for anything."]], ""],
+    ],
+    spells: [
+      ["Action roll", "Reference", "Roll dots in the action, keep the highest. 6 full success, 4–5 partial, 1–3 bad outcome, two 6s critical. With 0 dots roll two and keep the lower: `2d6kl1`"],
+      ["Fortune roll", "Reference", "For when no one acts: roll the trait's level and keep the highest. `2d6kh1`"],
+      ["Resistance", "Reference", "Roll the attribute: stress cost is 6 minus the highest die. A critical clears 1 stress."],
+      ["Compel", "Whisper ability", "Attune to the ghost field to force a nearby ghost to appear and obey a command. You're not supernaturally terrifying to them."],
+      ["Ghost Ward", "Whisper ability", "Wreck a place to make it repel or attract ghosts."],
+      ["Summoning Ritual", "Ritual · long-term", "Make a long-term project to learn it. Costs stress or coin to cast; something always comes."],
+    ],
+  },
+  vtm5: {
+    label: "Disciplines",
+    creatures: [
+      ["Ghoul Retainer", "Mortal, blood-bound", 1, ["6", "1", "5", "—"], [["Brawl", "5d10>=6", "Superficial damage.", ""], ["Pistol", "4d10>=6", "+2 damage.", ""]], "Loyal to the domitor. Drinks the blood monthly."],
+      ["Second Inquisition Agent", "Hunter, trained", 2, ["7", "2", "6", "—"], [["Assault rifle", "6d10>=6", "+3 damage. Uses UV and fire.", ""], ["Intel", "", "Knows the coterie's haven if they were sloppy."]], ""],
+      ["Anarch Brawler", "Kindred, 13th generation", 2, ["7", "1", "7", "1"], [["Fists", "7d10>=6", "Potence adds damage.", ""], ["Blood surge", "", "Rouse check: add 2 dice to one physical pool. `1d10>=6`"]], ""],
+      ["Sheriff's Enforcer", "Kindred, 11th generation", 3, ["9", "2", "8", "2"], [["Sword", "8d10>=6", "+2 aggravated against mortals.", ""], ["Celerity", "", "Acts twice when it counts."]], "Asks once."],
+      ["Thin-blood Alchemist", "Duskborn", 2, ["5", "0", "5", "0"], [["Alchemical flame", "5d10>=6", "Fire, aggravated damage.", ""]], "Can walk in daylight. Wants a place in the city."],
+      ["Werewolf", "Garou, enraged", 5, ["13", "3", "10", "—"], [["Claws", "10d10>=6", "Aggravated damage to Kindred.", ""], ["Rage", "", "Heals 1 superficial each turn."]], "Run."],
+      ["Methuselah's Envoy", "Elder Kindred", 5, ["10", "2", "11", "5"], [["Dominate", "11d10>=6", "Contested with Resolve + Intelligence.", ""]], ""],
+    ],
+    spells: [
+      ["Rouse check", "Reference", "Roll `1d10>=6` when you spend blood. A failure raises Hunger by 1."],
+      ["Celerity: Rapid Reflexes", "Celerity 1", "Faster reactions: take a minor action for free each turn; no penalty when defending against ranged attacks without cover."],
+      ["Dominate: Compel", "Dominate 1 · Charisma + Dominate vs Intelligence + Resolve", "A single short command, obeyed at once if it can be done in a turn."],
+      ["Auspex: Heightened Senses", "Auspex 1", "Add Auspex to Awareness and Wits rolls with your senses for the scene."],
+      ["Presence: Awe", "Presence 1 · Rouse", "Add Presence to Persuasion, Performance and Charisma rolls. Everyone in the room finds you magnetic."],
+      ["Fortitude: Resilience", "Fortitude 1", "Add Fortitude to your Health track."],
+      ["Obfuscate: Cloak of Shadows", "Obfuscate 1", "Stay unseen while you stand still in cover."],
+      ["Potence: Lethal Body", "Potence 1", "Unarmed attacks deal aggravated damage to mortals and ignore one level of armor."],
+      ["Blood Sorcery: Corrosive Vitae", "Blood Sorcery 1 · Rouse", "Your blood eats through inanimate matter: a lock, a chain, a door."],
+    ],
+  },
+  savage: {
+    label: "Powers",
+    creatures: [
+      ["Bandit", "Extra · human", 1, ["1", "5", "6", "6 (1)"], [["Short sword", "1d6!", "Fighting d6.", "1d8+1d6"], ["Bow", "1d6!", "Shooting d6, 12/24/48.", "2d6"]], ""],
+      ["Wolf", "Extra · animal", 1, ["1", "5", "8", "4"], [["Bite", "1d6!", "Fighting d6. Go for the throat: hits an unarmored location on a raise.", "1d6+1d6"]], ""],
+      ["Skeleton", "Extra · undead", 1, ["1", "5", "7", "7 (2)"], [["Claws", "1d6!", "Fighting d6.", "1d6+1d4"], ["Undead", "", "+2 Toughness, no wound penalties, called shots do no extra damage."]], ""],
+      ["Orc", "Extra · humanoid", 2, ["1", "5", "6", "8 (1)"], [["Axe", "1d8!", "Fighting d8.", "1d8+1d8"]], ""],
+      ["Zombie", "Extra · undead", 1, ["1", "5", "4", "7"], [["Bite", "1d6!", "Fighting d6.", "1d6+1d4"], ["Weakness", "", "Head shots do +4 damage, not +4 for the hit."]], ""],
+      ["Ogre", "Wild Card · giant", 3, ["3", "6", "7", "11 (1)"], [["Club", "1d8!", "Fighting d8, Reach 1. Roll a wild die too: `1d6!`", "1d12+1d8"]], "Size 2, Sweep."],
+      ["Young Dragon", "Wild Card · dragon", 5, ["3", "7", "8", "18 (4)"], [["Bite and claws", "1d10!", "Fighting d10.", "1d12+1d8"], ["Fiery breath", "", "Cone template, Agility roll at −2 to dodge.", "3d6"]], "Flies, Hardy, Fear −2."],
+    ],
+    spells: [
+      ["Bolt", "Power · 1 PP · Smarts range", "Arcane skill roll. Success `2d6` damage, a raise `3d6`. Up to three bolts for extra PP."],
+      ["Blast", "Power · 3 PP · Medium Blast Template", "`2d6` to everyone under it, `3d6` on a raise."],
+      ["Healing", "Power · 3 PP · touch", "Remove a wound (two on a raise), within the golden hour."],
+      ["Protection", "Power · 1 PP · 5 rounds", "+2 Armor, or +2 Toughness on a raise."],
+      ["Deflection", "Power · 3 PP", "Attackers get −2 to hit (−4 on a raise)."],
+      ["Smite", "Power · 2 PP", "A weapon deals +2 damage, +4 on a raise."],
+      ["Entangle", "Power · 2 PP", "Target is Entangled, Bound on a raise."],
+      ["Fear", "Power · 2 PP · Large Blast Template", "Everyone under it makes a Fear check."],
+    ],
+  },
+  fate: { label: "Stunts & reference", creatures: fateNPCs(true), spells: fateStunts },
+  fae: { label: "Stunts & reference", creatures: fateNPCs(false).map(c => [c[0], c[1], c[2], c[3].slice(0, 3), c[4], c[5]]), spells: fateStunts },
+};
