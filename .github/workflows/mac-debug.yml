@@ -12,13 +12,11 @@ jobs:
       - name: Diagnose
         run: |
           APP="dist-installer/mac-arm64/Gamemasters Codex.app"
-          note() { while IFS= read -r l; do echo "::warning title=$1::${l:0:300}"; done; }
-          ls "$APP/Contents/MacOS" | note "MacOS dir"
-          codesign -dv "$APP" 2>&1 | head -6 | note "codesign"
-          export CODEX_SMOKE="$RUNNER_TEMP/smoke.txt" ELECTRON_ENABLE_LOGGING=1 ELECTRON_ENABLE_STACK_DUMPING=1
+          export CODEX_SMOKE="$RUNNER_TEMP/smoke.txt"
           set +e
-          perl -e 'alarm 150; exec @ARGV' "$APP/Contents/MacOS/Gamemasters Codex" --enable-logging > "$RUNNER_TEMP/app.log" 2>&1
-          echo "exit code $?" | note "exit"
-          grep -v '^\s*$' "$RUNNER_TEMP/app.log" | tail -30 | note "app log"
-          [ -f "$CODEX_SMOKE" ] && cat "$CODEX_SMOKE" | note "report" || echo "no report" | note "report"
-          ls ~/Library/Logs/DiagnosticReports 2>/dev/null | tail -3 | note "crash reports"
+          perl -e 'alarm 150; exec @ARGV' "$APP/Contents/MacOS/Gamemasters Codex" > "$RUNNER_TEMP/app.log" 2>&1
+          code=$?
+          enc() { sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | cut -c1-3000; }
+          echo "::warning title=exit and report::exit $code; report file: $(ls -la "$CODEX_SMOKE" 2>&1)%0A$(cat "$CODEX_SMOKE" 2>&1 | enc)"
+          echo "::warning title=self-test lines::$(grep -i 'SELF-TEST' "$RUNNER_TEMP/app.log" | enc)"
+          echo "::warning title=env::RUNNER_TEMP=$RUNNER_TEMP; whoami=$(whoami)"

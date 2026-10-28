@@ -26,7 +26,9 @@ let stage = null;
 const SMOKE = process.env.CODEX_SMOKE;
 const smokeErrors = [];
 function smokeDone(ok, detail) {
-  try { fs.writeFileSync(SMOKE, (ok ? "OK\n" : "FAIL\n") + detail + "\n"); } catch {}
+  const report = (ok ? "OK\n" : "FAIL\n") + detail + "\n";
+  console.log("SELF-TEST " + report.replace(/\n/g, " | "));
+  try { fs.writeFileSync(SMOKE, report); } catch (e) { console.log("SELF-TEST couldn't write " + SMOKE + ": " + e.message); }
   app.exit(ok ? 0 : 1);
 }
 if (SMOKE) {
