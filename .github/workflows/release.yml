@@ -42,7 +42,7 @@ jobs:
     needs: check
     if: needs.check.outputs.skip == 'false'
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
