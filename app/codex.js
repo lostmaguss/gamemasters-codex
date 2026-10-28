@@ -32,7 +32,7 @@ export function createCodex(el, App) {
   el.innerHTML = `<div class="codex">
     <nav class="cx-cats" id="cxCats"></nav>
     <div class="cx-list">
-      <div class="head"><button class="btn primary" id="cxNew">${icon("plus")} New page</button><input type="search" id="cxQ" placeholder="Search the Codex"></div>
+      <div class="head"><button class="btn primary" id="cxNew">${icon("plus")} New page</button><button class="btn sm ghost" id="cxImp" title="Import notes from a folder (Obsidian vault or Markdown files)">${icon("book")} Import notes</button><input type="search" id="cxQ" placeholder="Search the Codex"></div>
       <ul class="cx-items" id="cxItems"></ul>
     </div>
     <div class="cx-page" id="cxPage"></div>
@@ -146,6 +146,36 @@ export function createCodex(el, App) {
   $("#cxNew", el).onclick = e => App.menu(e.currentTarget, Object.keys(TEMPLATES).map(t => ({ text: t === "Blank" ? "Blank page" : `${t} template`, icon: { Blank: "codex", NPC: "social", Location: "explore", Faction: "board", Quest: "travel", Item: "loot" }[t], run: () => newPage(t) })));
   $("#cxQ", el).oninput = e => { st.q = e.target.value; renderList(); };
   st.sel = C().ui.note && notes().some(n => n.id === C().ui.note) ? C().ui.note : notes()[0]?.id;
+  // bring in an Obsidian vault or any folder of Markdown notes
+  $("#cxImp", el).onclick = async () => {
+    if (!window.codex?.importNotes) return toast("Importing works in the desktop app");
+    toast("Reading your notes…");
+    const r = await window.codex.importNotes(); if (!r) return;
+    if (!r.pages.length) return toast("No Markdown (.md) notes in that folder");
+    const have = new Map(notes().map(n => [n.title.trim().toLowerCase(), n]));
+    const dupes = r.pages.filter(p => have.has(p.title.toLowerCase())).length;
+    const byCat = {}; r.pages.forEach(p => byCat[p.cat] = (byCat[p.cat] || 0) + 1);
+    App.modal(`<h2>Import "${esc(r.folder)}"</h2>
+      <p style="margin:0;color:var(--dim)">${r.pages.length} pages${r.pages.some(p => p.img) ? `, ${r.pages.filter(p => p.img).length} with pictures` : ""}. Categories are guessed from folder names; you can change any page later.</p>
+      <div class="chips">${Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<span class="chip"><span class="sq" style="background:${CATS[c]};display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px"></span>${esc(c)} ${n}</span>`).join("")}</div>
+      ${dupes ? `<label class="f"><span>${dupes} page${dupes > 1 ? "s have" : " has"} the same title as one you already have</span><select id="imDup"><option value="skip">Keep mine, skip those</option><option value="update">Replace mine with the imported text</option><option value="both">Import them as extra copies</option></select></label>` : ""}
+      <label class="toggle"><input type="checkbox" id="imTag" checked> Tag them "${esc(r.folder)}" so you can find them</label>
+      <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Import ${r.pages.length} pages</button></div>`, (m, close) => {
+      $("[data-x]", m).onclick = close;
+      $("[data-ok]", m).onclick = () => {
+        const mode = $("#imDup", m)?.value || "skip", tag = $("#imTag", m).checked ? r.folder : "";
+        let added = 0, updated = 0;
+        for (const p of r.pages) {
+          const tags = [p.tags, tag].filter(Boolean).join(", "), ex = have.get(p.title.toLowerCase());
+          if (ex && mode === "skip") continue;
+          if (ex && mode === "update") { ex.body = p.body; ex.tags = tags || ex.tags; if (p.img) ex.img = p.img; ex.updated = Date.now(); updated++; continue; }
+          notes().push({ id: uid(), title: p.title, cat: p.cat, tags, body: p.body, img: p.img || undefined, updated: Date.now() }); added++;
+        }
+        save(); close(); renderCats(); renderList(); App.refreshAll?.();
+        toast(`Imported ${added} page${added === 1 ? "" : "s"}${updated ? `, updated ${updated}` : ""}`);
+      };
+    });
+  };
   renderCats(); renderList(); renderPage();
   return {
     show(arg) { if (arg?.note) open(arg.note, "read"); else if (arg?.title) followLink(arg.title); else { renderCats(); renderList(); if (st.mode === "read") renderPage(); } },

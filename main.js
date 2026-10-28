@@ -292,6 +292,7 @@ ipcMain.handle("app:version", () => app.getVersion());
 const bot = require("./bot");
 bot.setup(() => desk);
 table.setup(() => desk, mediaDir, () => !!(stage && !stage.isDestroyed()));
+require("./notesimport").setup(() => desk, mediaDir);
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);

@@ -42,6 +42,7 @@
       "bot.js",
       "tableserver.js",
       "tunnel.js",
+      "notesimport.js",
       "app/**/*",
       "build/icon.png",
       "package.json",
