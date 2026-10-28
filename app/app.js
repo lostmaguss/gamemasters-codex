@@ -3,7 +3,7 @@ import { t, setLang, LANGS } from "./i18n.js";
 import { initPoll } from "./poll.js";
 import { syncCustomDice } from "./customdice.js";
 import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
-import { $, $$, esc, h, icon, toast, uid } from "./util.js";
+import { $, $$, esc, h, icon, toast, uid, keys, isMac } from "./util.js";
 import { S, C, loadData, save, flush, onSaved, blankCampaign } from "./store.js";
 import { Stage } from "./bridge.js";
 import { createForge } from "./forge.js";
@@ -355,7 +355,7 @@ function campaignMenu() {
     { text: "What's new", icon: "star", run: () => showNews(NEWS) },
     { text: "Keyboard shortcuts (F1)", icon: "type", run: helpSheet },
     { text: "User guide (opens in browser)", icon: "book", run: () => window.open("https://github.com/lostmaguss/gamemasters-codex#readme") },
-    { text: `Interface size: ${Math.round((S.data.prefs.zoom || 1) * 100)}% (Ctrl + / −)`, icon: "fit", run: () => { S.data.prefs.zoom = 1.1; zoomBy(-.1); } },
+    { text: `Interface size: ${Math.round((S.data.prefs.zoom || 1) * 100)}% (${keys("Ctrl + / −")})`, icon: "fit", run: () => { S.data.prefs.zoom = 1.1; zoomBy(-.1); } },
     "-",
     { text: "Delete this campaign", icon: "trash", run: () => {
       if (S.data.campaigns.length < 2) return toast("Make another campaign first; you need at least one");
@@ -388,6 +388,8 @@ function wireChrome() {
   App.fx.push();
   import("./combat.js").then(m => m.pushCombat());
   if (window.codex?.update) window.codex.update.onState(updateState);
+  document.body.classList.add("os-" + (window.codex?.platform || "web"));
+  $("#searchBtn kbd").textContent = keys("Ctrl K"); $("#searchBtn").title = keys("Search and commands (Ctrl+K)");
   syncCustomDice(); wireBot(); initPoll(App); initPlayers(App);
   Stage.onState(setLive);
   Stage.isOpen().then(setLive);
@@ -445,7 +447,7 @@ function helpSheet() {
     ["Board", [["Double-click", "New note"], ["Drag a pin onto a card", "Tie yarn"], ["N · Ctrl+D · Delete", "New note · duplicate · delete"], ["Paste / drop an image", "Pin it"]]],
     ["Forge & Tables", [["Space", "Draw a card (Forge)"], ["R", "Roll the open table"]]],
     ["Stream window", [["H", "Hide roll history"], ["F", "Fullscreen"], ["Space", "Roll a d20"]]]];
-  App.modal(`<h2>Shortcuts</h2><div class="help-grid">${rows.map(([t, list]) => `<section><h3>${t}</h3><dl>${list.map(([k, d]) => `<dt><kbd>${esc(k)}</kbd></dt><dd>${esc(d)}</dd>`).join("")}</dl></section>`).join("")}</div><div class="foot"><button class="btn primary" data-ok>Got it</button></div>`, (m, close) => { $("[data-ok]", m).onclick = close; m.style.width = "min(900px, 100%)"; });
+  App.modal(`<h2>Shortcuts</h2><div class="help-grid">${rows.map(([t, list]) => `<section><h3>${t}</h3><dl>${list.map(([k, d]) => `<dt><kbd>${esc(keys(k))}</kbd></dt><dd>${esc(d)}</dd>`).join("")}</dl></section>`).join("")}</div><div class="foot"><button class="btn primary" data-ok>Got it</button></div>`, (m, close) => { $("[data-ok]", m).onclick = close; m.style.width = "min(900px, 100%)"; });
 }
 App.help = helpSheet;
 function zoomBy(d) {
@@ -565,6 +567,7 @@ function wireBot() {
 function updateState(u) {
   const pill = $("#updPill");
   if (u.state === "ready") { pill.hidden = false; pill.textContent = `Update ${u.version || ""} ready · restart`; pill.onclick = () => { flush(); window.codex.update.install(); }; }
+  else if (u.state === "available") { pill.hidden = false; pill.textContent = `Update ${u.version || ""} available · download`; pill.onclick = () => window.codex.update.page(); }
   else if (u.state === "downloading") { pill.hidden = false; pill.textContent = `Downloading update ${u.version || ""}…`; pill.onclick = null; }
   else if (u.manual) toast(u.state === "current" ? "You're on the latest version" : u.state === "error" ? "Couldn't check for updates: " + (u.message || "") : "");
 }

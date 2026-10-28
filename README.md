@@ -6,7 +6,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/lostmaguss/gamemasters-codex?style=for-the-badge&color=ff7a3d&labelColor=1a1517&label=version)](https://github.com/lostmaguss/gamemasters-codex/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/lostmaguss/gamemasters-codex/total?style=for-the-badge&color=ffcf5a&labelColor=1a1517)](https://github.com/lostmaguss/gamemasters-codex/releases)
-[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-39d0c0?style=for-the-badge&labelColor=1a1517)](https://github.com/lostmaguss/gamemasters-codex/releases/latest)
+[![Windows · macOS · Linux](https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-39d0c0?style=for-the-badge&labelColor=1a1517)](https://github.com/lostmaguss/gamemasters-codex/releases/latest)
 [![Free](https://img.shields.io/badge/price-free-9fd09a?style=for-the-badge&labelColor=1a1517)](https://github.com/lostmaguss/gamemasters-codex/releases/latest)
 
 ### A desktop companion for game masters who play at the table *and* on Discord.
@@ -14,7 +14,7 @@ Prep the session, run it, stream it, remember it. Any system, including your own
 
 <br>
 
-<a href="https://github.com/lostmaguss/gamemasters-codex/releases/latest"><img src="https://img.shields.io/badge/%E2%AC%87%20%20Download%20for%20Windows-ff7a3d?style=for-the-badge&labelColor=ff7a3d" alt="Download for Windows" height="44"></a>
+<a href="https://github.com/lostmaguss/gamemasters-codex/releases/latest"><img src="https://img.shields.io/badge/%E2%AC%87%20%20Download%20%C2%B7%20Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-ff7a3d?style=for-the-badge&labelColor=ff7a3d" alt="Download" height="44"></a>
 
 <br><br>
 
@@ -117,8 +117,17 @@ Pick a genre and the whole app follows: generators, starter tables, sounds, dice
 
 ## ⬇️ Get started
 
-1. **[Download the installer](https://github.com/lostmaguss/gamemasters-codex/releases/latest)** (`GamemastersCodex-Setup-x.y.z.exe`) and run it.
-   Windows may warn that the app isn't signed: click *More info → Run anyway*. After that the app updates itself.
+1. **[Download](https://github.com/lostmaguss/gamemasters-codex/releases/latest)** the file for your computer:
+
+   | | File | First launch |
+   |---|---|---|
+   | **Windows** 10 / 11 | `GamemastersCodex-Setup-x.y.z.exe` | If Windows warns that the app isn't signed: *More info → Run anyway*. |
+   | **macOS**, Apple Silicon (M1 and newer) | `GamemastersCodex-x.y.z-arm64.dmg` | Drag it to Applications. The first time, macOS blocks it: open *System Settings → Privacy & Security* and click **Open Anyway**. |
+   | **macOS**, Intel | `GamemastersCodex-x.y.z-x64.dmg` | Same as above. |
+   | **Ubuntu / Debian** | `GamemastersCodex-x.y.z-amd64.deb` | `sudo apt install ./GamemastersCodex-*.deb`, then find it in your apps. |
+   | **Any Linux** | `GamemastersCodex-x.y.z-x86_64.AppImage` | Make it executable (`chmod +x`) and run it. |
+
+   Windows and Linux update themselves. On macOS the app tells you when there's a new version to download (automatic installs need a paid Apple certificate).
 2. The sample campaign **The Ash Crown** shows how everything fits together. Make your own from the campaign menu (top left).
 3. Press **F1** any time for every keyboard shortcut.
 
@@ -128,6 +137,8 @@ Pick a genre and the whole app follows: generators, starter tables, sounds, dice
 1. Click **Stream window** in the top bar. A second window opens with just the table.
 2. In Discord: *Share Screen → Applications → Codex Dice (stream)*. Turn on **Sound** if you use the soundboard.
 3. Keep working in the main window. Everything you choose to show goes to the stream window. Secret rolls never do.
+
+On Linux, Discord can't share an app window's sound; play the soundboard through your speakers or share your whole screen.
 
 In the stream window: **H** hides the roll history, **F** goes fullscreen, and the control bar fades out on its own.
 For an in-person table, **Player display on a second screen** puts it fullscreen on a TV or projector.
@@ -201,7 +212,7 @@ Which die makes a critical, whether high or low is good, and initiative order ar
 <details>
 <summary><b>💾 Your data</b></summary>
 
-Everything stays on your computer in `%APPDATA%\Gamemasters Codex\`. A dated backup is kept every day for 14 days (*Campaign menu → Restore a backup*). *Export backup* writes one file with all pictures included, so it works on any computer.
+Everything stays on your computer: `%APPDATA%\Gamemasters Codex\` on Windows, `~/Library/Application Support/Gamemasters Codex/` on macOS, `~/.config/Gamemasters Codex/` on Linux. A dated backup is kept every day for 14 days (*Campaign menu → Restore a backup*). *Export backup* writes one file with all pictures included, so it works on any computer.
 </details>
 
 <details>
@@ -210,10 +221,12 @@ Everything stays on your computer in `%APPDATA%\Gamemasters Codex\`. A dated bac
 ```
 npm install
 npm start               # run the app
-npm run dist            # build the Windows installer (Wine needed on Linux)
+npm run dist            # Windows installer (Wine needed on Linux)
+npm run dist:linux      # AppImage + .deb
+npm run dist:mac        # .dmg + .zip (on a Mac)
 ```
 
-Electron · three.js + cannon-es for the dice · discord.js for the bot. Pushing a new `version` in `package.json` to `main` builds, checks and publishes a release automatically (GitHub Actions).
+Electron · three.js + cannon-es for the dice · discord.js for the bot. Pushing a new `version` in `package.json` to `main` builds Windows, macOS and Linux in parallel, starts each build and runs its self-test (on Linux also installing the .deb), and only then publishes the release (GitHub Actions).
 </details>
 
 <br>

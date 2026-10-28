@@ -9,10 +9,11 @@ const path = require("path");
 const BIN = {
   "win32-x64": "cloudflared-windows-amd64.exe", "win32-arm64": "cloudflared-windows-amd64.exe", "win32-ia32": "cloudflared-windows-386.exe",
   "linux-x64": "cloudflared-linux-amd64", "linux-arm64": "cloudflared-linux-arm64",
+  "darwin-x64": "cloudflared-darwin-amd64.tgz", "darwin-arm64": "cloudflared-darwin-arm64.tgz", // macOS ships as an archive
 };
 const binDir = () => path.join(app.getPath("userData"), "bin");
 const binName = () => BIN[`${process.platform}-${process.arch}`];
-const binPath = () => process.env.CODEX_TUNNEL_BIN || path.join(binDir(), binName() || "cloudflared");
+const binPath = () => process.env.CODEX_TUNNEL_BIN || path.join(binDir(), process.platform === "darwin" ? "cloudflared" : binName() || "cloudflared");
 
 let proc = null, state = { state: "off" }, onChange = () => {};
 const set = s => { state = s; onChange(state); };
@@ -24,7 +25,7 @@ async function download() {
   set({ state: "downloading", progress: 0 });
   const res = await net.fetch(url);
   if (!res.ok) throw new Error(`Couldn't download the tunnel helper (${res.status}).`);
-  const total = Number(res.headers.get("content-length")) || 0, tmp = binPath() + ".part";
+  const total = Number(res.headers.get("content-length")) || 0, tmp = path.join(binDir(), name + ".part");
   await fs.promises.mkdir(binDir(), { recursive: true });
   const out = fs.createWriteStream(tmp); let got = 0, last = 0;
   const reader = res.body.getReader();
@@ -35,7 +36,10 @@ async function download() {
   }
   await new Promise((r, j) => out.end(e => e ? j(e) : r()));
   if (got < 1e6) throw new Error("The tunnel helper download was incomplete. Try again.");
-  await fs.promises.rename(tmp, binPath());
+  if (name.endsWith(".tgz")) {
+    await new Promise((res, rej) => spawn("tar", ["-xzf", tmp, "-C", binDir()]).on("exit", c => c ? rej(new Error("Couldn't unpack the tunnel helper.")) : res()));
+    await fs.promises.unlink(tmp).catch(() => {});
+  } else await fs.promises.rename(tmp, binPath());
   if (process.platform !== "win32") await fs.promises.chmod(binPath(), 0o755);
 }
 

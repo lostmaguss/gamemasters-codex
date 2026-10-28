@@ -50,6 +50,7 @@ contextBridge.exposeInMainWorld("codex", {
   update: {
     check: () => ipcRenderer.invoke("update:check"),
     install: () => ipcRenderer.send("update:install"),
+    page: () => ipcRenderer.send("update:page"),
     onState: fn => on("update:state", fn),
   },
   win: {

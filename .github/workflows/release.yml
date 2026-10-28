@@ -1,7 +1,8 @@
 name: Build and release
 
-# Bump "version" in package.json and push to main: this builds the Windows installer
-# and publishes it as release v<version>. The app's auto-updater picks it up from there.
+# Bump "version" in package.json and push to main: this builds the app for Windows, Linux and
+# macOS, starts each build and runs its self-test, then publishes them together as release v<version>.
+# The apps' auto-updaters pick it up from there.
 on:
   push:
     branches: [main]
@@ -15,19 +16,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    runs-on: windows-latest
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      skip: ${{ steps.check.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Read version
         id: ver
-        shell: bash
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-
       - name: Skip if this version is already released
         id: check
-        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -38,24 +38,45 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+  build:
+    needs: check
+    if: needs.check.outputs.skip == 'false'
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            dir: --win dir
+            installers: --win nsis
+            asar: dist-installer/win-unpacked/resources/app.asar
+          - os: ubuntu-latest
+            dir: --linux dir
+            installers: --linux AppImage deb
+            asar: dist-installer/linux-unpacked/resources/app.asar
+          - os: macos-latest
+            dir: --mac dir
+            installers: --mac dmg zip
+            asar: dist-installer/mac-arm64/Gamemasters Codex.app/Contents/Resources/app.asar
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        if: steps.check.outputs.skip == 'false'
         with:
           node-version: 20
           cache: npm
-
       - name: Install dependencies
-        if: steps.check.outputs.skip == 'false'
         run: npm ci
 
-      - name: Check the packed app has every file it needs
-        if: steps.check.outputs.skip == 'false'
-        run: |
-          npx electron-builder --win dir --publish never
-          node scripts/check-pack.js dist-installer/win-unpacked/resources/app.asar
+      - name: Package the app
+        shell: bash
+        run: npx electron-builder ${{ matrix.dir }} --publish never
 
-      - name: Start the built app and run its self-test
-        if: steps.check.outputs.skip == 'false'
+      - name: Check the packed app has every file it needs
+        shell: bash
+        run: node scripts/check-pack.js "${{ matrix.asar }}"
+
+      - name: Self-test (Windows)
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $env:CODEX_SMOKE = "$env:RUNNER_TEMP\smoke.txt"
@@ -65,8 +86,59 @@ jobs:
           Get-Content $env:CODEX_SMOKE
           if ((Get-Content $env:CODEX_SMOKE -TotalCount 1) -ne "OK") { Write-Error "The app's self-test failed"; exit 1 }
 
-      - name: Build installer and publish release
-        if: steps.check.outputs.skip == 'false'
+      - name: Self-test (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          export CODEX_SMOKE="$RUNNER_TEMP/smoke.txt"
+          perl -e 'alarm 180; exec @ARGV' "dist-installer/mac-arm64/Gamemasters Codex.app/Contents/MacOS/Gamemasters Codex" || true
+          cat "$CODEX_SMOKE"
+          test "$(head -1 "$CODEX_SMOKE")" = "OK"
+
+      - name: Build installers
+        shell: bash
+        run: npx electron-builder ${{ matrix.installers }} --publish never
+
+      - name: Self-test the installed .deb and the AppImage (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
+          sudo apt-get install -y ./dist-installer/*.deb
+          # the installed app, sandbox on: this checks the AppArmor profile on Ubuntu 24.04
+          export CODEX_SMOKE="$RUNNER_TEMP/smoke-deb.txt"
+          timeout 180 xvfb-run -a gamemasters-codex || true
+          cat "$CODEX_SMOKE"; test "$(head -1 "$CODEX_SMOKE")" = "OK"
+          # the AppImage through its launcher
+          export CODEX_SMOKE="$RUNNER_TEMP/smoke-appimage.txt"
+          chmod +x dist-installer/*.AppImage
+          timeout 180 xvfb-run -a dist-installer/*.AppImage --appimage-extract-and-run || true
+          cat "$CODEX_SMOKE"; test "$(head -1 "$CODEX_SMOKE")" = "OK"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ runner.os }}
+          if-no-files-found: error
+          path: |
+            dist-installer/*.exe
+            dist-installer/*.blockmap
+            dist-installer/latest*.yml
+            dist-installer/*.AppImage
+            dist-installer/*.deb
+            dist-installer/*.dmg
+            dist-installer/*.zip
+
+  release:
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Publish release v${{ needs.check.outputs.version }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win nsis --publish always
+        run: |
+          ls -la out
+          node scripts/release-notes.js > notes.md
+          gh release create "v${{ needs.check.outputs.version }}" out/* --title "Gamemaster's Codex ${{ needs.check.outputs.version }}" --notes-file notes.md

@@ -263,7 +263,7 @@ export function createMap(el, App) {
   $("#mFollow", el).onchange = e => { ui().follow = e.target.checked; save(); pushState(); };
   const onKey = e => {
     if (el.closest("[hidden]") || document.querySelector(".modal-back") || e.target.closest("input,textarea,select")) return;
-    const k = { m: "move", r: "reveal", h: "hide", b: "box", d: "ruler", a: "area" }[e.key.toLowerCase()]; if (k && !e.ctrlKey) setTool(k);
+    const k = { m: "move", r: "reveal", h: "hide", b: "box", d: "ruler", a: "area" }[e.key.toLowerCase()]; if (k && !e.metaKey && !e.ctrlKey) setTool(k);
     if ((e.key === "Delete" || e.key === "Backspace") && st.sel) { const m = M(); m.tokens = m.tokens.filter(t => t.id !== st.sel); st.sel = null; save(); renderSide(); render(); pushState(); }
   };
   addEventListener("keydown", onKey);

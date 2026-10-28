@@ -1,12 +1,13 @@
 {
   "name": "gamemasters-codex",
-  "version": "1.23.0",
-  "description": "Campaign desk for game masters: generators, corkboard, codex, chronicle and 3D dice.",
+  "version": "1.24.0",
+  "description": "Companion app for game masters: 3D dice, prep, maps, a world wiki and stream overlays, built for Discord games.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "pack": "electron-packager . \"Gamemasters Codex\" --platform=win32 --arch=x64 --out=dist --overwrite --asar --ignore=^/dist --ignore=^/README.txt --app-copyright=\"Gamemaster's Codex\"",
-    "dist": "electron-builder --win nsis"
+    "dist": "electron-builder --win nsis",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:mac": "electron-builder --mac dmg zip"
   },
   "license": "ISC",
   "dependencies": {
@@ -78,10 +79,80 @@
         "repo": "gamemasters-codex",
         "releaseType": "release"
       }
-    ]
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Game",
+      "executableName": "gamemasters-codex",
+      "synopsis": "Companion app for game masters",
+      "artifactName": "GamemastersCodex-${version}-${arch}.${ext}",
+      "desktop": {
+        "entry": {
+          "Name": "Gamemaster's Codex",
+          "StartupWMClass": "Gamemasters Codex",
+          "Keywords": "dice;rpg;dnd;tabletop;discord;"
+        }
+      }
+    },
+    "deb": {
+      "artifactName": "GamemastersCodex-${version}-${arch}.${ext}",
+      "afterInstall": "build/linux/after-install.sh",
+      "afterRemove": "build/linux/after-remove.sh"
+    },
+    "afterPack": "scripts/after-pack.js",
+    "afterSign": "scripts/after-sign.js",
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.role-playing-games",
+      "identity": null,
+      "hardenedRuntime": false,
+      "artifactName": "GamemastersCodex-${version}-${arch}.${ext}",
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "Players' phones connect to the table link on your network."
+      }
+    },
+    "dmg": {
+      "title": "Gamemaster's Codex",
+      "artifactName": "GamemastersCodex-${version}-${arch}.${ext}"
+    }
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/lostmaguss/gamemasters-codex.git"
-  }
+  },
+  "author": {
+    "name": "lostmaguss",
+    "email": "lostmaguss@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/lostmaguss/gamemasters-codex"
 }

@@ -64,7 +64,8 @@ function iconPath() {
 function createDesk() {
   desk = new BrowserWindow({
     width: 1440, height: 900, minWidth: 1024, minHeight: 640,
-    frame: false, backgroundColor: "#1a1517", title: "Gamemaster's Codex", icon: iconPath(), show: false,
+    // macOS keeps its own traffic-light buttons; Windows and Linux get the app's title bar buttons
+    ...(process.platform === "darwin" ? { titleBarStyle: "hidden", trafficLightPosition: { x: 14, y: 13 } } : { frame: false }), backgroundColor: "#1a1517", title: "Gamemaster's Codex", icon: iconPath(), show: false,
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, sandbox: false },
   });
   desk.loadFile(path.join(__dirname, "app", "index.html"));
@@ -273,9 +274,11 @@ function setupUpdates() {
   try {
     updater = require("electron-updater").autoUpdater;
     updater.setFeedURL({ provider: "github", owner: UPDATE_REPO.owner, repo: UPDATE_REPO.repo });
-    updater.autoDownload = true;
+    // macOS only installs updates for apps signed by Apple, so there we point to the download instead
+    const manualMac = process.platform === "darwin";
+    updater.autoDownload = !manualMac;
     const tell = (state, info) => desk && desk.webContents.send("update:state", { state, version: info && info.version, message: info && info.message });
-    updater.on("update-available", i => tell("downloading", i));
+    updater.on("update-available", i => tell(manualMac ? "available" : "downloading", i));
     updater.on("update-not-available", i => tell("current", i));
     updater.on("update-downloaded", i => tell("ready", i));
     updater.on("error", e => tell("error", { message: String(e && e.message || e) }));
@@ -287,6 +290,7 @@ ipcMain.handle("update:check", async () => {
   try { await updater.checkForUpdates(); return { state: "checking", version: app.getVersion() }; } catch (e) { return { state: "error", message: String(e.message || e) }; }
 });
 ipcMain.on("update:install", () => updater && updater.quitAndInstall());
+ipcMain.on("update:page", () => shell.openExternal(`https://github.com/${UPDATE_REPO.owner}/${UPDATE_REPO.repo}/releases/latest`));
 ipcMain.handle("app:version", () => app.getVersion());
 
 const bot = require("./bot");
@@ -295,7 +299,8 @@ table.setup(() => desk, mediaDir, () => !!(stage && !stage.isDestroyed()));
 require("./notesimport").setup(() => desk, mediaDir);
 
 app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
+  // macOS needs an app menu for ⌘C / ⌘V / ⌘Q to work; the others don't show one
+  Menu.setApplicationMenu(process.platform === "darwin" ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null);
   protocol.handle("codexmedia", req => {
     const file = path.basename(decodeURIComponent(new URL(req.url).pathname));
     return net.fetch(pathToFileURL(path.join(mediaDir(), file)).toString());

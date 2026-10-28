@@ -84,3 +84,7 @@ export async function mapStrings(obj, fn) {
   for (const k in obj) { const v = obj[k]; if (typeof v === "string") obj[k] = await fn(v); else if (v && typeof v === "object") await mapStrings(v, fn); }
   return obj;
 }
+
+// keyboard labels: ⌘ on macOS, Ctrl elsewhere
+export const isMac = /Mac/.test(navigator.platform) || window.codex?.platform === "darwin";
+export const keys = s => isMac ? String(s).replace(/Ctrl ?\+ ?/g, "⌘").replace(/Ctrl /g, "⌘") : s;

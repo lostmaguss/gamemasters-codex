@@ -237,7 +237,7 @@ export function createBoard(el, App) {
       renderLinks(); drawMini();
     };
     e.addEventListener("blur", done);
-    e.onkeydown = ev => { if (ev.key === "Escape" || (ev.key === "Enter" && (ev.ctrlKey || field === "title"))) { ev.preventDefault(); e.blur(); } ev.stopPropagation(); };
+    e.onkeydown = ev => { if (ev.key === "Escape" || (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey || field === "title"))) { ev.preventDefault(); e.blur(); } ev.stopPropagation(); };
   }
 
   // ---------- pointer ----------
@@ -328,7 +328,7 @@ export function createBoard(el, App) {
     if ((e.key === "Delete" || e.key === "Backspace") && st.sel) { e.preventDefault(); deleteSel(); }
     if (e.key === "Escape") select(null);
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") { e.preventDefault(); duplicateSel(); }
-    if (e.key === "n" && !e.ctrlKey) { const p = centerWorld(); addCard({ type: "note", x: p.x - 110, y: p.y - 40 }); e.preventDefault(); }
+    if (e.key === "n" && !e.ctrlKey && !e.metaKey) { const p = centerWorld(); addCard({ type: "note", x: p.x - 110, y: p.y - 40 }); e.preventDefault(); }
   };
   addEventListener("keydown", onKey);
   const onPaste = async e => {
