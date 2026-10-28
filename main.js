@@ -21,6 +21,39 @@ app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 let desk = null;
 let stage = null;
 
+// ---- smoke test: CODEX_SMOKE=<report file> boots the app, walks every view, and quits ----
+// The release workflow runs the built Windows app this way, so a build that can't start never ships.
+const SMOKE = process.env.CODEX_SMOKE;
+const smokeErrors = [];
+function smokeDone(ok, detail) {
+  try { fs.writeFileSync(SMOKE, (ok ? "OK\n" : "FAIL\n") + detail + "\n"); } catch {}
+  app.exit(ok ? 0 : 1);
+}
+if (SMOKE) {
+  app.setPath("userData", path.join(require("os").tmpdir(), `codex-smoke-${Date.now()}`));
+  process.on("uncaughtException", e => smokeDone(false, "main process: " + (e.stack || e)));
+  setTimeout(() => smokeDone(false, "timed out after 120 s\n" + smokeErrors.join("\n")), 120000);
+}
+async function runSmoke(w) {
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const js = code => w.webContents.executeJavaScript(code);
+  try {
+    await wait(3000);
+    await js(`document.querySelector(".modal [data-ok]")?.click()`);
+    const views = await js(`[...document.querySelectorAll("#rail a[data-v]")].map(a => a.dataset.v)`);
+    if (views.length < 10) throw new Error(`only ${views.length} views in the sidebar`);
+    for (const v of views) { await js(`document.querySelector('#rail a[data-v="${v}"]').click()`); await wait(400); }
+    openStage(); await wait(3000);
+    if (!stage || stage.isDestroyed()) throw new Error("the stream window didn't open");
+    const on = await js(`window.codex.table.start({ port: 7420 }).then(r => r.on)`);
+    if (!on) throw new Error("the table server didn't start");
+    await js(`window.codex.table.stop()`);
+    const bad = smokeErrors.filter(e => !/Failed to load resource|Autofill/i.test(e));
+    if (bad.length) throw new Error("errors in the app:\n" + bad.join("\n"));
+    smokeDone(true, `views: ${views.join(", ")}\nstream window: ok\ntable server: ok`);
+  } catch (e) { smokeDone(false, String(e.message || e)); }
+}
+
 const dataDir = () => app.getPath("userData");
 const dataFile = () => path.join(dataDir(), "codex-data.json");
 
@@ -36,6 +69,11 @@ function createDesk() {
   });
   desk.loadFile(path.join(__dirname, "app", "index.html"));
   desk.once("ready-to-show", () => desk.show());
+  if (SMOKE) {
+    desk.webContents.on("console-message", (_e, level, message, line, source) => { if (level >= 3) smokeErrors.push(`desk: ${message} (${path.basename(source || "")}:${line})`); });
+    desk.webContents.on("render-process-gone", (_e, d) => smokeDone(false, "the desk window crashed: " + d.reason));
+    desk.webContents.once("did-finish-load", () => runSmoke(desk));
+  }
   const sendState = () => desk && desk.webContents.send("win:state", { max: desk.isMaximized() });
   desk.on("maximize", sendState);
   desk.on("unmaximize", sendState);
@@ -55,6 +93,7 @@ function openStage() {
   });
   stage.setMenu(null);
   stage.loadFile(path.join(__dirname, "app", "stage.html"));
+  if (SMOKE) stage.webContents.on("console-message", (_e, level, message, line, source) => { if (level >= 3) smokeErrors.push(`stream: ${message} (${path.basename(source || "")}:${line})`); });
   stage.on("page-title-updated", e => e.preventDefault());
   stage.webContents.on("did-finish-load", () => {
     desk && desk.webContents.send("stage:state", true);
@@ -261,7 +300,7 @@ app.whenReady().then(() => {
     return net.fetch(pathToFileURL(path.join(mediaDir(), file)).toString());
   });
   createDesk();
-  setupUpdates();
+  if (!SMOKE) setupUpdates();
   app.on("activate", () => { if (!desk) createDesk(); });
 });
 app.on("window-all-closed", () => { bot.stop(); if (process.platform !== "darwin") app.quit(); });

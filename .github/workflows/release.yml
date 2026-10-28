@@ -54,6 +54,17 @@ jobs:
           npx electron-builder --win dir --publish never
           node scripts/check-pack.js dist-installer/win-unpacked/resources/app.asar
 
+      - name: Start the built app and run its self-test
+        if: steps.check.outputs.skip == 'false'
+        shell: pwsh
+        run: |
+          $env:CODEX_SMOKE = "$env:RUNNER_TEMP\smoke.txt"
+          $p = Start-Process -FilePath "dist-installer\win-unpacked\Gamemasters Codex.exe" -PassThru
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Error "The app didn't finish its self-test in time"; exit 1 }
+          if (-not (Test-Path $env:CODEX_SMOKE)) { Write-Error "The app quit without a self-test report"; exit 1 }
+          Get-Content $env:CODEX_SMOKE
+          if ((Get-Content $env:CODEX_SMOKE -TotalCount 1) -ne "OK") { Write-Error "The app's self-test failed"; exit 1 }
+
       - name: Build installer and publish release
         if: steps.check.outputs.skip == 'false'
         env:
