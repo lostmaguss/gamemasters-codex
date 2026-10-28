@@ -21,6 +21,7 @@ export function openPalette(App, VIEWS) {
     cmd("Open the stream window", "stream", () => App.stage.open(), "stream discord share");
     cmd("New note in the Codex", "codex", () => App.go("codex", { title: "New page " + new Date().toLocaleTimeString() }), "page write");
     cmd("Rules & genre settings", "gear", () => App.rulesModal(), "settings crit initiative");
+    cmd("Legal & credits", "book", () => App.legalModal(), "license copyright srd ogl orc attribution trademark");
     cmd("Discord settings", "discord", () => App.discord.discordModal(App), "webhook");
     cmd("Whisper to a player (Discord DM)", "lock", () => App.whisperPicker({ ask: true }), "secret private dm message");
     cmd("Stop all sounds", "sound", () => App.sound.send({ op: "stopAll", fade: 1 }), "silence mute");

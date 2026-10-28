@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld("codex", {
   saveMedia: (dataURL, ext) => ipcRenderer.invoke("media:saveData", { dataURL, ext }),
   pathForFile: f => { try { return webUtils.getPathForFile(f); } catch { return null; } },
   version: () => ipcRenderer.invoke("app:version"),
+  legal: () => ipcRenderer.invoke("app:legal"),
   zoom: f => { if (f) webFrame.setZoomFactor(f); return webFrame.getZoomFactor(); },
   discord: req => ipcRenderer.invoke("discord:send", req),
   printPDF: o => ipcRenderer.invoke("print:pdf", o),

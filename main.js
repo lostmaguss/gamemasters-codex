@@ -52,9 +52,11 @@ async function runSmoke(w) {
     const on = await js(`window.codex.table.start({ port: 7420 }).then(r => r.on)`);
     if (!on) throw new Error("the table server didn't start");
     await js(`window.codex.table.stop()`);
+    const legal = await js(`window.codex.legal()`);
+    if (!/OPEN GAME LICENSE/.test(legal) || !/System Reference Document 5\.1/.test(legal)) throw new Error("the legal notices (app/LEGAL.md) are missing from the build");
     const bad = smokeErrors.filter(e => !/Failed to load resource|Autofill/i.test(e));
     if (bad.length) throw new Error("errors in the app:\n" + bad.join("\n"));
-    smokeDone(true, `views: ${views.join(", ")}\nstream window: ok\ntable server: ok`);
+    smokeDone(true, `views: ${views.join(", ")}\nstream window: ok\ntable server: ok\nlegal notices: ok`);
   } catch (e) { smokeDone(false, String(e.message || e)); }
 }
 
@@ -296,6 +298,7 @@ ipcMain.handle("update:check", async () => {
 ipcMain.on("update:install", () => updater && updater.quitAndInstall());
 ipcMain.on("update:page", () => shell.openExternal(`https://github.com/${UPDATE_REPO.owner}/${UPDATE_REPO.repo}/releases/latest`));
 ipcMain.handle("app:version", () => app.getVersion());
+ipcMain.handle("app:legal", () => fs.promises.readFile(path.join(__dirname, "app", "LEGAL.md"), "utf8").catch(() => ""));
 
 const bot = require("./bot");
 bot.setup(() => desk);

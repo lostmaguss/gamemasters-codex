@@ -220,7 +220,7 @@ Where the entries come from:
 | Blades in the Dark | Blades SRD, John Harper / One Seven Design, CC-BY 3.0. Abilities and rolls from the SRD; Blades has no monster stats, so threats are examples |
 | Everything else | Written for the Codex in the style of the game, not taken from its books. Check numbers against your copy |
 
-D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Daggerheart · Call of Cthulhu 7e · Powered by the Apocalypse · Blades in the Dark · Vampire V5 · Savage Worlds · Fate Core · Fate Accelerated · Cyberpunk RED · Shadowrun 6e · Mothership · Traveller · Star Wars-style d6 · Homebrew d20
+D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Daggerheart · Call of Cthulhu 7e · Powered by the Apocalypse · Blades in the Dark · Vampire V5 · Savage Worlds · Fate Core · Fate Accelerated · Cyberpunk RED · Shadowrun 6e · Mothership · Traveller · Space opera d6 · Homebrew d20
 </details>
 
 <details>
@@ -255,3 +255,7 @@ Electron · three.js + cannon-es for the dice · discord.js for the bot. Pushing
 <img src="build/icon.png" width="56" alt=""><br>
 <sub>Made for the GMs who keep the world in their heads. Roll well.</sub>
 </div>
+
+## Legal
+
+Gamemaster's Codex is an unofficial fan tool, not affiliated with or endorsed by any game publisher. Game names are used only to say which rules a template works with. The library includes open content under the CC-BY-4.0 (D&D SRD 5.1), ORC (Pathfinder 2e), OGL 1.0a (Pathfinder 1e), DPCGL (Daggerheart) and CC-BY 3.0 (Fate, Blades in the Dark) licenses; everything else is original writing. Full notices, attributions, trademarks and software licenses: [app/LEGAL.md](app/LEGAL.md), also in the app under *Campaign menu → Legal & credits*.

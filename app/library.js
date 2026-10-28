@@ -57,7 +57,7 @@ export async function libraryModal(App, { tab = "creatures", onAdd } = {}) {
     <div class="row" style="gap:8px;flex-wrap:wrap"><select id="lbSys" style="flex:1;min-width:200px">${SYSTEMS.filter(s => lib[s.id]).map(s => `<option value="${s.id}">${esc(s.name)}${s.id === c.system ? " (this campaign)" : ""}</option>`).join("")}</select>
       <div class="mode-seg" id="lbTabs"></div><input type="search" id="lbQ" placeholder="Search" style="width:150px"></div>
     <div class="lib-list" id="lbList"></div>
-    <p class="md-help" id="lbFoot" style="margin:0"></p>
+    <p class="md-help" id="lbFoot" style="margin:0"></p><p class="md-help" style="margin:0"><a href="#" id="lbLegal">Legal & credits</a> lists every source, license and trademark.</p>
     <div class="foot"><button class="btn" id="lbAll">${icon("plus")} Add all</button><div style="flex:1"></div><button class="btn primary" data-x>Done</button></div>`, (m, close) => {
     $("#lbSys", m).value = st.sys;
     const draw = () => {
@@ -79,6 +79,7 @@ export async function libraryModal(App, { tab = "creatures", onAdd } = {}) {
     $("#lbSys", m).onchange = e => { st.sys = e.target.value; draw(); };
     $("#lbQ", m).oninput = e => { st.q = e.target.value.toLowerCase(); draw(); };
     $("[data-x]", m).onclick = close;
+    $("#lbLegal", m).onclick = e => { e.preventDefault(); close(); App.legalModal?.(); };
     draw();
   });
 }

@@ -10,7 +10,7 @@ import { S, C, loadData, save, flush, onSaved, blankCampaign } from "./store.js"
 import { Stage } from "./bridge.js";
 import { createForge } from "./forge.js";
 import { createBoard } from "./board.js";
-import { createCodex } from "./codex.js";
+import { createCodex, md } from "./codex.js";
 import { createChronicle } from "./chronicle.js";
 import { createDice } from "./dicedesk.js";
 import { createPrep } from "./prep.js";
@@ -253,7 +253,9 @@ export function newCampaignModal() {
     <div class="f"><span>Game system</span><div class="sysgrid" id="ncSys">${sysCards(pick)}</div></div>
     <p class="md-help" id="ncNote" style="margin:0"></p>
     <label class="toggle"><input type="checkbox" id="ncLib" checked> ${icon("book")} Fill the Bestiary and Codex from the system's library (monsters, spells, gear)</label>
+    <p class="md-help" style="margin:0">Unofficial and not affiliated with any publisher. Sources and licenses: <a href="#" id="ncLegal">Legal & credits</a>.</p>
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Create campaign</button></div>`, (m, close) => {
+    $("#ncLegal", m).onclick = e => { e.preventDefault(); close(); legalModal(); };
     const note = () => { const s = systemById(pick); $("#ncNote", m).textContent = `Sets the dice and crits, the party sheet (${s.sheet.stats.slice(0, 4).join(", ")}…), the bestiary's stat block and quick rolls${s.genre !== "fantasy" ? `, plus ${GENRE_NAME[s.genre].toLowerCase()} generators and look` : ""}. ${s.note} You can change all of it later.`; };
     $$("[data-sys]", m).forEach(b => b.onclick = () => { pick = b.dataset.sys; $$("[data-sys]", m).forEach(x => x.classList.toggle("on", x === b)); note(); });
     note();
@@ -271,6 +273,14 @@ export function newCampaignModal() {
     $("[data-ok]", m).onclick = ok; $("#ncName", m).onkeydown = e => { if (e.key === "Enter") ok(); }; $("#ncName", m).focus();
   });
 }
+// licenses and credits for the game content, trademarks and software (app/LEGAL.md)
+export async function legalModal() {
+  let txt = "";
+  try { txt = window.codex?.legal ? await window.codex.legal() : await (await fetch("LEGAL.md")).text(); } catch {}
+  if (!txt) txt = "# Legal notices\n\nThe notices file is missing from this build. See LEGAL.md in the app's source.";
+  App.modal(`<div class="prose nocap legal">${md(txt, [])}</div><div class="foot"><button class="btn primary" data-x>Close</button></div>`, (m, close) => { $("[data-x]", m).onclick = close; m.classList.add("wide"); setTimeout(() => m.scrollTop = 0); });
+}
+App.legalModal = legalModal;
 function renameModal(c) {
   App.modal(`<h2>Campaign</h2>
     <label class="f"><span>Name</span><input type="text" id="mName" value="${esc(c.name)}"></label>
@@ -368,6 +378,7 @@ function campaignMenu() {
     { text: Discord.connected() ? "Discord (connected)" : "Connect Discord…", icon: "discord", run: () => Discord.discordModal(App) },
     { text: "Table link: phones & OBS…", icon: "stream", run: () => tableModal() },
     { text: "Print…", icon: "book", run: () => import("./print.js").then(x => x.printModal(App)) },
+    { text: "Legal & credits", icon: "book", run: legalModal },
     "-",
     { text: "Export backup…", icon: "save", run: async () => {
       const name = `${c.name.replace(/[^\w\- ]+/g, "").trim() || "campaign"}-${new Date().toISOString().slice(0, 10)}.json`;

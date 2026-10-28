@@ -38,7 +38,7 @@ export default {
       ["Reanimated Corpse", "Undead", 2, ["14", "0", "6", "80", "80", "5", "1/1d8"], [["Grab and bite", "1d100<=30", "Fighting.", "1d6+1d4"]], "Takes only 1 damage from bullets and impaling weapons."],
       ["Ghoul", "Monster, graveyard", 2, ["13", "6", "9", "80", "65", "65", "0/1d6"], [["Claws ×2", "1d100<=40", "Fighting.", "1d6+1d4"], ["Bite", "1d100<=40", "Then worries the target for `1d4` a round.", "1d6+1d4"]], "Firearms do half damage. Rubbery hide counts as 6 armor."],
       ["Deep One", "Monster, sea", 3, ["15", "1", "8 / swim 10", "70", "50", "50", "0/1d6"], [["Claw", "1d100<=45", "Fighting.", "1d6+1d4"], ["Spear", "1d100<=45", "Fighting.", "1d8+1d4"]], "Lives forever unless killed. Interbreeds with coastal villages."],
-      ["Byakhee", "Monster, winged", 3, ["11", "2", "5 / fly 20", "90", "55", "50", "1/1d6"], [["Claw", "1d100<=55", "Fighting.", "1d6+1d6"], ["Bite and drain", "1d100<=55", "Stays attached, draining `1d6` STR a round.", "1d6"]], "Summoned with a whistle and a golden mead."],
+      ["Nightgaunt", "Monster, faceless flyer", 3, ["11", "2", "6 / fly 12", "70", "50", "50", "0/1d6"], [["Grab and carry", "1d100<=50", "Fighting maneuver: seizes the victim and flies off with it.", ""], ["Tickle", "1d100<=40", "The victim is helpless with dread while held.", ""]], "Silent, rubbery, horned and faceless (Lovecraft, The Dream-Quest of Unknown Kadath)."],
       ["Mi-Go", "Monster, fungi from Yuggoth", 3, ["11", "0", "7 / fly 9", "50", "50", "65", "0/1d6"], [["Nippers", "1d100<=45", "Grapple to fly off with the victim.", "1d6"], ["Electric gun", "1d100<=40", "Paralyzes on 1d10 roll of damage beyond CON.", "1d10"]], "Surgeons. They collect brains in cylinders."],
       ["Shoggoth", "Monster, ancient servitor", 5, ["66", "0", "10", "315", "200", "70", "1d6/1d20"], [["Crush", "1d100<=70", "Everyone within its mass.", "8d6"], ["Engulf", "1d100<=70", "Victims taken in are crushed each round and suffocate."]], "Regenerates 2 HP a round. Fire and electricity do half."],
     ],
@@ -74,11 +74,11 @@ export default {
   blades: {
     label: "Abilities & reference",
     creatures: [
-      ["Bluecoat Patrol", "Example · City Watch gang", 2, ["Level 2", "Armor", "III", "Standard"], [["Clubs and crossbows", "", "Harm 2. Calls for backup when outnumbered."]], "Take a bribe if no sergeant is watching."],
+      ["Watch Patrol", "Example · city watch gang", 2, ["Level 2", "Armor", "III", "Standard"], [["Clubs and crossbows", "", "Harm 2. Calls for backup when outnumbered."]], "Take a bribe if no sergeant is watching."],
       ["Dock Gang", "Example · street gang", 1, ["Level 1", "—", "I", "Standard"], [["Hooks and knives", "", "Harm 1–2."]], ""],
       ["Hollow", "Example · undead", 3, ["Level 3", "Tough", "II", "Risky"], [["Rending grip", "", "Harm 3. Ignores harm short of fire or electroplasm."]], ""],
       ["Restless Ghost", "Example · spirit", 3, ["—", "Ethereal", "II", "Desperate"], [["Possess", "", "Attune to resist. On a failure the ghost takes the body for a scene."], ["Chill", "", "Harm 2, cold. Weapons pass through."]], "Wants one thing it lost."],
-      ["Spirit Warden", "Example · Spirit Warden", 4, ["Level 3", "Heavy", "IV", "Desperate"], [["Lightning hook", "", "Harm 3. Binds spirits into a bottle."]], "Shows up when anyone dies near a ghost field."],
+      ["Death Warden", "Example · keeper of the dead", 4, ["Level 3", "Heavy", "IV", "Desperate"], [["Lightning hook", "", "Harm 3. Binds spirits into a bottle."]], "Shows up when anyone dies near a ghost field."],
       ["Lesser Demon", "Example · demon", 5, ["Level 4", "Armor ×2", "V", "Desperate"], [["Claws and will", "", "Harm 4. Bargains for anything."]], ""],
     ],
     spells: [
@@ -103,11 +103,11 @@ export default {
     label: "Disciplines",
     creatures: [
       ["Ghoul Retainer", "Mortal, blood-bound", 1, ["6", "1", "5", "—"], [["Brawl", "5d10>=6", "Superficial damage.", ""], ["Pistol", "4d10>=6", "+2 damage.", ""]], "Loyal to the domitor. Drinks the blood monthly."],
-      ["Second Inquisition Agent", "Hunter, trained", 2, ["7", "2", "6", "—"], [["Assault rifle", "6d10>=6", "+3 damage. Uses UV and fire.", ""], ["Intel", "", "Knows the coterie's haven if they were sloppy."]], ""],
+      ["Task-Force Hunter", "Hunter, trained", 2, ["7", "2", "6", "—"], [["Assault rifle", "6d10>=6", "+3 damage. Uses UV and fire.", ""], ["Intel", "", "Knows the coterie's haven if they were sloppy."]], ""],
       ["Anarch Brawler", "Kindred, 13th generation", 2, ["7", "1", "7", "1"], [["Fists", "7d10>=6", "Potence adds damage.", ""], ["Blood surge", "", "Rouse check: add 2 dice to one physical pool. `1d10>=6`"]], ""],
       ["Sheriff's Enforcer", "Kindred, 11th generation", 3, ["9", "2", "8", "2"], [["Sword", "8d10>=6", "+2 aggravated against mortals.", ""], ["Celerity", "", "Acts twice when it counts."]], "Asks once."],
       ["Thin-blood Alchemist", "Duskborn", 2, ["5", "0", "5", "0"], [["Alchemical flame", "5d10>=6", "Fire, aggravated damage.", ""]], "Can walk in daylight. Wants a place in the city."],
-      ["Werewolf", "Garou, enraged", 5, ["13", "3", "10", "—"], [["Claws", "10d10>=6", "Aggravated damage to Kindred.", ""], ["Rage", "", "Heals 1 superficial each turn."]], "Run."],
+      ["Werewolf", "Shapeshifter, enraged", 5, ["13", "3", "10", "—"], [["Claws", "10d10>=6", "Aggravated damage to Kindred.", ""], ["Rage", "", "Heals 1 superficial each turn."]], "Run."],
       ["Methuselah's Envoy", "Elder Kindred", 5, ["10", "2", "11", "5"], [["Dominate", "11d10>=6", "Contested with Resolve + Intelligence.", ""]], ""],
     ],
     spells: [

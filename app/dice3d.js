@@ -144,9 +144,12 @@ function faceTexture(type, label, theme, uvPts, mode, vertexLabels) {
     const oy = type === 10 || type === 100 ? -S * .06 : 0;
     // Fate faces: bold bars that read from any angle (a font's thin "−" looks like "/" on a tilted die)
     if (mode === "fate") {
-      const L = S * .5, T = S * .13;
-      if (label) { g.beginPath(); g.roundRect(cx - L / 2, cy - T / 2, L, T, T / 3); g.fill(); }
-      if (label === "+") { g.beginPath(); g.roundRect(cx - T / 2, cy - L / 2, T, L, T / 3); g.fill(); }
+      // line the bars up with the face's own edge: the face can sit tilted in its texture
+      const L = S * .5, T = S * .13, ang = Math.atan2(P[1][1] - P[0][1], P[1][0] - P[0][0]);
+      g.save(); g.translate(cx, cy); g.rotate(ang);
+      if (label) { g.beginPath(); g.roundRect(-L / 2, -T / 2, L, T, T / 3); g.fill(); }
+      if (label === "+") { g.beginPath(); g.roundRect(-T / 2, -L / 2, T, L, T / 3); g.fill(); }
+      g.restore();
     } else g.fillText(label, cx, cy + oy + fs * .04);
     if (mode !== "fate" && (label === "6" || label === "9")) { g.fillRect(cx - fs * .2, cy + oy + fs * .42, fs * .4, Math.max(4, fs * .06)); }
   }
@@ -166,14 +169,14 @@ function labelFor(type, value, variant) {
 function buildDie(type, themeKey, variant, faces) {
   const T = typeof themeKey === "object" && themeKey ? themeKey : THEMES[themeKey === "party" ? PARTY[variant === "tens" || variant === "units" ? 100 : type] : themeKey] || THEMES.ember;
   const def = DEFS[type];
-  const pos = [], uv = [], mats = [], faceNormals = [];
+  const pos = [], uv = [], mats = [], faceNormals = [], faceEdges = [];
   const geo = new THREE.BufferGeometry();
   def.faces.forEach((f, fi) => {
     const pts = f.map(i => def.verts[i]);
     const c = centroid(pts);
     let nrm = norm(cross(sub(pts[1], pts[0]), sub(pts[2], pts[0])));
     if (dot(nrm, c) < 0) nrm = scale(nrm, -1);
-    faceNormals.push(nrm);
+    faceNormals.push(nrm); faceEdges.push(norm(sub(pts[1], pts[0])));
     let e1 = sub(pts[0], c); e1 = norm(sub(e1, scale(nrm, dot(e1, nrm))));
     const e2 = cross(e1, nrm);
     const R = Math.max(...pts.map(p => Math.hypot(...sub(p, c))));
@@ -199,7 +202,7 @@ function buildDie(type, themeKey, variant, faces) {
     vertices: def.verts.map(p => new CANNON.Vec3(...p)),
     faces: def.faces.map(f => f.slice()),
   });
-  return { mesh, shape, def, faceNormals, type, variant };
+  return { mesh, shape, def, faceNormals, faceEdges, type, variant };
 }
 
 function readDie(d) {
@@ -213,6 +216,24 @@ function readDie(d) {
   let best = -Infinity, fi = 0;
   d.faceNormals.forEach((n, i) => { const w = q.vmult(new CANNON.Vec3(...n)); const s = w.dot(up); if (s > best) { best = s; fi = i; } });
   return d.def.values[fi];
+}
+
+// a cube lying on the table, turned about the vertical so its edges run along the screen:
+// at 45° a Fate "+" reads as "×"
+function squareUp(d) {
+  const q = d.body.quaternion;
+  const side = [[1, 0, 0], [0, 0, 1], [0, 1, 0]].map(a => q.vmult(new CANNON.Vec3(...a))).sort((a, b) => Math.abs(a.y) - Math.abs(b.y))[0];
+  const yaw = Math.atan2(side.x, side.z), step = Math.PI / 2;
+  let delta = Math.round(yaw / step) * step - yaw;
+  const turn = new CANNON.Quaternion(); turn.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), delta);
+  // a "−" should lie flat, not stand up like a "|": its bar runs along the top face's first edge
+  if (d.value <= 2) {
+    let fi = 0, best = -Infinity; d.faceNormals.forEach((n, i) => { const y = q.vmult(new CANNON.Vec3(...n)).y; if (y > best) { best = y; fi = i; } });
+    const bar = turn.mult(q).vmult(new CANNON.Vec3(...d.faceEdges[fi]));
+    if (Math.abs(bar.z) > Math.abs(bar.x)) { delta += step; turn.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), delta); }
+  }
+  if (Math.abs(delta) < .01) return;
+  d.snap = { from: q.clone(), to: turn.mult(q), t0: performance.now() };
 }
 
 function feltTexture(felt) {
@@ -377,7 +398,14 @@ export class DiceTray {
     if (!this.running) return;
     const dt = Math.min(.05, (t - this.lastT) / 1000); this.lastT = t;
     this.world.step(1 / 120, dt, 8);
-    for (const d of this.dice) { d.mesh.position.copy(d.body.position); d.mesh.quaternion.copy(d.body.quaternion); }
+    for (const d of this.dice) {
+      if (d.snap) { // ease a settled Fate die square to the camera
+        const k = Math.min(1, (t - d.snap.t0) / 260), e = 1 - Math.pow(1 - k, 3);
+        d.snap.from.slerp(d.snap.to, e, d.body.quaternion); d.body.velocity.setZero(); d.body.angularVelocity.setZero();
+        if (k >= 1) d.snap = null;
+      }
+      d.mesh.position.copy(d.body.position); d.mesh.quaternion.copy(d.body.quaternion);
+    }
     this.renderer.render(this.scene, this.camera);
     if (this.resolve) {
       const still = this.dice.every(d => d.body.velocity.lengthSquared() < .02 && d.body.angularVelocity.lengthSquared() < .02);
@@ -395,7 +423,9 @@ export class DiceTray {
       if (!x.type) { values[i] = 1 + Math.floor(Math.random() * x.sides); return; }
       const d = this.dice[pi++]; values[i] = d ? readDie(d) : 1 + Math.floor(Math.random() * (x.type));
       if (d) d.value = values[i];
+      if (d && d.variant === "fate") squareUp(d);
     });
+    if (this.dice.some(d => d.snap)) { this.glowUntil = performance.now() + 320; this.start(); }
     // combine d100 pairs and group
     const out = [];
     for (let i = 0; i < this.list.length; i++) {

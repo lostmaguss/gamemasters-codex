@@ -1036,3 +1036,10 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .prose .rollchip, .mabil p .rollchip { vertical-align: baseline; margin: 0 2px; }
 .prose .rollchip, .mabil p .rollchip { height: 24px; padding: 0 8px; font-size: 12px; }
 .prose.nocap > p:first-of-type::first-letter { font: inherit; float: none; margin: 0; color: inherit; }
+
+/* legal & credits */
+.modal.wide { width: min(820px, 100%); }
+.legal h1 { font-size: 30px; margin: 0 0 6px; }
+.legal h2 { font-size: 22px; margin: 18px 0 4px; }
+.legal h3 { font-size: 16px; margin: 14px 0 2px; }
+.legal p, .legal li { font-size: 13.5px; line-height: 1.5; }
