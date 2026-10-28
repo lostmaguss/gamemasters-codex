@@ -96,7 +96,7 @@ Turn on the **table link** and players scan a QR code. Each picks their characte
 </tr>
 </table>
 
-Also inside: random tables that roll other tables · world clocks, calendar and faction reputation · `Ctrl+K` to find anything · printable NPC cards, handouts and character sheets · daily backups · auto-updates.
+Also inside: import your Obsidian vault or Markdown notes · players' private journals · Turkish for everything players see · random tables that roll other tables · world clocks, calendar and faction reputation · `Ctrl+K` to find anything · printable NPC cards, handouts and character sheets · daily backups · auto-updates.
 
 ## 🌌 Fantasy, sci-fi or cyberpunk
 
