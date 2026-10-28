@@ -109,10 +109,15 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          if ! npx electron-builder ${{ matrix.installers }} --publish never 2>&1 | tee "$RUNNER_TEMP/build.log"; then
-            grep -v '^\s*$' "$RUNNER_TEMP/build.log" | tail -9 | while IFS= read -r l; do echo "::warning title=Build output::${l:0:300}"; done
-            exit 1
-          fi
+          # macOS runners sometimes hold the dmg open ("hdiutil detach" busy), so try a few times there
+          tries=1; [ "$RUNNER_OS" = macOS ] && tries=3
+          for i in $(seq $tries); do
+            if npx electron-builder ${{ matrix.installers }} --publish never 2>&1 | tee "$RUNNER_TEMP/build.log"; then exit 0; fi
+            echo "::warning title=Installer build::attempt $i of $tries failed"
+            hdiutil info 2>/dev/null | awk '/\/Volumes\//{print $NF}' | while read -r v; do hdiutil detach -force "$v" || true; done
+          done
+          grep -v '^\s*$' "$RUNNER_TEMP/build.log" | tail -9 | while IFS= read -r l; do echo "::warning title=Build output::${l:0:300}"; done
+          exit 1
 
       - name: Self-test the installed .deb and the AppImage (Linux)
         if: runner.os == 'Linux'
