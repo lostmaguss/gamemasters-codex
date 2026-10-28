@@ -97,6 +97,14 @@ jobs:
           wait $pid || echo "exit code $?" >> "$RUNNER_TEMP/app.log"
           bash scripts/report.sh "$CODEX_SMOKE" "$RUNNER_TEMP/app.log" macOS
 
+      - name: Keep Spotlight and XProtect off the dmg (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          # they scan the freshly mounted image and hdiutil detach then fails with "resource busy"
+          sudo mdutil -a -i off || true
+          sudo pkill -9 XProtect >/dev/null 2>&1 || true
+          for i in 1 2 3 4 5 6 7 8 9 10; do pgrep XProtect >/dev/null || break; sleep 3; done
+
       - name: Build installers
         shell: bash
         run: |
