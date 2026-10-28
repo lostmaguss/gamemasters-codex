@@ -1005,3 +1005,8 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .cd-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
 .cd-face { display: grid; grid-template-columns: 18px 1fr 46px; gap: 4px; align-items: center; background: var(--surface); border-radius: 8px; padding: 4px 6px; }
 .cd-face input { padding: 5px 6px; min-width: 0; } .cd-face input[data-l] { font-size: 16px; text-align: center; }
+.tl-seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line-soft); border-radius: 10px; padding: 3px; gap: 2px; margin-bottom: 4px; }
+.tl-seg button { border: 0; background: none; color: var(--dim); font: 600 14px var(--body); padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+.tl-seg button.on { background: var(--ember); color: var(--ember-ink); }
+.tl-qr.off { background: var(--surface); display: grid; place-items: center; aspect-ratio: 1; } .tl-noqr .ic { width: 48px; height: 48px; opacity: .3; }
+.tl-wait { display: flex; flex-direction: column; gap: 4px; } .tl-wait .dbar { position: relative; height: 8px; border-radius: 6px; background: var(--surface-3); overflow: hidden; } .tl-wait .dbar i { position: absolute; inset: 0 auto 0 0; background: var(--ember); }

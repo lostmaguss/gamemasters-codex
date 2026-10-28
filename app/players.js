@@ -68,8 +68,10 @@ export function initPlayers(app) {
   onSaved(st => { if (st === "saved" || st === "saving") push(); });
   if (prefs().on) startTable();
 }
+// 128-bit keys: the link is the only lock once it's shared over the internet
+const newKey = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("");
 export async function startTable() {
-  const P = prefs(); P.key ||= Math.random().toString(16).slice(2, 10);
+  const P = prefs(); P.key ||= newKey();
   const r = await T().start({ port: P.port, key: P.key });
   if (r.error) { toast(`Couldn't start the table link: ${r.error}`); return r; }
   status = r; P.on = true; save(); push();
@@ -92,11 +94,19 @@ export function tableModal() {
         $("#tlOn", body).onclick = async () => { await startTable(); draw(); };
         return;
       }
-      const svg = await T().qr(s.url);
+      const web = P.mode === "web", tn = s.tunnel || { state: "off" };
+      const link = web ? s.publicUrl : s.url;
+      const svg = link ? await T().qr(link) : "";
       const party = C().party;
-      body.innerHTML = `<div class="tl-grid"><div class="tl-qr">${svg}</div><div>
-          <div class="eyebrow">For phones</div><div class="tl-url mono">${esc(s.url)}</div>
-          <div class="row" style="gap:6px;margin-top:8px"><button class="btn sm" id="tlCopy">${icon("copy")} Copy link</button><button class="btn sm ghost" id="tlNew" title="Old links and QR codes stop working">New key</button><button class="btn sm ghost" id="tlOff">Turn off</button></div>
+      const webPane = tn.state === "on" ? "" : tn.state === "downloading" ? `<div class="tl-wait"><b>Getting Cloudflare's tunnel helper…</b><div class="dbar" style="margin-top:8px"><i style="width:${Math.round((tn.progress || 0) * 100)}%"></i></div><span class="carried">One-time download, about 55 MB</span></div>`
+        : tn.state === "starting" ? `<div class="tl-wait"><b>Connecting to Cloudflare…</b><span class="carried">Usually a few seconds</span></div>`
+        : `<div class="tl-wait">${tn.state === "error" ? `<b style="color:var(--bad)">${esc(tn.error)}</b>` : `<b>Players on other networks</b>`}
+            <p class="md-help" style="margin:4px 0 10px">Makes a free, secure link through Cloudflare that works from anywhere: their home Wi-Fi or mobile data. Only people with the link can open it. The address changes each time you turn it on.</p>
+            <button class="btn primary" id="tlWebOn">${icon("stream")} ${tn.state === "error" ? "Try again" : "Share over the internet"}</button></div>`;
+      body.innerHTML = `<div class="seg tl-seg"><button class="${web ? "" : "on"}" data-mode="lan">Same Wi-Fi</button><button class="${web ? "on" : ""}" data-mode="web">Anywhere (internet)</button></div>
+        <div class="tl-grid"><div class="tl-qr ${link ? "" : "off"}">${svg || `<div class="tl-noqr">${icon("stream")}</div>`}</div><div>
+          ${web && !link ? webPane : `<div class="eyebrow">${web ? "For phones anywhere" : "For phones on your Wi-Fi"}</div><div class="tl-url mono">${esc(link)}</div>
+          <div class="row" style="gap:6px;margin-top:8px"><button class="btn sm" id="tlCopy">${icon("copy")} Copy link</button>${web ? `<button class="btn sm ghost" id="tlWebOff">Stop sharing</button>` : ""}<button class="btn sm ghost" id="tlNew" title="Old links and QR codes stop working">New key</button><button class="btn sm ghost" id="tlOff">Turn off</button></div>`}
           <div class="eyebrow" style="margin-top:16px">At the table now</div>
           <div class="chips">${party.map(p => `<span class="chip ${online.includes(p.id) ? "tl-on" : ""}" style="border-color:${esc(p.color)}">${online.includes(p.id) ? "● " : ""}${esc(p.character || p.player)}</span>`).join("") || `<span class="carried">Add your party first</span>`}</div>
           <label class="toggle" style="margin-top:12px"><input type="checkbox" id="tlHp" ${P.hp !== false ? "checked" : ""}> Players can change their own HP and resources</label>
@@ -107,11 +117,17 @@ export function tableModal() {
         </details>
         <div class="foot"><button class="btn primary" data-x>Done</button></div>`;
       $("[data-x]", body).onclick = () => m.closest(".modal-back").remove();
-      $("#tlCopy", body).onclick = () => copyText(s.url, "Link copied");
+      $("#tlCopy", body)?.addEventListener("click", () => copyText(link, "Link copied"));
+      $$("[data-mode]", body).forEach(b => b.onclick = () => { P.mode = b.dataset.mode; save(); draw(); });
+      $("#tlWebOn", body)?.addEventListener("click", async () => {
+        if ((P.key || "").length < 32) { P.key = newKey(); await startTable(); } // old short keys are too easy to guess on the open internet
+        await T().tunnel(true); draw();
+      });
+      $("#tlWebOff", body)?.addEventListener("click", async () => { await T().tunnel(false); P.mode = "lan"; save(); draw(); });
       $$("[data-cp]", body).forEach(b => b.onclick = () => copyText(b.dataset.cp, "OBS link copied"));
       $("#tlHp", body).onchange = e => { P.hp = e.target.checked; save(); push(); };
-      $("#tlOff", body).onclick = async () => { await T().stop(); P.on = false; save(); draw(); };
-      $("#tlNew", body).onclick = async () => { P.key = Math.random().toString(16).slice(2, 10); await startTable(); draw(); };
+      $("#tlOff", body)?.addEventListener("click", async () => { await T().stop(); P.on = false; save(); draw(); });
+      $("#tlNew", body)?.addEventListener("click", async () => { const wasWeb = (s.tunnel || {}).state === "on"; P.key = newKey(); await startTable(); if (wasWeb) await T().tunnel(true); draw(); });
     };
     draw();
     const redraw = () => { if (document.body.contains(body)) draw(); else subs.delete(redraw); };

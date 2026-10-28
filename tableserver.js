@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { ipcMain } = require("electron");
+const tunnel = require("./tunnel");
 
 const ROOT = __dirname;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".woff2": "font/woff2", ".woff": "font/woff", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif", ".svg": "image/svg+xml", ".mp3": "audio/mpeg", ".ogg": "audio/ogg", ".wav": "audio/wav", ".m4a": "audio/mp4", ".webm": "audio/webm" };
@@ -30,7 +31,7 @@ function lanAddresses() {
   return out.sort((a, b) => b.score - a.score).map(a => a.ip);
 }
 const base = () => `http://${lanAddresses()[0] || "localhost"}:${port}`;
-const info = () => ({ on: !!server, port, key, url: server ? `${base()}/?k=${key}` : null, local: server ? `http://localhost:${port}` : null, players: [...clients].filter(c => c.role === "player").map(c => c.member).filter(Boolean), obs: [...clients].filter(c => c.role === "obs").length });
+const info = () => ({ on: !!server, port, key, url: server ? `${base()}/?k=${key}` : null, tunnel: tunnel.status(), publicUrl: server && tunnel.status().state === "on" ? `${tunnel.status().url}/?k=${key}` : null, local: server ? `http://localhost:${port}` : null, players: [...clients].filter(c => c.role === "player").map(c => c.member).filter(Boolean), obs: [...clients].filter(c => c.role === "obs").length });
 const tellDesk = () => desk && !desk.isDestroyed() && desk.webContents.send("table:status", info());
 
 // pictures in the app live at codexmedia://media/<file>; phones fetch them from /media/<file>
@@ -65,8 +66,20 @@ function serveFile(res, file, cache = true) {
 }
 function body(req) { return new Promise(r => { let s = ""; req.on("data", d => { s += d; if (s.length > 1e6) req.destroy(); }); req.on("end", () => { try { r(JSON.parse(s)); } catch { r(null); } }); }); }
 
+// wrong keys: each address gets a short cooldown, so the link can't be guessed by brute force
+const misses = new Map();
+const who = req => String(req.headers["cf-connecting-ip"] || req.socket.remoteAddress || "?");
+const sameKey = k => typeof k === "string" && k.length === key.length && crypto.timingSafeEqual(Buffer.from(k), Buffer.from(key));
 async function handle(req, res) {
-  const u = new URL(req.url, "http://x"), ok = u.searchParams.get("k") === key;
+  const u = new URL(req.url, "http://x"), given = u.searchParams.get("k");
+  let ok = false;
+  if (given != null) {
+    const ip = who(req), m = misses.get(ip);
+    if (m && m.n >= 5 && Date.now() - m.t < 60000) { res.writeHead(429); return res.end("Too many wrong links. Wait a minute."); }
+    ok = sameKey(given);
+    if (!ok) misses.set(ip, { n: (m && Date.now() - m.t < 60000 ? m.n : 0) + 1, t: Date.now() }); else misses.delete(ip);
+    if (misses.size > 5000) misses.clear();
+  }
   const p = decodeURIComponent(u.pathname).replace(/^\/+/, "");
   if (p === "" || p === "player") {
     if (!ok) { res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" }); return res.end(`<!doctype html><meta name=viewport content="width=device-width"><body style="font:18px sans-serif;background:#1a1517;color:#eee;padding:40px">Ask your GM for the table link or QR code.</body>`); }
@@ -116,6 +129,7 @@ function start(wantPort, wantKey) {
   });
 }
 function stop() {
+  tunnel.stop();
   for (const c of clients) { try { c.res.end(); } catch {} }
   clients.clear(); primary = null;
   if (server) { server.close(); server = null; }
@@ -140,6 +154,9 @@ function setup(getDesk, getMediaDir, isStageOpen) {
   mediaDir = getMediaDir; stageOpen = isStageOpen;
   ipcMain.handle("table:start", async (_e, o = {}) => { desk = getDesk(); return start(o.port, o.key); });
   ipcMain.handle("table:stop", () => { stop(); return info(); });
+  // share over the internet: a Cloudflare quick tunnel in front of the table server
+  tunnel.onChange(() => tellDesk());
+  ipcMain.handle("table:tunnel", async (_e, on) => { if (!on) { tunnel.stop(); return info(); } if (!server) return { ...info(), error: "Turn on the table link first" }; await tunnel.start(port); return info(); });
   ipcMain.handle("table:info", () => { desk = getDesk(); return info(); });
   ipcMain.handle("table:qr", async (_e, text) => require("qrcode").toString(text, { type: "svg", margin: 1, color: { dark: "#1a1517", light: "#ffffff" } }));
   // the desk pushes player-facing state: party sheets, whispers, roll results

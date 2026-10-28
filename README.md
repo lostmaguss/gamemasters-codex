@@ -67,7 +67,7 @@ Open the **stream window** and share it in Discord (or load the overlays in OBS)
 
 ## 📱 Players' phones
 
-Turn on the **table link** and players scan a QR code. Each picks their character and gets their sheet, handouts, the map, turn order and votes on their phone. **Tapping a stat rolls the dice on your table**, and whispers land in their private *Secrets* tab. Great for in-person games, no app to install.
+Turn on the **table link** and players scan a QR code. Each picks their character and gets their sheet, handouts, the map, turn order and votes on their phone. **Tapping a stat rolls the dice on your table**, and whispers land in their private *Secrets* tab. Works at the table on your Wi-Fi, or **from anywhere** over a secure Cloudflare link for your Discord players. No app to install.
 
 <img src="docs/media/phones.jpg" alt="Player phones and the table link QR code" width="100%">
 
@@ -142,7 +142,12 @@ Campaign menu → **Table link: phones & OBS** → *OBS browser sources*. Copy a
 <details>
 <summary><b>📱 Setting up players' phones</b></summary>
 
-Campaign menu → **Table link: phones & OBS** → turn it on. Players scan the QR code; their phones need to be on the same Wi-Fi as your computer. The first time, Windows asks to let the app on your network: allow **Private networks**. You choose whether players can change their own HP. *New key* makes old links stop working.
+Campaign menu → **Table link: phones & OBS** → turn it on, then pick:
+
+- **Same Wi-Fi:** for an in-person table. Phones must be on the same network as your computer. The first time, Windows asks to let the app on your network: allow **Private networks**.
+- **Anywhere (internet):** for players at home. One click makes a secure `https://…trycloudflare.com` link through Cloudflare (free, no account). The first time, the app downloads Cloudflare's tunnel helper (about 55 MB). The address changes each time you turn it on.
+
+Only people with the link can open it, and wrong guesses are slowed down. *New key* makes old links stop working. You choose whether players can change their own HP.
 </details>
 
 <details>
