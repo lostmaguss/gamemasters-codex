@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.24.1", title: "Intel Macs too", items: ["macOS downloads for Intel Macs (x64) alongside Apple Silicon (arm64)"] },
   { v: "1.24.0", title: "Now on macOS and Linux", items: ["Gamemaster's Codex runs on macOS (Apple Silicon and Intel) and Linux (AppImage, and a .deb for Ubuntu / Debian)", "On a Mac: the native window buttons, ⌘ shortcuts, and copy / paste work as you'd expect", "Every release is now built and tested on all three systems before it ships"] },
   { v: "1.23.0", title: "Journals, Turkish & imports", items: ["Players keep a private journal on their phone: goals to tick off and entries only they and you can read (book icon on their party sheet)", "Players' language (Rules & genre): phones, the stream window and Discord in Türkçe. Your screens stay in English", "Codex → Import notes: bring in an Obsidian vault or any folder of Markdown files, with pictures, tags and links", "Every release now starts the app on Windows and tests it before it ships"] },
   { v: "1.22.0", title: "Phones from anywhere", items: ["Table link → Anywhere (internet): one click makes a secure link through Cloudflare, so players on their own Wi-Fi or mobile data can join from home", "Free, no account. The first time, the app downloads Cloudflare's small tunnel helper", "Links now use long keys, and wrong guesses are slowed down"] },

@@ -55,7 +55,7 @@ jobs:
             asar: dist-installer/linux-unpacked/resources/app.asar
           - os: macos-latest
             dir: --mac dir
-            installers: --mac dmg zip
+            installers: --mac dmg zip --x64 --arm64
             asar: dist-installer/mac-arm64/Gamemasters Codex.app/Contents/Resources/app.asar
     runs-on: ${{ matrix.os }}
     steps:
