@@ -1,6 +1,6 @@
 // Pieces shared by the desk's Dice view and the stream window.
 import { esc } from "./util.js";
-import { breakdown, critLabel, shownTotal } from "./roll.js";
+import { breakdown, critLabel, shownTotal, successWord } from "./roll.js";
 
 const SHAPES = {
   4: `<polygon class="f" points="50,8 94,88 6,88"/><line class="e" x1="50" y1="8" x2="50" y2="88"/>`,
@@ -13,7 +13,7 @@ const SHAPES = {
 };
 export const dieIcon = s => `<svg viewBox="0 0 100 100" aria-hidden="true">${SHAPES[s] || SHAPES[6]}</svg>`;
 
-export function createOverlay(host) {
+export function createOverlay(host, tr) {
   const ov = document.createElement("div"); ov.className = "result-ov"; ov.hidden = true;
   const fl = document.createElement("div"); fl.className = "flash";
   host.append(fl, ov);
@@ -21,7 +21,7 @@ export function createOverlay(host) {
     wait(label) { ov.hidden = false; ov.className = "result-ov wait"; ov.innerHTML = `<div class="rl">${esc(label)}</div><div class="rt">rolling…</div>`; },
     show(r) {
       ov.hidden = false; ov.className = "result-ov" + (r.crit ? " crit" : r.fumble ? " fumble" : "");
-      ov.innerHTML = `${r.who ? `<div class="rwho" style="--wc:${esc(r.color || "var(--ember)")}">${esc(r.who)}</div>` : ""}<div class="rl">${esc(r.label || r.expr)}</div><div class="rt">${shownTotal(r)}${r.successMode && r.single == null ? `<small class="succ">success${r.total === 1 ? "" : "es"}</small>` : ""}</div><div class="rb">${esc(breakdown(r))}</div><div class="banner ${r.success === true ? "ok" : r.success === false ? "no" : ""}">${esc(critLabel(r))}</div>`;
+      ov.innerHTML = `${r.who ? `<div class="rwho" style="--wc:${esc(r.color || "var(--ember)")}">${esc(r.who)}</div>` : ""}<div class="rl">${esc(r.label || r.expr)}</div><div class="rt">${shownTotal(r)}${r.successMode && r.single == null ? `<small class="succ">${esc(successWord(r, tr))}</small>` : ""}</div><div class="rb">${esc(breakdown(r))}</div><div class="banner ${r.success === true ? "ok" : r.success === false ? "no" : ""}">${esc(critLabel(r, tr))}</div>`;
       void ov.offsetWidth; ov.classList.add("show");
       if (r.crit || r.fumble) { fl.className = "flash " + (r.crit ? "crit" : "fumble"); void fl.offsetWidth; fl.classList.add("go"); }
     },

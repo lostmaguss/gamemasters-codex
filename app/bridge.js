@@ -1,4 +1,5 @@
 // Talks to the stream dice window: Electron IPC in the app, BroadcastChannel when opened in a browser.
+import { getLang } from "./i18n.js";
 const api = window.codex?.stage;
 let bc = null; try { bc = new BroadcastChannel("codex-stage"); } catch {}
 const subs = { result: [], state: [], roll: [], clear: [], close: [], sound: [], show: [], hide: [], overlay: [], rollShow: [] };
@@ -27,11 +28,11 @@ export const Stage = {
   close() { if (api) api.close(); else bc?.postMessage({ t: "close" }); },
   async isOpen() { return api ? api.isOpen() : browserOpen; },
   onTop(v) { api?.onTop(v); },
-  roll(req) { if (api) api.roll(req); else bc?.postMessage({ t: "roll", v: req }); },
+  roll(req) { req = { ...req, lang: getLang() }; if (api) api.roll(req); else bc?.postMessage({ t: "roll", v: req }); },
   clear() { if (api) api.clear(); else bc?.postMessage({ t: "clear" }); },
   sound(cmd) { if (api) api.sound(cmd); else bc?.postMessage({ t: "sound", v: cmd }); },
   show(h) { if (api) api.show(h); else { if (!browserOpen) this.open(); setTimeout(() => bc?.postMessage({ t: "show", v: h }), browserOpen ? 0 : 1500); } },
-  overlay(o) { if (api) api.overlay(o); else { lastOverlay[o.kind] = o; bc?.postMessage({ t: "overlay", v: o }); } },
+  overlay(o) { o = { ...o, lang: getLang() }; if (api) api.overlay(o); else { lastOverlay[o.kind] = o; bc?.postMessage({ t: "overlay", v: o }); } },
   onOverlay(fn) { if (api) api.onOverlay(fn); else subs.overlay.push(fn); },
   hide() { if (api) api.hide(); else bc?.postMessage({ t: "hide" }); },
   onSound(fn) { if (api) api.onSound(fn); else subs.sound.push(fn); },

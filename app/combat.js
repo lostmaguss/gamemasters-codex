@@ -1,4 +1,5 @@
 // Combat tracker: initiative, HP, conditions with round timers. The turn order shows on the stream window.
+import { t } from "./i18n.js";
 import { rate, meterHTML, creatureDPR } from "./difficulty.js";
 import { $, $$, esc, h, icon, toast, uid, ls, debounce, rnd } from "./util.js";
 import { C, save } from "./store.js";
@@ -11,7 +12,7 @@ const KIND = { pc: { label: "Player", color: "#a8d3e4" }, ally: { label: "Ally",
 
 export function combat(c = C()) { return (c.combat ||= { active: false, round: 1, turn: 0, list: [], log: [], showOnStream: true, autoSkip: true }); }
 export function sortCombat(cb) { const dir = C().rules?.initHigh === false ? -1 : 1; cb.list.sort((a, b) => dir * ((Number(b.init) || 0) - (Number(a.init) || 0)) || (b.tie || 0) - (a.tie || 0)); }
-const hpWord = (hp, max) => !max ? "" : hp <= 0 ? "Down" : hp <= max * .25 ? "Near death" : hp <= max * .5 ? "Bloodied" : hp < max ? "Hurt" : "Unhurt";
+const hpWord = (hp, max) => t(!max ? "" : hp <= 0 ? "Down" : hp <= max * .25 ? "Near death" : hp <= max * .5 ? "Bloodied" : hp < max ? "Hurt" : "Unhurt");
 
 // What the players see: no monster numbers, only how hurt things look.
 export function streamCombatState(c = C()) {

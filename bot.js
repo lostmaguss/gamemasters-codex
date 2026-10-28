@@ -2,25 +2,34 @@
 // and the bot answers with the result. Runs in the main process with the GM's own bot token.
 const { ipcMain } = require("electron");
 
-let client = null, status = { state: "off" }, desk = null, appId = null, stats = [], lastChannel = null;
+let client = null, status = { state: "off" }, desk = null, appId = null, stats = [], lastChannel = null, lang = "en";
+// the bot's own words, in the players' language (Campaign menu → Rules & genre)
+const TR = {
+  "The GM's table didn't answer. Is Gamemaster's Codex open?": "Oyun yöneticisinin masası yanıt vermedi. Gamemaster's Codex açık mı?",
+  "That roll didn't work.": "Bu atış olmadı.",
+  "This vote is closed.": "Bu oylama kapandı.",
+  "You voted: **{x}**. Click another option to change your mind.": "Oy verdin: **{x}**. Fikrini değiştirmek için başka bir seçeneğe tıkla.",
+  "The party decides:": "Grup karar veriyor:", "The party decided:": "Grup karar verdi:",
+};
+const t = (s, v) => { let o = lang === "tr" && TR[s] ? TR[s] : s; if (v) o = o.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m); return o; };
 const pending = new Map();
 const polls = new Map(); // party votes: id -> { msg, q, opts, votes: Map(userId -> { idx, name }) }
 const COMMANDS = () => {
   const { SlashCommandBuilder } = require("discord.js");
   return [
-    new SlashCommandBuilder().setName("roll").setDescription("Roll dice on the GM's table")
-      .addStringOption(o => o.setName("dice").setDescription("Like 1d20+5, 2d6, 4dF, 8d6>=5").setRequired(true))
-      .addStringOption(o => o.setName("for").setDescription("What it's for, like Stealth").setRequired(false)),
-    new SlashCommandBuilder().setName("r").setDescription("Short for /roll")
-      .addStringOption(o => o.setName("dice").setDescription("Like 1d20+5").setRequired(true))
-      .addStringOption(o => o.setName("for").setDescription("What it's for").setRequired(false)),
-    new SlashCommandBuilder().setName("check").setDescription("Roll one of your character's stats")
-      .addStringOption(o => { o.setName("stat").setDescription("Which stat").setRequired(true); if (stats.length) o.addChoices(...stats.slice(0, 25).map(x => ({ name: x, value: x }))); return o; })
-      .addIntegerOption(o => o.setName("bonus").setDescription("Extra bonus or penalty, like 2 or -1").setRequired(false)),
-    new SlashCommandBuilder().setName("init").setDescription("Roll your initiative into the GM's combat tracker")
-      .addStringOption(o => o.setName("dice").setDescription("Leave empty to use the table's rule").setRequired(false)),
-    new SlashCommandBuilder().setName("me").setDescription("See your character sheet (only you see it)"),
-    new SlashCommandBuilder().setName("stash").setDescription("See the party's money and loot"),
+    new SlashCommandBuilder().setName("roll").setDescription("Roll dice on the GM's table").setDescriptionLocalizations({ tr: "Oyun yöneticisinin masasında zar at" })
+      .addStringOption(o => o.setName("dice").setDescription("Like 1d20+5, 2d6, 4dF, 8d6>=5").setDescriptionLocalizations({ tr: "Örneğin 1d20+5, 2d6, 4dF, 8d6>=5" }).setRequired(true))
+      .addStringOption(o => o.setName("for").setDescription("What it's for, like Stealth").setDescriptionLocalizations({ tr: "Ne için, örneğin Gizlilik" }).setRequired(false)),
+    new SlashCommandBuilder().setName("r").setDescription("Short for /roll").setDescriptionLocalizations({ tr: "/roll kısaltması" })
+      .addStringOption(o => o.setName("dice").setDescription("Like 1d20+5").setDescriptionLocalizations({ tr: "Örneğin 1d20+5" }).setRequired(true))
+      .addStringOption(o => o.setName("for").setDescription("What it's for").setDescriptionLocalizations({ tr: "Ne için" }).setRequired(false)),
+    new SlashCommandBuilder().setName("check").setDescription("Roll one of your character's stats").setDescriptionLocalizations({ tr: "Karakterinin bir özelliğiyle zar at" })
+      .addStringOption(o => { o.setName("stat").setDescription("Which stat").setDescriptionLocalizations({ tr: "Hangi özellik" }).setRequired(true); if (stats.length) o.addChoices(...stats.slice(0, 25).map(x => ({ name: x, value: x }))); return o; })
+      .addIntegerOption(o => o.setName("bonus").setDescription("Extra bonus or penalty, like 2 or -1").setDescriptionLocalizations({ tr: "Ek bonus ya da ceza, örneğin 2 veya -1" }).setRequired(false)),
+    new SlashCommandBuilder().setName("init").setDescription("Roll your initiative into the GM's combat tracker").setDescriptionLocalizations({ tr: "İnisiyatifini savaş sırasına at" })
+      .addStringOption(o => o.setName("dice").setDescription("Leave empty to use the table's rule").setDescriptionLocalizations({ tr: "Masanın kuralı için boş bırak" }).setRequired(false)),
+    new SlashCommandBuilder().setName("me").setDescription("See your character sheet (only you see it)").setDescriptionLocalizations({ tr: "Karakter kâğıdını gör (sadece sen görürsün)" }),
+    new SlashCommandBuilder().setName("stash").setDescription("See the party's money and loot").setDescriptionLocalizations({ tr: "Grubun parasını ve ganimetini gör" }),
   ].map(c => c.toJSON());
 };
 const tell = () => desk && !desk.isDestroyed() && desk.webContents.send("bot:status", { ...status, invite: appId ? `https://discord.com/oauth2/authorize?client_id=${appId}&scope=bot%20applications.commands&permissions=2048` : null });
@@ -31,7 +40,7 @@ function handle(i) {
   const names = [i.member?.displayName, i.user?.globalName, i.user?.username].filter(Boolean);
   if (i.channelId) lastChannel = i.channelId;
   const id = "bot-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  const t = setTimeout(() => { pending.delete(id); i.editReply({ content: "The GM's table didn't answer. Is Gamemaster's Codex open?" }).catch(() => {}); }, 30000);
+  const t = setTimeout(() => { pending.delete(id); i.editReply({ content: t("The GM's table didn't answer. Is Gamemaster's Codex open?") }).catch(() => {}); }, 30000);
   pending.set(id, { i, t });
   const args = { dice: i.options.getString("dice"), label: i.options.getString("for") || "", stat: i.options.getString?.("stat"), bonus: i.options.getInteger?.("bonus") };
   return i.deferReply({ ephemeral: cmd === "me" }).then(() => desk && desk.webContents.send("bot:roll", { id, cmd, expr: args.dice, label: args.label, args, who, names, userId: i.user?.id || null, channelId: i.channelId || null }));
@@ -70,10 +79,10 @@ const tally = p => p.opts.map((text, idx) => { const v = [...p.votes.values()].f
 const sendVotes = id => { const p = polls.get(id); if (p && desk && !desk.isDestroyed()) desk.webContents.send("bot:vote", { id, opts: tally(p) }); };
 async function vote(i) {
   const [, id, idx] = i.customId.split("|"); const p = polls.get(id);
-  if (!p || p.closed) return i.reply({ content: "This vote is closed.", ephemeral: true });
+  if (!p || p.closed) return i.reply({ content: t("This vote is closed."), ephemeral: true });
   const who = i.member?.displayName || i.user?.globalName || i.user?.username || "Player";
   p.votes.set(i.user?.id || who, { idx: +idx, name: who });
-  await i.reply({ content: `You voted: **${p.opts[+idx]}**. Click another option to change your mind.`, ephemeral: true });
+  await i.reply({ content: t("You voted: **{x}**. Click another option to change your mind.", { x: p.opts[+idx] }), ephemeral: true });
   sendVotes(id);
 }
 const rows = (id, opts, disabled = false) => {
@@ -98,7 +107,7 @@ async function poll({ op, id, q, opts, channel }) {
     if (!test) {
       if (!client?.isReady?.()) return { ok: false, error: "The dice bot isn't connected." };
       const ch = await pickChannel(channel); if (!ch) return { ok: false, error: "The bot couldn't find a channel to post in. Have a player use /roll in your game channel once." };
-      try { p.msg = await ch.send({ content: `🗳️ **The party decides:** ${q}`, components: rows(id, opts) }); }
+      try { p.msg = await ch.send({ content: `🗳️ **${t("The party decides:")}** ${q}`, components: rows(id, opts) }); }
       catch (e) { return { ok: false, error: /Missing Access|Missing Permissions/i.test(e.message) ? "The bot isn't allowed to post in that channel. Give it Send Messages there." : String(e.message || e) }; }
     }
     polls.set(id, p); return { ok: true, channel: p.msg?.channelId || null };
@@ -107,7 +116,7 @@ async function poll({ op, id, q, opts, channel }) {
   if (op === "close") {
     p.closed = true; const t = tally(p), top = Math.max(0, ...t.map(x => x.n));
     const lines = t.map(x => `${x.n === top && top > 0 ? "**" : ""}${x.text}: ${x.n}${x.n === top && top > 0 ? "**" : ""}${x.names.length ? ` (${x.names.join(", ")})` : ""}`);
-    await p.msg?.edit({ content: `🗳️ **The party decided:** ${p.q}\n${lines.join("\n")}`, components: rows(id, p.opts, true) }).catch(() => {});
+    await p.msg?.edit({ content: `🗳️ **${t("The party decided:")}** ${p.q}\n${lines.join("\n")}`, components: rows(id, p.opts, true) }).catch(() => {});
     polls.delete(id);
   }
   return { ok: true };
@@ -132,11 +141,11 @@ function setup(getDesk) {
       return { ok: true };
     } catch (e) { return { ok: false, error: /Cannot send messages/i.test(e.message) ? "That player doesn't accept DMs from server members. They can allow it in the server's Privacy Settings." : String(e.message || e) }; }
   });
-  ipcMain.on("bot:config", (_e, cfg) => { const next = (cfg.stats || []).filter(Boolean); if (JSON.stringify(next) !== JSON.stringify(stats)) { stats = next; register(); } });
+  ipcMain.on("bot:config", (_e, cfg) => { if (cfg.lang) lang = cfg.lang; const next = (cfg.stats || []).filter(Boolean); if (JSON.stringify(next) !== JSON.stringify(stats)) { stats = next; register(); } });
   ipcMain.on("bot:result", (_e, { id, ok, error, embed }) => {
     const p = pending.get(id); if (!p) return;
     clearTimeout(p.t); pending.delete(id);
-    p.i.editReply(ok ? { embeds: [embed], content: "" } : { content: error || "That roll didn't work." }).catch(() => {});
+    p.i.editReply(ok ? { embeds: [embed], content: "" } : { content: error || t("That roll didn't work.") }).catch(() => {});
   });
   ipcMain.handle("bot:poll", (_e, cmd) => { desk = getDesk(); return poll(cmd); });
   // lets the test suite play a fake player without a real Discord connection

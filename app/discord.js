@@ -1,7 +1,8 @@
 // Discord: post rolls, handouts, turn order and recaps to a channel through a webhook.
+import { t } from "./i18n.js";
 import { $, $$, esc, icon, toast, uid, toDataURL } from "./util.js";
 import { C, S, save } from "./store.js";
-import { breakdown, critLabel, shownTotal } from "./roll.js";
+import { breakdown, critLabel, shownTotal, successWord } from "./roll.js";
 
 const COLOR = { roll: 0xff7a3d, crit: 0xffcf5a, fumble: 0xff5555, info: 0x5865f2, handout: 0xefe4cf, combat: 0xf39da8, ok: 0x6bd17d, no: 0xff6b6b };
 export function settings(c = C()) { return (c.discord ||= { hooks: [], channel: null, autoRolls: false, autoHandouts: false, autoRounds: false, name: "" }); }
@@ -26,8 +27,8 @@ export function post(payload, { file, files, hook, quiet } = {}) {
 
 export function rollEmbed(r) {
   const color = r.crit ? COLOR.crit : r.fumble ? COLOR.fumble : r.success === true ? COLOR.ok : r.success === false ? COLOR.no : COLOR.roll;
-  const banner = critLabel(r);
-  return { color, author: { name: [r.who, r.label || r.expr].filter(Boolean).join(" · ") }, title: `${shownTotal(r)}${r.successMode && r.single == null ? ` success${r.total === 1 ? "" : "es"}` : ""}${banner ? `  ·  ${banner}` : ""}`, description: "`" + breakdown(r) + "`" };
+  const banner = critLabel(r, t);
+  return { color, author: { name: [r.who, r.label || r.expr].filter(Boolean).join(" · ") }, title: `${shownTotal(r)}${r.successMode && r.single == null ? " " + successWord(r, t) : ""}${banner ? `  ·  ${banner}` : ""}`, description: "`" + breakdown(r) + "`" };
 }
 export function postRoll(r, opts) {
   if (r.secret) return;
@@ -38,14 +39,14 @@ export async function postHandout(hd, opts) {
     const src = await toDataURL(hd.src);
     const ext = (src.match(/data:image\/(\w+)/) || [, "png"])[1].replace("jpeg", "jpg");
     const name = `handout.${ext}`;
-    return post({ embeds: [{ color: COLOR.handout, title: hd.title || "Handout", image: { url: `attachment://${name}` } }] }, { ...opts, file: { dataURL: src, name } });
+    return post({ embeds: [{ color: COLOR.handout, title: hd.title || t("Handout"), image: { url: `attachment://${name}` } }] }, { ...opts, file: { dataURL: src, name } });
   }
-  return post({ embeds: [{ color: COLOR.handout, title: hd.title || "Handout", description: String(hd.text || "").slice(0, 4000) }] }, opts);
+  return post({ embeds: [{ color: COLOR.handout, title: hd.title || t("Handout"), description: String(hd.text || "").slice(0, 4000) }] }, opts);
 }
 export function postCombat(state, opts) {
   if (!state.show) return;
   const lines = state.list.map(x => `${x.current ? "▶ **" : "　"}${x.name}${x.current ? "**" : ""}${x.status && x.kind !== "pc" ? ` · *${x.status}*` : ""}${x.conds.length ? ` · ${x.conds.join(", ")}` : ""}`);
-  return post({ embeds: [{ color: COLOR.combat, title: `Round ${state.round}`, description: lines.join("\n").slice(0, 4000) }] }, opts);
+  return post({ embeds: [{ color: COLOR.combat, title: t("Round {n}", { n: state.round }), description: lines.join("\n").slice(0, 4000) }] }, opts);
 }
 export function postText(title, text, opts) {
   // Discord embeds cap at 4096 characters, so long recaps go out in parts
@@ -74,10 +75,10 @@ export async function postRecap(s, opts = {}) {
   }
   const url = "https://github.com/lostmaguss/gamemasters-codex"; // shared url groups the images into one gallery
   const main = {
-    color: COLOR.crit, url, title: clip(`Session ${s.num}${s.title ? ": " + s.title : ""}`, 250),
+    color: COLOR.crit, url, title: clip(`${t("Session {n}", { n: s.num })}${s.title ? ": " + s.title : ""}`, 250),
     description: clip([s.ingame && `*${s.ingame}*`, happened.length ? "" : strip(s.recap)].filter(Boolean).join("\n"), 2000) || undefined,
-    fields: [...field(stars.length ? "Highlights" : "What happened", happened), ...field("Said at the table", quotes), ...field("MVP", mvps.map(m => `🏆 ${m.character || m.player}`)), ...field("The party decided", votes), ...field("Loot", [loot.join(", ")].filter(Boolean)), ...field("Where we left off", s.cliff ? [`||${strip(s.cliff)}||`] : []), ...field("Next session", next ? [next] : [])],
-    footer: { text: [c.name, s.hours ? `${s.hours} h played` : ""].filter(Boolean).join(" · ") },
+    fields: [...field(t(stars.length ? "Highlights" : "What happened"), happened), ...field(t("Said at the table"), quotes), ...field(t("MVP"), mvps.map(m => `🏆 ${m.character || m.player}`)), ...field(t("The party decided"), votes), ...field(t("Loot"), [loot.join(", ")].filter(Boolean)), ...field(t("Where we left off"), s.cliff ? [`||${strip(s.cliff)}||`] : []), ...field(t("Next session"), next ? [next] : [])],
+    footer: { text: [c.name, s.hours ? t("{h} h played", { h: s.hours }) : ""].filter(Boolean).join(" · ") },
   };
   if (imgs[0]) main.image = { url: `attachment://${imgs[0].name}` };
   const embeds = [main, ...imgs.slice(1).map(f => ({ url, image: { url: `attachment://${f.name}` } }))];

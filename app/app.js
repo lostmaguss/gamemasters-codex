@@ -1,4 +1,5 @@
 import { stashSummary, UNIT as STASH_UNIT } from "./stash.js";
+import { t, setLang, LANGS } from "./i18n.js";
 import { initPoll } from "./poll.js";
 import { syncCustomDice } from "./customdice.js";
 import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
@@ -32,7 +33,7 @@ import { starterTables } from "./store.js";
 
 const LOOK_OF = { fantasy: "lantern", cyberpunk: "neon", scifi: "void" };
 export function applyGenre(c = C()) {
-  setGenre(c.genre || "fantasy");
+  setGenre(c.genre || "fantasy"); setLang(c.playerLang || "en");
   const look = !c.look || c.look === "auto" ? LOOK_OF[c.genre || "fantasy"] : c.look;
   if (look === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = look;
   ls.set("look", look);
@@ -233,7 +234,7 @@ function show(key, arg) {
 
 function renderCampName() { $("#campName").textContent = C().name || "Untitled campaign"; document.title = `${C().name} · Gamemaster's Codex`; }
 function switchCampaign(id) {
-  S.data.currentId = id; save(); syncCustomDice();
+  S.data.currentId = id; save(); syncCustomDice(); setLang(C().playerLang || "en"); App.botConfig?.();
   for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; }
   $("#views").innerHTML = ""; current = null;
   renderCampName(); show(C().ui.view || "prep");
@@ -278,6 +279,8 @@ export function rulesModal() {
   App.modal(`<h2>Rules & genre</h2>
     <label class="f"><span>Genre</span><select id="rgG"><option value="fantasy">Fantasy</option><option value="scifi">Sci-fi</option><option value="cyberpunk">Cyberpunk</option></select></label>
     <p class="md-help" style="margin:-6px 0 0">Changes what the Forge generates, the built-in sounds, starter tables, dice and the app's look.</p>
+    <label class="f"><span>Players' language</span><select id="rgLang">${Object.entries(LANGS).map(([k, n]) => `<option value="${k}">${n}</option>`).join("")}</select></label>
+    <p class="md-help" style="margin:-6px 0 0">For what players see: their phones, the stream window and Discord. Your own screens stay in English.</p>
     <label class="f"><span>App look</span><select id="rgL"><option value="auto">Match the genre</option><option value="lantern">Lantern (warm, blackletter)</option><option value="neon">Neon (cyberpunk)</option><option value="void">Void (sci-fi)</option></select></label>
     <div class="two">
       <label class="f"><span>Critical die</span><select id="rgD"><option value="20">d20</option><option value="100">d100 (percentile)</option><option value="10">d10</option><option value="12">d12</option><option value="6">d6</option><option value="any">Any single die</option></select></label>
@@ -286,13 +289,13 @@ export function rulesModal() {
     <label class="f"><span>Initiative order</span><select id="rgI"><option value="high">Highest goes first</option><option value="low">Lowest goes first</option></select></label>
     <p class="md-help" style="margin:0">For roll-under systems, roll against a target: <code>1d100&lt;=45</code> shows Success or Failure. For dice pools, count hits: <code>8d6&gt;=5</code>.</p>
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
-    $("#rgG", m).value = c.genre || "fantasy"; $("#rgL", m).value = c.look || "auto"; $("#rgD", m).value = String(R.critDie); $("#rgM", m).value = R.critMode; $("#rgI", m).value = R.initHigh ? "high" : "low";
+    $("#rgG", m).value = c.genre || "fantasy"; $("#rgLang", m).value = c.playerLang || "en"; $("#rgL", m).value = c.look || "auto"; $("#rgD", m).value = String(R.critDie); $("#rgM", m).value = R.critMode; $("#rgI", m).value = R.initHigh ? "high" : "low";
     $("[data-x]", m).onclick = close;
     $("[data-ok]", m).onclick = () => {
       const d = $("#rgD", m).value; const g = $("#rgG", m).value;
       c.rules = { critDie: d === "any" ? "any" : Number(d), critMode: $("#rgM", m).value, initHigh: $("#rgI", m).value === "high" };
-      const changedGenre = (c.genre || "fantasy") !== g; c.genre = g; c.look = $("#rgL", m).value;
-      save(); ls.set("rules", c.rules); close(); applyGenre(c); if (changedGenre) App.genreChanged?.(c); else toast("Rules saved");
+      const changedGenre = (c.genre || "fantasy") !== g; c.genre = g; c.look = $("#rgL", m).value; c.playerLang = $("#rgLang", m).value;
+      save(); ls.set("rules", c.rules); close(); applyGenre(c); App.botConfig?.(); if (changedGenre) App.genreChanged?.(c); else toast("Rules saved");
       for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; } $("#views").innerHTML = ""; const v = current; current = null; show(v);
     };
   });
@@ -510,11 +513,11 @@ function wireBot() {
     const member = c.party.find(m => (req.userId && m.discordId === req.userId) || (m.discord && names.includes(String(m.discord).trim().replace(/^@/, "").toLowerCase())));
     // remember the player's Discord account so whispers can reach them
     if (member && req.userId && member.discordId !== req.userId) { member.discordId = req.userId; save(); }
-    const unlinked = `I don't know which character you play. Ask the GM to put your Discord name (${req.who}) on your party sheet.`;
+    const unlinked = t("I don't know which character you play. Ask the GM to put your Discord name ({who}) on your party sheet.", { who: req.who });
     if (req.cmd === "check") {
       if (!member) return fail(unlinked);
       const stat = req.args.stat, v = parseInt(member.stats?.[stat]);
-      if (isNaN(v)) return fail(`${member.character || member.player} has no number for ${stat} yet.`);
+      if (isNaN(v)) return fail(t("{name} has no number for {stat} yet.", { name: member.character || member.player, stat }));
       const L = c.sheet || { roll: "1d20+{value}" };
       let expr = (L.roll || "1d20+{value}").replace(/\{value\}/g, v).replace(/\+-/g, "-");
       if (req.args.bonus) expr += (req.args.bonus > 0 ? "+" : "-") + Math.abs(req.args.bonus);
@@ -525,18 +528,18 @@ function wireBot() {
     if (req.cmd === "init") {
       if (!member) return fail(unlinked);
       const cb = c.combat; const x = cb?.list.find(y => y.ref === member.id);
-      if (!x) return fail("You're not in the GM's combat tracker yet. Ask the GM to add the party.");
+      if (!x) return fail(t("You're not in the GM's combat tracker yet. Ask the GM to add the party."));
       let expr = req.args.dice;
       if (!expr) { const v = parseInt(member.stats?.[cb.pcStat || "Agility"]); expr = "1d20" + (isNaN(v) || !v ? "" : (v > 0 ? "+" : "-") + Math.abs(v)); }
-      try { parseRoll(expr); } catch (e) { return fail(`Couldn't read "${expr}": ${e.message}`); }
+      try { parseRoll(expr); } catch (e) { return fail(t("Couldn't read \"{expr}\": {error}", { expr, error: e.message })); }
       const r = App.roll(expr, "Initiative", { who: member.character || req.who, id: req.id });
-      const apply = res => { x.init = res.total; x.tie = Math.random(); import("./combat.js").then(m => { if (!cb.active) m.sortCombat(cb); save(); m.pushCombat(); mounted.combat?.refresh?.(); }); const order = cb.list.indexOf(x) + 1; B.reply({ id: req.id, ok: true, embed: { ...Discord.rollEmbed(res), footer: { text: `Initiative set${cb.active ? "" : ` · you're #${order} of ${cb.list.length}`}` } } }); };
+      const apply = res => { x.init = res.total; x.tie = Math.random(); import("./combat.js").then(m => { if (!cb.active) m.sortCombat(cb); save(); m.pushCombat(); mounted.combat?.refresh?.(); }); const order = cb.list.indexOf(x) + 1; B.reply({ id: req.id, ok: true, embed: { ...Discord.rollEmbed(res), footer: { text: t("Initiative set") + (cb.active ? "" : " · " + t("you're #{n} of {m}", { n: order, m: cb.list.length })) } } }); };
       if (r) apply(r); else App._initWait = { id: req.id, apply };
       return;
     }
     if (req.cmd === "stash") {
       const s = stashSummary(c);
-      B.reply({ id: req.id, ok: true, embed: { color: 0xf0c35a, title: `${c.name}: party stash`, description: `**${s.money}**\n\n${s.items.length ? s.items.map(x => `• ${x}`).join("\n").slice(0, 3800) : "*No loot yet.*"}` } });
+      B.reply({ id: req.id, ok: true, embed: { color: 0xf0c35a, title: t("{campaign}: party stash", { campaign: c.name }), description: `**${s.money}**\n\n${s.items.length ? s.items.map(x => `• ${x}`).join("\n").slice(0, 3800) : t("*No loot yet.*")}` } });
       return;
     }
     if (req.cmd === "me") {
@@ -547,12 +550,12 @@ function wireBot() {
       B.reply({ id: req.id, ok: true, embed: { color: parseInt(String(member.color || "#ff7a3d").slice(1), 16) || 0xff7a3d, title: member.character || member.player, description: [member.role, res, stats, member.conds?.length ? `*${member.conds.join(", ")}*` : ""].filter(Boolean).join("\n\n") } });
       return;
     }
-    try { parseRoll(req.expr); } catch (e) { return fail(`Couldn't read "${req.expr}": ${e.message}`); }
+    try { parseRoll(req.expr); } catch (e) { return fail(t("Couldn't read \"{expr}\": {error}", { expr: req.expr, error: e.message })); }
     botPending.add(req.id);
     const r = App.roll(req.expr, req.label, { who: member?.character || req.who, id: req.id });
     if (r) botReply(r);
   });
-  const sendCfg = () => B.config({ stats: (C().sheet?.stats || []).slice(0, 25) });
+  const sendCfg = () => B.config({ stats: (C().sheet?.stats || []).slice(0, 25), lang: C().playerLang || "en" });
   B.onStatus(st => { if (st.state === "online") sendCfg(); });
   App.botConfig = sendCfg;
   const p = S.data.prefs.bot; if (p?.token && p.on) B.start(p.token);

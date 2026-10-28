@@ -82,7 +82,7 @@ async function handle(req, res) {
   }
   const p = decodeURIComponent(u.pathname).replace(/^\/+/, "");
   if (p === "" || p === "player") {
-    if (!ok) { res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" }); return res.end(`<!doctype html><meta name=viewport content="width=device-width"><body style="font:18px sans-serif;background:#1a1517;color:#eee;padding:40px">Ask your GM for the table link or QR code.</body>`); }
+    if (!ok) { res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" }); return res.end(`<!doctype html><meta name=viewport content="width=device-width"><body style="font:18px sans-serif;background:#1a1517;color:#eee;padding:40px">Ask your GM for the table link or QR code.<br><br><span style="color:#aaa">Oyun yöneticinden masa bağlantısını ya da QR kodunu iste.</span></body>`); }
     return serveFile(res, path.join(ROOT, "app", "player.html"), false);
   }
   // the stream page loads its scripts and styles relative to app/, so send OBS there

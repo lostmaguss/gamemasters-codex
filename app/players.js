@@ -3,6 +3,7 @@
 import { $, $$, esc, icon, toast, uid, debounce, copyText } from "./util.js";
 import { C, S, save, onSaved } from "./store.js";
 import { parseRoll, breakdown, critLabel, shownTotal } from "./roll.js";
+import { t, getLang } from "./i18n.js";
 import { sheetLayout } from "./party.js";
 import { stashSummary } from "./stash.js";
 import { pollCounts } from "./poll.js";
@@ -16,7 +17,7 @@ const LOOK_OF = { fantasy: "lantern", scifi: "void", cyberpunk: "neon" };
 function state() {
   const c = C(), L = sheetLayout(c), p = c.ui.poll, cb = c.combat;
   return {
-    campaign: c.name, look: !c.look || c.look === "auto" ? LOOK_OF[c.genre || "fantasy"] : c.look, hpEdit: prefs().hp !== false,
+    campaign: c.name, lang: getLang(), look: !c.look || c.look === "auto" ? LOOK_OF[c.genre || "fantasy"] : c.look, hpEdit: prefs().hp !== false,
     party: c.party.map(m => ({
       id: m.id, name: m.character || m.player || "?", player: m.player || "", role: m.role || "", color: m.color, portrait: m.portrait || null,
       res: L.resources.map(n => ({ name: n, cur: m.res?.[n]?.cur ?? "", max: m.res?.[n]?.max ?? "" })),
@@ -45,9 +46,9 @@ export function phoneWhisper(member, { text, title, image }) {
 
 function act(a) {
   const c = C(), m = c.party.find(x => x.id === a.member); if (!m) return;
-  const who = m.character || m.player, back = r => T()?.to(m.id, "result", { total: shownTotal(r), label: r.label, expr: r.expr, crit: r.crit, fumble: r.fumble, note: critLabel(r), breakdown: breakdown(r) });
+  const who = m.character || m.player, back = r => T()?.to(m.id, "result", { total: shownTotal(r), label: r.label, expr: r.expr, crit: r.crit, fumble: r.fumble, note: critLabel(r, t), breakdown: breakdown(r) });
   if (a.type === "check") {
-    const v = parseInt(m.stats?.[a.stat]); if (isNaN(v)) return T()?.to(m.id, "result", { error: `${a.stat} has no number yet` });
+    const v = parseInt(m.stats?.[a.stat]); if (isNaN(v)) return T()?.to(m.id, "result", { error: t("{stat} has no number yet", { stat: a.stat }) });
     const L = sheetLayout(c); let expr = (L.roll || "1d20+{value}").replace(/\{value\}/g, v).replace(/\+-/g, "-");
     App.roll(expr, a.stat, { who, onResult: back }); return;
   }

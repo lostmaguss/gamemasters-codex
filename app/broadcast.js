@@ -1,4 +1,5 @@
 // Broadcast: full-screen stream scenes (starting soon, break, chapter title, recap, end) and NPC name cards.
+import { t } from "./i18n.js";
 import { $, $$, esc, h, icon, toast, uid, ls } from "./util.js";
 import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
@@ -21,11 +22,11 @@ export function createBroadcast(el, App) {
     const c = C(), S = st(), s = c.sessions.find(x => x.status === "live") || nextPlanned(c, false) || [...c.sessions].sort((a, b) => b.num - a.num)[0];
     const prev = c.sessions.filter(x => (!x.status || x.status === "played") && x !== s).sort((a, b) => b.num - a.num)[0];
     const base = { kind: "scene", show: true, type, campaign: c.name, tagline: c.tagline || "" };
-    if (type === "soon") return { ...base, title: c.name, sub: s ? `Session ${s.num}${s.title ? ": " + s.title : ""}` : "", endsAt: Date.now() + S.soonMin * 60000 };
-    if (type === "brb") return { ...base, title: "Short break", sub: "Grab a drink. Back soon.", endsAt: Date.now() + S.brbMin * 60000 };
-    if (type === "title") return { ...base, title: s?.title || c.name, sub: s ? `Chapter ${s.num}` : "", };
-    if (type === "recap") return { ...base, title: "Previously on…", text: (s?.recap || prev?.cliff || "").replace(/\[\[([^\]]+)\]\]/g, "$1") };
-    if (type === "end") return { ...base, title: "Thanks for playing", sub: S.next ? `Next session: ${S.next}` : "See you next time", };
+    if (type === "soon") return { ...base, title: c.name, sub: s ? `${t("Session {n}", { n: s.num })}${s.title ? ": " + s.title : ""}` : "", endsAt: Date.now() + S.soonMin * 60000 };
+    if (type === "brb") return { ...base, title: t("Short break"), sub: t("Grab a drink. Back soon."), endsAt: Date.now() + S.brbMin * 60000 };
+    if (type === "title") return { ...base, title: s?.title || c.name, sub: s ? t("Chapter {n}", { n: s.num }) : "", };
+    if (type === "recap") return { ...base, title: t("Previously on…"), text: (s?.recap || prev?.cliff || "").replace(/\[\[([^\]]+)\]\]/g, "$1") };
+    if (type === "end") return { ...base, title: t("Thanks for playing"), sub: S.next ? t("Next session: {when}", { when: S.next }) : t("See you next time"), };
   }
   function show(type) { const d = sceneData(type); onAirScene = type; Stage.overlay(d); if (!App.streamLive) Stage.open(); render(); toast(`${SCENES[type].label} is on stream`); }
   function render() {

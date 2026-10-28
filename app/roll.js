@@ -94,12 +94,15 @@ export function buildResult({ id, expr, label, who, rules, color }, terms, value
   }
   return r;
 }
-export function critLabel(r) {
+const fmt = (s, v) => v ? s.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m) : s;
+// tr: a translator for what players see (i18n.js t); the GM's screens use English
+export function critLabel(r, tr = fmt) {
   if (r.tally && !r.symbolic) return r.tally;
-  if (r.success != null && !r.crit && !r.fumble) return r.success ? "Success" : "Failure";
+  if (r.success != null && !r.crit && !r.fumble) return tr(r.success ? "Success" : "Failure");
   const v = r.groups[0]?.rolls.find(x => !x.dropped)?.v;
-  return r.crit ? `Critical · natural ${v}` : r.fumble ? `Fumble · natural ${v}` : r.success != null ? (r.success ? "Success" : "Failure") : "";
+  return r.crit ? tr("Critical · natural {v}", { v }) : r.fumble ? tr("Fumble · natural {v}", { v }) : r.success != null ? tr(r.success ? "Success" : "Failure") : "";
 }
+export const successWord = (r, tr = fmt) => tr(r.total === 1 ? "success" : "successes");
 export function shownTotal(r) { return r.symbolic ? (r.tally || "—") : r.single != null ? r.single : r.total; }
 export function breakdown(r) {
   const parts = r.groups.map((g, i) => {

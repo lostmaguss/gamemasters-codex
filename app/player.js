@@ -1,5 +1,6 @@
 // The player's phone: opened from the GM's table link. Read-mostly view of the table,
 // plus rolls, votes and HP taps that go back to the GM's app.
+import { t, setLang } from "./i18n.js";
 import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprender.js";
 
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -21,6 +22,7 @@ function connect() {
 }
 const on = {
   players(v) {
+    setLang(v.lang); document.documentElement.lang = v.lang || "en";
     S.players = v; $("#camp").textContent = v.campaign;
     if (v.look && v.look !== "lantern") document.documentElement.dataset.look = v.look; else delete document.documentElement.dataset.look;
     const mine = !!(v.turn && me() && v.turn.list.find(x => x.current)?.name === me().name);
@@ -58,7 +60,7 @@ function showResult(r) {
   rt = setTimeout(() => el.className = "result", r.error ? 2500 : 4500);
 }
 let pending = 0;
-function rolled(label) { showResult({ label, total: "…", note: "Rolling on the table", breakdown: "" }); clearTimeout(pending); }
+function rolled(label) { showResult({ label, total: "…", note: t("Rolling on the table"), breakdown: "" }); clearTimeout(pending); }
 
 // ---- views ----
 // live updates redraw the screen; keep what the player is typing
@@ -72,11 +74,11 @@ function render() {
 }
 function draw() {
   const main = $("#main"), P = S.players;
-  if (!P) { main.innerHTML = `<div class="empty-p">Connecting to the table…</div>`; return; }
+  if (!P) { main.innerHTML = `<div class="empty-p">${t("Connecting to the table…")}</div>`; return; }
   if (!me()) {
     $("#nav").hidden = true; $("#who").hidden = true;
-    main.innerHTML = `<div class="card"><h2>Who are you?</h2><div class="eyebrow" style="margin-bottom:12px">Pick your character</div>
-      <div class="pick">${P.party.map(p => `<button data-me="${p.id}" style="--mc:${esc(p.color)}"><i style="${p.portrait ? `background-image:url(${esc(p.portrait)})` : ""}">${p.portrait ? "" : esc(p.name[0])}</i>${esc(p.name)}<small>${esc(p.player || p.role)}</small></button>`).join("") || `<div class="empty-p">Your GM hasn't added the party yet.</div>`}</div></div>`;
+    main.innerHTML = `<div class="card"><h2>${t("Who are you?")}</h2><div class="eyebrow" style="margin-bottom:12px">${t("Pick your character")}</div>
+      <div class="pick">${P.party.map(p => `<button data-me="${p.id}" style="--mc:${esc(p.color)}"><i style="${p.portrait ? `background-image:url(${esc(p.portrait)})` : ""}">${p.portrait ? "" : esc(p.name[0])}</i>${esc(p.name)}<small>${esc(p.player || p.role)}</small></button>`).join("") || `<div class="empty-p">${t("Your GM hasn't added the party yet.")}</div>`}</div></div>`;
     $$("[data-me]", main).forEach(b => b.onclick = () => { S.me = b.dataset.me; store.set("me", S.me); connect(); render(); });
     return;
   }
@@ -84,9 +86,9 @@ function draw() {
   $("#nav").hidden = false;
   const w = $("#who"); w.hidden = false; w.style.setProperty("--mc", m.color);
   w.innerHTML = `<i style="${m.portrait ? `background-image:url(${esc(m.portrait)})` : ""}"></i><span>${esc(m.name)}</span>`;
-  w.onclick = () => { if (confirm("Switch character?")) { S.me = null; store.set("me", null); connect(); render(); } };
+  w.onclick = () => { if (confirm(t("Switch character?"))) { S.me = null; store.set("me", null); connect(); render(); } };
   const unread = S.inbox.filter(x => x.t > S.seen).length, badge = $("#badge"); badge.hidden = !unread; badge.textContent = unread;
-  $$("nav [data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === S.tab));
+  $$("nav [data-tab]").forEach(b => { b.classList.toggle("on", b.dataset.tab === S.tab); const l = b.querySelector(".nl"); if (l) l.textContent = t(l.dataset.en); });
   if (S.tab === "table") main.innerHTML = tableView(P, m);
   if (S.tab === "me") main.innerHTML = meView(P, m);
   if (S.tab === "journal") main.innerHTML = journalView(m);
@@ -98,21 +100,21 @@ function tableView(P, m) {
   const out = [];
   if (P.turn) {
     const cur = P.turn.list.find(x => x.current);
-    if (cur && cur.name === m.name) out.push(`<div class="yourturn">It's your turn!</div>`);
-    out.push(`<div class="card"><div class="eyebrow" style="margin-bottom:8px">Round ${P.turn.round}</div><div class="turns">${P.turn.list.map(x => `<span class="${x.current ? "cur" : ""}" style="--mc:${esc(x.color)}">${esc(x.name)}</span>`).join("")}</div></div>`);
+    if (cur && cur.name === m.name) out.push(`<div class="yourturn">${t("It's your turn!")}</div>`);
+    out.push(`<div class="card"><div class="eyebrow" style="margin-bottom:8px">${t("Round {n}", { n: P.turn.round })}</div><div class="turns">${P.turn.list.map(x => `<span class="${x.current ? "cur" : ""}" style="--mc:${esc(x.color)}">${esc(x.name)}</span>`).join("")}</div></div>`);
   }
   if (P.poll) {
     const tot = P.poll.opts.reduce((s, o) => s + o.n, 0) || 1, mine = P.poll.mine?.[m.id];
-    out.push(`<div class="card vote"><div class="eyebrow">${P.poll.open ? "The party decides" : "The party decided"}</div><h2 style="margin-top:6px">${esc(P.poll.q)}</h2>
+    out.push(`<div class="card vote"><div class="eyebrow">${t(P.poll.open ? "The party decides" : "The party decided")}</div><h2 style="margin-top:6px">${esc(P.poll.q)}</h2>
       ${P.poll.opts.map((o, i) => `<button data-vote="${i}" class="${mine === i ? "mine" : ""}" ${P.poll.open ? "" : "disabled"}><i style="width:${o.n / tot * 100}%"></i><span>${esc(o.text)}</span><b>${o.n}</b></button>`).join("")}</div>`);
   }
   if (S.show) {
     const h = S.show;
-    out.push(`<div class="card ho"><div class="eyebrow" style="margin-bottom:8px">Handout</div>${h.title ? `<h2>${esc(h.title)}</h2>` : ""}${h.type === "image" ? `<img src="${esc(h.src)}" alt="">` : `<div class="body">${esc(h.text)}</div>`}</div>`);
+    out.push(`<div class="card ho"><div class="eyebrow" style="margin-bottom:8px">${t("Handout")}</div>${h.title ? `<h2>${esc(h.title)}</h2>` : ""}${h.type === "image" ? `<img src="${esc(h.src)}" alt="">` : `<div class="body">${esc(h.text)}</div>`}</div>`);
   }
-  if (S.map) out.push(`<div class="card"><div class="eyebrow" style="margin-bottom:8px">Map</div><canvas class="map" id="map"></canvas></div>`);
-  if (P.stash) out.push(`<div class="card"><div class="eyebrow">Party stash</div><div class="money">${esc(P.stash.money)}</div>${P.stash.items.length ? `<div class="txt" style="margin-top:6px">${P.stash.items.map(esc).join("<br>")}</div>` : ""}</div>`);
-  if (!out.length) out.push(`<div class="empty-p">Nothing on the table right now.<br>Handouts, the map, turn order and votes show up here.</div>`);
+  if (S.map) out.push(`<div class="card"><div class="eyebrow" style="margin-bottom:8px">${t("Map")}</div><canvas class="map" id="map"></canvas></div>`);
+  if (P.stash) out.push(`<div class="card"><div class="eyebrow">${t("Party stash")}</div><div class="money">${esc(P.stash.money)}</div>${P.stash.items.length ? `<div class="txt" style="margin-top:6px">${P.stash.items.map(esc).join("<br>")}</div>` : ""}</div>`);
+  if (!out.length) out.push(`<div class="empty-p">${t("Nothing on the table right now.")}<br>${t("Handouts, the map, turn order and votes show up here.")}</div>`);
   return out.join("");
 }
 function meView(P, m) {
@@ -120,23 +122,23 @@ function meView(P, m) {
     ${m.res.map(r => { const cur = Number(r.cur), max = Number(r.max), pct = max ? Math.max(0, Math.min(100, cur / max * 100)) : 0;
       return `<div class="res"><div class="rh"><span>${esc(r.name)}</span><span>${esc(r.cur === "" ? "?" : r.cur)} / ${esc(r.max === "" ? "?" : r.max)}</span></div><div class="bar"><i style="width:${pct}%"></i></div>${P.hpEdit ? `<div class="rb">${[-5, -1, 1, 5].map(d => `<button data-hp="${esc(r.name)}" data-d="${d}">${d > 0 ? "+" : "−"}${Math.abs(d)}</button>`).join("")}</div>` : ""}</div>`; }).join("")}
     ${m.conds.length ? `<div class="conds" style="margin-top:12px">${m.conds.map(c => `<span>${esc(c)}</span>`).join("")}</div>` : ""}</div>
-    <div class="card"><div class="eyebrow" style="margin-bottom:10px">Tap a stat to roll it on the table</div>
+    <div class="card"><div class="eyebrow" style="margin-bottom:10px">${t("Tap a stat to roll it on the table")}</div>
       <div class="stats">${m.stats.map(s => `<button data-stat="${esc(s.name)}"><small>${esc(s.name)}</small><b>${esc(s.value === "" ? "—" : s.value)}</b></button>`).join("")}</div>
-      <div class="rollrow"><input id="expr" placeholder="2d6+1" inputmode="text" autocomplete="off" spellcheck="false"><button class="btn primary big" id="rollGo">Roll</button></div></div>
-    ${m.text.map(t => `<div class="card"><div class="eyebrow" style="margin-bottom:6px">${esc(t.name)}</div><div class="txt">${esc(t.body)}</div></div>`).join("")}`;
+      <div class="rollrow"><input id="expr" placeholder="2d6+1" inputmode="text" autocomplete="off" spellcheck="false"><button class="btn primary big" id="rollGo">${t("Roll")}</button></div></div>
+    ${m.text.map(x => `<div class="card"><div class="eyebrow" style="margin-bottom:6px">${esc(x.name)}</div><div class="txt">${esc(x.body)}</div></div>`).join("")}`;
 }
 function journalView(m) {
   const J = S.journal;
-  return `<div class="card"><div class="eyebrow" style="margin-bottom:4px">Only you and the GM see this</div><h2>Goals</h2>
-      <ul class="goals">${J.goals.map(g => `<li class="${g.done ? "done" : ""}" data-g="${esc(g.id)}"><button class="ck" data-gt>${g.done ? "✓" : ""}</button><span>${esc(g.text)}</span><button class="x" data-gd aria-label="Remove">×</button></li>`).join("") || `<li style="background:none;color:var(--faint);padding:0">What does ${esc(m.name)} want?</li>`}</ul>
-      <div class="rollrow"><input id="jGoal" placeholder="Add a goal" maxlength="300" style="font:16px var(--body)"><button class="btn big" id="jGoalAdd">Add</button></div></div>
-    <div class="card"><h2>Journal</h2><textarea class="jt" id="jText" placeholder="What happened tonight, what you suspect, who you owe…" maxlength="4000"></textarea>
-      <div class="rollrow" style="justify-content:flex-end"><button class="btn primary big" id="jAdd">Write it down</button></div></div>
-    ${J.entries.map(e => `<div class="card entry" style="--mc:${esc(m.color)}"><div class="when"><span>${new Date(e.t).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span><button class="x" data-je="${esc(e.id)}" aria-label="Delete">×</button></div><div class="txt">${esc(e.text)}</div></div>`).join("")}`;
+  return `<div class="card"><div class="eyebrow" style="margin-bottom:4px">${t("Only you and the GM see this")}</div><h2>${t("Goals")}</h2>
+      <ul class="goals">${J.goals.map(g => `<li class="${g.done ? "done" : ""}" data-g="${esc(g.id)}"><button class="ck" data-gt>${g.done ? "✓" : ""}</button><span>${esc(g.text)}</span><button class="x" data-gd aria-label="Remove">×</button></li>`).join("") || `<li style="background:none;color:var(--faint);padding:0">${t("What does {name} want?", { name: esc(m.name) })}</li>`}</ul>
+      <div class="rollrow"><input id="jGoal" placeholder="${t("Add a goal")}" maxlength="300" style="font:16px var(--body)"><button class="btn big" id="jGoalAdd">${t("Add")}</button></div></div>
+    <div class="card"><h2>${t("Journal")}</h2><textarea class="jt" id="jText" placeholder="${t("What happened tonight, what you suspect, who you owe…")}" maxlength="4000"></textarea>
+      <div class="rollrow" style="justify-content:flex-end"><button class="btn primary big" id="jAdd">${t("Write it down")}</button></div></div>
+    ${J.entries.map(e => `<div class="card entry" style="--mc:${esc(m.color)}"><div class="when"><span>${new Date(e.t).toLocaleString(document.documentElement.lang === "tr" ? "tr-TR" : [], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span><button class="x" data-je="${esc(e.id)}" aria-label="Delete">×</button></div><div class="txt">${esc(e.text)}</div></div>`).join("")}`;
 }
 function inboxView() {
-  if (!S.inbox.length) return `<div class="empty-p">No secrets yet.<br>When the GM whispers to you, it lands here, and only you see it.</div>`;
-  return S.inbox.map(x => `<div class="card msg"><span class="when">${new Date(x.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>${x.title ? `<h2>${esc(x.title)}</h2>` : `<div class="eyebrow" style="margin-bottom:6px">From the GM</div>`}${x.src ? `<img src="${esc(x.src)}" style="width:100%;border-radius:10px;margin-bottom:8px">` : ""}<div class="txt">${esc(x.text)}</div></div>`).join("");
+  if (!S.inbox.length) return `<div class="empty-p">${t("No secrets yet.")}<br>${t("When the GM whispers to you, it lands here, and only you see it.")}</div>`;
+  return S.inbox.map(x => `<div class="card msg"><span class="when">${new Date(x.t).toLocaleTimeString(document.documentElement.lang === "tr" ? "tr-TR" : [], { hour: "2-digit", minute: "2-digit" })}</span>${x.title ? `<h2>${esc(x.title)}</h2>` : `<div class="eyebrow" style="margin-bottom:6px">${t("From the GM")}</div>`}${x.src ? `<img src="${esc(x.src)}" style="width:100%;border-radius:10px;margin-bottom:8px">` : ""}<div class="txt">${esc(x.text)}</div></div>`).join("");
 }
 function bind(main, P, m) {
   const jPost = o => post({ type: "journal", ...o });
@@ -144,7 +146,7 @@ function bind(main, P, m) {
   $("#jGoal", main)?.addEventListener("keydown", e => { if (e.key === "Enter") $("#jGoalAdd", main).click(); });
   $$("[data-g]", main).forEach(li => { $("[data-gt]", li).onclick = () => jPost({ op: "goalToggle", id: li.dataset.g }); $("[data-gd]", li).onclick = () => jPost({ op: "goalDel", id: li.dataset.g }); });
   $("#jAdd", main)?.addEventListener("click", () => { const t = $("#jText", main); if (t.value.trim()) { jPost({ op: "add", text: t.value }); t.value = ""; drafts.jText = ""; navigator.vibrate?.(30); } });
-  $$("[data-je]", main).forEach(b => b.onclick = () => { if (confirm("Delete this entry?")) jPost({ op: "del", id: b.dataset.je }); });
+  $$("[data-je]", main).forEach(b => b.onclick = () => { if (confirm(t("Delete this entry?"))) jPost({ op: "del", id: b.dataset.je }); });
   $$("[data-vote]", main).forEach(b => b.onclick = () => { post({ type: "vote", pollId: P.poll.id, idx: +b.dataset.vote }); navigator.vibrate?.(30); });
   $$("[data-stat]", main).forEach(b => b.onclick = () => { post({ type: "check", stat: b.dataset.stat }); rolled(b.dataset.stat); });
   $$("[data-hp]", main).forEach(b => b.onclick = () => { post({ type: "hp", res: b.dataset.hp, delta: +b.dataset.d }); navigator.vibrate?.(20); });

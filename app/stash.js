@@ -1,4 +1,5 @@
 // Party stash: the money and loot the group carries together, with a ledger of where it came from.
+import { t } from "./i18n.js";
 import { $, $$, esc, icon, toast, uid, cap } from "./util.js";
 import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
@@ -37,7 +38,7 @@ export function fromForgeCard(cur, g) {
 }
 export function revealLoot(it, App) {
   const c = C();
-  Stage.overlay({ kind: "loot", show: true, id: uid(), name: it.name, note: it.note || "", value: it.value || "", eyebrow: it.money ? "Coin" : "Loot", secs: 9 });
+  Stage.overlay({ kind: "loot", show: true, id: uid(), name: it.name, note: it.note || "", value: it.value || "", eyebrow: t(it.money ? "Coin" : "Loot"), secs: 9 });
   if (!App.streamLive) Stage.open();
   App.sound.send({ op: "play", key: "loot:" + Date.now(), sound: { synth: REVEAL_SFX[c.genre || "fantasy"] || "magic" }, loop: false, vol: .7 });
   toast(`Revealed ${it.name} on stream`);
@@ -81,7 +82,7 @@ export function renderStash(host, App) {
       S.money = left; logIt(S, `Split ${fmt(each)} ${S.unit} each among ${n}`); save(); App.refreshAll?.(); redraw();
     });
   };
-  $("#shShowM", host).onclick = () => revealLoot({ name: `${fmt(S.money)} ${S.unit}`, note: "In the party's purse", money: true }, App);
+  $("#shShowM", host).onclick = () => revealLoot({ name: `${fmt(S.money)} ${S.unit}`, note: t("In the party's purse"), money: true }, App);
   $("#shUnit", host).onclick = () => App.modal(`<h2>Currency</h2><label class="f"><span>What the party counts in</span><input type="text" id="uN" value="${esc(S.unit)}" placeholder="gold, credits, eddies, shells"></label><div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
     $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = () => { S.unit = $("#uN", m).value.trim() || S.unit; save(); close(); redraw(); };
   });

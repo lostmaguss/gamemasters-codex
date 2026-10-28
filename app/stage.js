@@ -1,4 +1,5 @@
 // Stream window: only the dice table, built to be screen-shared.
+import { t, setLang } from "./i18n.js";
 import { $, $$, uid, ls } from "./util.js";
 import { parseRoll, diceGroups, buildResult, markFor } from "./roll.js";
 import { DiceTray, THEMES, FELTS, setDiceSound } from "./dice3d.js";
@@ -19,7 +20,7 @@ import { createFx } from "./fx.js";
   const Qp = new URLSearchParams(location.search);
   const host = $("#tray");
   const tray = new DiceTray(host, { theme: Qp.get("theme") || ls.get("dice.theme", "ember"), felt: ls.get("dice.felt", "oxblood"), transparent: !!remote });
-  const ov = createOverlay(host);
+  const ov = createOverlay(host, (s, v) => t(s, v));
   setDiceSound(ls.get("dice.sound", true));
   const hist = $("#hist");
   let busy = Promise.resolve();
@@ -31,6 +32,7 @@ import { createFx } from "./fx.js";
     hist.prepend(li); while (hist.children.length > 7) hist.lastChild.remove();
   }
   function roll(req) {
+    if (req.lang) { setLang(req.lang); document.documentElement.lang = req.lang; }
     busy = busy.then(async () => {
       let terms; try { terms = parseRoll(req.expr, req.custom); } catch (e) { ov.show({ label: req.label || req.expr, expr: req.expr, total: "?", groups: [], mod: 0, error: e.message }); return; }
       ov.hide();
@@ -79,6 +81,7 @@ import { createFx } from "./fx.js";
   }
   new ResizeObserver(mrender).observe(mapc);
   Stage.onOverlay(async o => {
+    if (o.lang) { setLang(o.lang); document.documentElement.lang = o.lang; }
     if (o.kind === "map") {
       document.body.classList.toggle("has-map", !!o.show); mapc.hidden = !o.show;
       if (!o.show) { MS.map = null; return; }
@@ -103,7 +106,7 @@ import { createFx } from "./fx.js";
       const tot = o.opts.reduce((s, x) => s + x.n, 0) || 1;
       pe.className = "poll" + (o.closed ? " closed" : "");
       pe.innerHTML = `<small></small><b class="pq"></b>${o.opts.map(() => `<div class="po"><i></i><span></span><em></em><u></u></div>`).join("")}`;
-      $("small", pe).textContent = o.closed ? "The party decided" : o.viaDiscord ? "Vote now · buttons in Discord" : "The party decides";
+      $("small", pe).textContent = t(o.closed ? "The party decided" : o.viaDiscord ? "Vote now · buttons in Discord" : "The party decides");
       $(".pq", pe).textContent = o.q;
       $$(".po", pe).forEach((d, i) => { const x = o.opts[i]; d.querySelector("i").style.width = (x.n / tot * 100) + "%"; d.querySelector("span").textContent = x.text; d.querySelector("em").textContent = x.n; d.querySelector("u").textContent = x.names.join(", "); d.classList.toggle("win", o.closed && x.n === o.top && o.top > 0); });
       return;
@@ -132,7 +135,7 @@ import { createFx } from "./fx.js";
     if (!o.show) { strip.hidden = true; strip.innerHTML = ""; return; }
     strip.hidden = false;
     const cur = o.list.findIndex(x => x.current);
-    strip.innerHTML = `<div class="st-round"><span>Round</span><b>${o.round}</b></div><div class="st-list">${o.list.map((x, i) => {
+    strip.innerHTML = `<div class="st-round"><span>${t("Round")}</span><b>${o.round}</b></div><div class="st-list">${o.list.map((x, i) => {
       const pct = x.max ? Math.max(0, Math.min(100, x.hp / x.max * 100)) : null;
       return `<div class="st-c ${x.current ? "cur" : ""} ${x.status === "Down" ? "down" : ""} ${i < cur ? "done" : ""}" style="--kc:${x.color}">
         <b></b>${pct != null ? `<div class="st-hp"><i style="width:${pct}%"></i></div>` : `<span class="st-s">${x.status}</span>`}${x.conds.length ? `<span class="st-k"></span>` : ""}</div>`; }).join("")}</div>`;
@@ -156,7 +159,7 @@ import { createFx } from "./fx.js";
     if (o.text) { const tx = $(".sc-text", sceneEl); o.text.split(/\n+/).filter(Boolean).forEach((para, i) => { const p = document.createElement("p"); p.textContent = para; p.style.animationDelay = (0.6 + i * 2.2) + "s"; tx.append(p); }); }
     if (o.endsAt) {
       const cnt = $(".sc-count", sceneEl);
-      const tick = () => { const ms = o.endsAt - Date.now(); if (ms <= 0) { cnt.textContent = o.type === "soon" ? "Starting now" : "Back now"; cnt.style.fontSize = "clamp(40px, 9vh, 110px)"; clearInterval(sceneTimer); return; } const s = Math.ceil(ms / 1000); cnt.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+      const tick = () => { const ms = o.endsAt - Date.now(); if (ms <= 0) { cnt.textContent = t(o.type === "soon" ? "Starting now" : "Back now"); cnt.style.fontSize = "clamp(40px, 9vh, 110px)"; clearInterval(sceneTimer); return; } const s = Math.ceil(ms / 1000); cnt.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
       tick(); sceneTimer = setInterval(tick, 250);
     }
   }
@@ -174,7 +177,7 @@ import { createFx } from "./fx.js";
   function showLoot(o) {
     clearTimeout(lootT);
     lootEl.innerHTML = `<div class="lo-glow"></div><div class="lo-card"><small></small><b></b><span class="lo-note"></span><span class="lo-val"></span></div>`;
-    $("small", lootEl).textContent = o.eyebrow || "Loot"; $("b", lootEl).textContent = o.name;
+    $("small", lootEl).textContent = o.eyebrow || t("Loot"); $("b", lootEl).textContent = o.name;
     $(".lo-note", lootEl).textContent = o.note || ""; $(".lo-val", lootEl).textContent = o.value || "";
     lootEl.hidden = false; lootEl.className = "loot"; void lootEl.offsetWidth; lootEl.classList.add("in");
     lootT = setTimeout(() => { lootEl.classList.add("out"); setTimeout(() => lootEl.hidden = true, 500); }, (o.secs || 9) * 1000);
