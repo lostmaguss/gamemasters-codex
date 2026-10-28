@@ -2,20 +2,33 @@
 // creatures from Lovecraft's public-domain stories are named as he named them.
 // Creature: [name, kind, threat 1-5, stats in the system's bestiary order, abilities, tactics]
 // Ability: [name, roll, text, damage roll]. Spell: [name, tags, text]; `dice` in text become roll buttons.
-const fateNPCs = (withSkills) => [
-  ["Thug", "Nameless NPC · average", 1, ["1", "+1", "Hired muscle", withSkills ? "Fight +1" : ""], [["Attack", "4dF+1", "Taken out by one solid hit."]], "Comes in groups. Treat a group as one character with +1 per extra thug."],
-  ["Bodyguard", "Nameless NPC · fair", 2, ["2", "+2", "Loyal to the end; Big and slow", withSkills ? "Fight +2, Physique +1" : ""], [["Attack", "4dF+2", ""], ["Interpose", "", "Takes a hit meant for the boss."]], ""],
-  ["Rival Investigator", "Supporting NPC", 3, ["3", "+2", "Always a step ahead; Owes the wrong people", withSkills ? "Investigate +3, Notice +2, Shoot +1" : ""], [["Create an advantage", "4dF+3", "Finds the clue first."]], "Wants the same thing as the PCs, for a different reason."],
-  ["Cult Leader", "Main NPC", 4, ["4", "+3", "Voice of the drowned god; Believes every word; Afraid of the light", withSkills ? "Provoke +4, Will +3, Lore +3, Deceive +2" : ""], [["Provoke", "4dF+4", "Mental attack."], ["Consequence", "", "Mild, moderate and severe consequence slots."]], ""],
-  ["Beast of the Moor", "Monster · main NPC", 5, ["5", "+3", "Hungry shape in the fog; Fears fire", withSkills ? "Fight +4, Stealth +4, Physique +3" : ""], [["Maul", "4dF+4", "Weapon:2."]], ""],
+// Fate entries follow the Fate Core and Fate Accelerated SRDs (Evil Hat Productions, CC-BY 3.0).
+// Nameless NPC tiers and the stunts are the SRD's own; the named NPCs are examples built with its guidelines.
+const fateNPCs = (core) => [
+  ["Street Thug", "Nameless NPC · Average", 1, ["0 (no boxes)", "+1", "Street-gang tough", core ? "Fight +1, Notice +1" : ""], [["Attack", core ? "4dF+1" : "4dF+1", "A one-shift hit takes them out."], ["Mob", "", "Identical nameless NPCs act as one: +1 for each helper (teamwork). Extra shifts on a hit spill over to the next thug."]], "From the Fate Core example: six of them jump Landon and Cynere in an alley."],
+  ["Elite Guard", "Nameless NPC · Fair", 2, ["1 box", "+2", "Trained to stand watch", core ? "Fight +2, Notice +1" : ""], [["Attack", "4dF+2", "A two-shift hit takes them out."]], "Drains a fate point or a stress box, maybe a mild consequence."],
+  ["Veteran Soldier", "Nameless NPC · Good", 3, ["2 boxes", "+3", "Seen a dozen wars", core ? "Fight +3, Shoot +2, Physique +1" : ""], [["Attack", "4dF+3", "A three-shift hit takes them out."]], "Tough in numbers. A stumbling block before the real fight."],
+  ["Rival Investigator", "Supporting NPC · example", 3, ["3 boxes", "+2", "Always a Step Ahead; Owes the Wrong People", core ? "Investigate +3, Notice +2, Shoot +1" : ""], [["Create an advantage", "4dF+3", "Finds the clue first."], ["Consequences", "", "One mild consequence."]], "Wants the same thing as the PCs, for a different reason."],
+  ["Cult Leader", "Main NPC · example", 4, ["4 boxes", "+3", "Voice of the Drowned God; Believes Every Word; Afraid of the Light", core ? "Provoke +4, Will +3, Lore +3, Deceive +2" : ""], [["Provoke", "4dF+4", "Mental attack."], ["Consequences", "", "Mild, moderate and severe, like a PC."]], ""],
 ];
-const fateStunts = [
-  ["Backup Plan", "Stunt", "Once per session, declare you prepared for exactly this. Create an advantage with a free invoke, no roll."],
-  ["Hard to Kill", "Stunt", "Once per session, take a mild consequence instead of being taken out."],
-  ["Silver Tongue", "Stunt", "+2 when you use Rapport (or Flashy) to change someone's mind. `4dF+2`"],
-  ["Killing Stroke", "Stunt", "Once per scene, when you succeed with style on an attack, you can force a consequence instead of the boost."],
-  ["Called Shot", "Stunt", "Attacks with a weapon get +2 when you spent your previous action aiming. `4dF+2`"],
-  ["The Ladder", "Reference", "+8 Legendary · +7 Epic · +6 Fantastic · +5 Superb · +4 Great · +3 Good · +2 Fair · +1 Average · 0 Mediocre · −1 Poor · −2 Terrible"],
+const fateStunts = core => core ? [
+  ["Sprinter", "Athletics stunt · Fate Core", "You move two zones for free in a conflict without rolling, instead of one, provided there are no situation aspects restricting movement."],
+  ["Heavy Hitter", "Fight stunt · Fate Core", "When you succeed with style on a Fight attack and choose to reduce the result by one to gain a boost, you gain a full situation aspect with a free invocation instead."],
+  ["Grappler", "Physique stunt · Fate Core", "+2 to Physique rolls made to create advantages on an enemy by wrestling or grappling with them. `4dF+2`"],
+  ["Tough as Nails", "Physique stunt · Fate Core", "Once per session, at the cost of a fate point, you can reduce the severity of a moderate physical consequence to a mild one (if your mild slot is free), or erase a mild consequence altogether."],
+  ["Strength From Determination", "Will stunt · Fate Core", "Use Will instead of Physique on any overcome rolls representing feats of strength."],
+  ["Hard Boiled", "Will stunt · Fate Core", "Ignore a mild or moderate consequence for the scene. It can't be compelled or invoked against you. At the end of the scene it comes back one step worse."],
+  ["Stress & consequences", "Reference · Fate Core", "Two physical and two mental stress boxes. Physique and Will add one box at Average or Fair, two at Good or higher. Three consequence slots: mild (2), moderate (4), severe (6)."],
+  ["The Ladder", "Reference", "+8 Legendary · +7 Epic · +6 Fantastic · +5 Superb · +4 Great · +3 Good · +2 Fair · +1 Average · 0 Mediocre · −1 Poor · −2 Terrible. Results can go above and below it."],
+] : [
+  ["Smooth Talker", "Stunt · Fate Accelerated", "Because I am a Smooth Talker, I get a +2 when I Sneakily create advantages when I'm in conversation with someone. `4dF+2`"],
+  ["Lover of Puzzles", "Stunt · Fate Accelerated", "Because I am a Lover of Puzzles, I get a +2 when I Cleverly overcome obstacles when I am presented with a puzzle, riddle, or similar conundrum."],
+  ["World-Class Duelist", "Stunt · Fate Accelerated", "Because I am a World-Class Duelist, I get a +2 when I Flashily attack when engaged in a one-on-one swordfight."],
+  ["Big Kite Shield", "Stunt · Fate Accelerated", "Because I have a Big Kite Shield, I get a +2 when I Forcefully defend when I use my shield in close combat."],
+  ["Well Connected", "Stunt · Fate Accelerated", "Because I am Well Connected, once per game session I can find a helpful ally in just the right place."],
+  ["Quick on the Draw", "Stunt · Fate Accelerated", "Because I am Quick on the Draw, once per game session I can choose to go first in a physical conflict."],
+  ["Stress & consequences", "Reference · Fate Accelerated", "Three stress boxes (1, 2 and 3 shifts), cleared at the end of each scene. Consequences: mild (2), moderate (4), severe (6)."],
+  ["The Ladder", "Reference", "+8 Legendary · +7 Epic · +6 Fantastic · +5 Superb · +4 Great · +3 Good · +2 Fair · +1 Average · 0 Mediocre · −1 Poor · −2 Terrible."],
 ];
 export default {
   coc: {
@@ -59,22 +72,31 @@ export default {
     ],
   },
   blades: {
-    label: "Rituals & abilities",
+    label: "Abilities & reference",
     creatures: [
-      ["Bluecoat Patrol", "City Watch · tier II gang", 2, ["Level 2", "Armor", "II", "Standard"], [["Clubs and crossbows", "", "Harm 2. Calls for backup when outnumbered."]], "Take a bribe if no sergeant is watching."],
-      ["Dock Gang", "Thugs · tier I gang", 1, ["Level 1", "—", "I", "Standard"], [["Hooks and knives", "", "Harm 1–2."]], ""],
-      ["Hollow", "Undead body, spirit-bound", 3, ["Level 3", "Tough", "II", "Risky"], [["Rending grip", "", "Harm 3. Ignores harm short of fire or electroplasm."]], ""],
-      ["Restless Ghost", "Spirit", 3, ["—", "Ethereal", "II", "Desperate"], [["Possess", "", "Attune to resist. On a failure the ghost takes the body for a scene."], ["Chill", "", "Harm 2, cold. Weapons pass through."]], "Wants one thing it lost."],
-      ["Spirit Warden", "Order of the Dead", 4, ["Level 3", "Heavy", "IV", "Desperate"], [["Lightning hook", "", "Harm 3. Binds spirits into a bottle."]], "Shows up when anyone dies near a ghost field."],
-      ["Lesser Demon", "Demon of the deep", 5, ["Level 4", "Armor ×2", "V", "Desperate"], [["Claws and will", "", "Harm 4. Bargains for anything."]], ""],
+      ["Bluecoat Patrol", "Example · City Watch gang", 2, ["Level 2", "Armor", "III", "Standard"], [["Clubs and crossbows", "", "Harm 2. Calls for backup when outnumbered."]], "Take a bribe if no sergeant is watching."],
+      ["Dock Gang", "Example · street gang", 1, ["Level 1", "—", "I", "Standard"], [["Hooks and knives", "", "Harm 1–2."]], ""],
+      ["Hollow", "Example · undead", 3, ["Level 3", "Tough", "II", "Risky"], [["Rending grip", "", "Harm 3. Ignores harm short of fire or electroplasm."]], ""],
+      ["Restless Ghost", "Example · spirit", 3, ["—", "Ethereal", "II", "Desperate"], [["Possess", "", "Attune to resist. On a failure the ghost takes the body for a scene."], ["Chill", "", "Harm 2, cold. Weapons pass through."]], "Wants one thing it lost."],
+      ["Spirit Warden", "Example · Spirit Warden", 4, ["Level 3", "Heavy", "IV", "Desperate"], [["Lightning hook", "", "Harm 3. Binds spirits into a bottle."]], "Shows up when anyone dies near a ghost field."],
+      ["Lesser Demon", "Example · demon", 5, ["Level 4", "Armor ×2", "V", "Desperate"], [["Claws and will", "", "Harm 4. Bargains for anything."]], ""],
     ],
     spells: [
-      ["Action roll", "Reference", "Roll dots in the action, keep the highest. 6 full success, 4–5 partial, 1–3 bad outcome, two 6s critical. With 0 dots roll two and keep the lower: `2d6kl1`"],
-      ["Fortune roll", "Reference", "For when no one acts: roll the trait's level and keep the highest. `2d6kh1`"],
-      ["Resistance", "Reference", "Roll the attribute: stress cost is 6 minus the highest die. A critical clears 1 stress."],
-      ["Compel", "Whisper ability", "Attune to the ghost field to force a nearby ghost to appear and obey a command. You're not supernaturally terrifying to them."],
-      ["Ghost Ward", "Whisper ability", "Wreck a place to make it repel or attract ghosts."],
-      ["Summoning Ritual", "Ritual · long-term", "Make a long-term project to learn it. Costs stress or coin to cast; something always comes."],
+      ["Action roll", "Reference", "Roll dice equal to the action rating and read the highest. 6: full success. 4–5: partial success, with a consequence. 1–3: bad outcome. Two 6s: critical. With 0 dots, roll two dice and take the lowest: `2d6kl1`"],
+      ["Fortune roll", "Reference", "When no one acts and the GM wants a quick answer, roll a trait's level and read the highest. `2d6kh1`"],
+      ["Resistance roll", "Reference", "Roll the attribute: the stress cost is 6 minus the highest die. A critical clears 1 stress."],
+      ["Compel", "Whisper ability", "You can Attune to the ghost field to force a nearby ghost to appear and obey a command you give it. You are not supernaturally terrified by a ghost you summon or compel (though your allies may be)."],
+      ["Ghost Ward", "Whisper ability", "You know how to Wreck an area with arcane substances and methods so it is either anathema or enticing to spirits (your choice)."],
+      ["Ghost Mind", "Whisper ability", "You’re always aware of supernatural entities in your presence. Take +1d when you gather info about the supernatural."],
+      ["Iron Will", "Whisper ability", "You're immune to the terror that some supernatural entities inflict on sight. Take +1d to resistance rolls with Resolve."],
+      ["Occultist", "Whisper ability", "You know the secret ways to Consort with ancient powers, forgotten gods or demons. Once you've consorted with one, you get +1d to command cultists who worship it."],
+      ["Ritual", "Whisper ability", "You can Study an occult ritual (or create a new one) to summon a supernatural effect or being. You know the arcane methods to perform ritual sorcery. You begin with one ritual already learned."],
+      ["Ambush", "Lurk ability", "When you attack from hiding or spring a trap, you get +1d."],
+      ["Reflexes", "Lurk ability", "When there's a question about who acts first, the answer is you (two characters with Reflexes act simultaneously)."],
+      ["Infiltrator", "Lurk ability", "You are not affected by quality or Tier when you bypass security measures."],
+      ["Bodyguard", "Cutter ability", "When you protect a teammate, take +1d to your resistance roll. When you gather info to anticipate possible threats in the current situation, you get +1 effect."],
+      ["Not to be Trifled With", "Cutter ability", "You can push yourself to do one of the following: perform a feat of physical force that verges on the superhuman — engage a small gang on equal footing in close combat."],
+      ["Leader", "Cutter ability", "When you Command a cohort in combat, they continue to fight when they would otherwise break (they're not taken out when they suffer level 3 harm). They gain +1 effect and 1 armor."],
     ],
   },
   vtm5: {
@@ -122,6 +144,6 @@ export default {
       ["Fear", "Power · 2 PP · Large Blast Template", "Everyone under it makes a Fear check."],
     ],
   },
-  fate: { label: "Stunts & reference", creatures: fateNPCs(true), spells: fateStunts },
-  fae: { label: "Stunts & reference", creatures: fateNPCs(false).map(c => [c[0], c[1], c[2], c[3].slice(0, 3), c[4], c[5]]), spells: fateStunts },
+  fate: { label: "Stunts & reference", creatures: fateNPCs(true), spells: fateStunts(true) },
+  fae: { label: "Stunts & reference", creatures: fateNPCs(false).map(c => [c[0], c[1], c[2], c[3].slice(0, 3), c[4], c[5]]), spells: fateStunts(false) },
 };

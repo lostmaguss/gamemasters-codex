@@ -6,7 +6,7 @@ import { SYSTEMS, systemById } from "./systems.js";
 let LIB = null;
 export async function loadLibrary() {
   if (LIB) return LIB;
-  const parts = await Promise.all([import("./lib-d20.js"), import("./lib-story.js"), import("./lib-future.js")]);
+  const parts = await Promise.all([import("./lib-d20.js"), import("./lib-daggerheart.js"), import("./lib-story.js"), import("./lib-future.js")]);
   return (LIB = Object.assign({}, ...parts.map(p => p.default)));
 }
 
@@ -28,6 +28,16 @@ export function toCreature(sys, row) {
 }
 export const toSpell = (sys, [title, tags, body]) => ({ id: uid(), title, cat: "Spells", tags: `${sys.name}, ${tags}`, body, updated: Date.now(), lib: sys.id });
 
+// where each system's entries come from
+const CREDIT = {
+  dnd5e: "From the System Reference Document 5.1 by Wizards of the Coast LLC, licensed under CC-BY-4.0. Checked against the SRD. ",
+  pf2e: "Stat blocks from Paizo's Pathfinder Monster Core (ORC License) and Bestiary (OGL), spells from Player Core, as published in the open Pathfinder 2e data. Checked against that data. ",
+  pf1e: "Pathfinder Roleplaying Game Core Rulebook and Bestiary, Open Game Content under the OGL. Spells checked against the open rules; monster numbers rebuilt from their Hit Dice, armor and attacks. ",
+  fate: "Fate Core SRD by Evil Hat Productions, CC-BY 3.0: nameless NPC tiers, stunts and the ladder are taken from it; the named NPCs are examples built with its guidelines. ",
+  fae: "Fate Accelerated SRD by Evil Hat Productions, CC-BY 3.0: stunts and rules are taken from it; the NPCs are examples. ",
+  blades: "Abilities and roll rules from the Blades in the Dark SRD by John Harper (One Seven Design), CC-BY 3.0. Blades has no monster stat blocks, so the threats are examples. ",
+  daggerheart: "Includes materials from the Daggerheart System Reference Document 1.0, © Critical Role, LLC, under the Darrington Press Community Gaming (DPCGL) License. Taken from the SRD. ",
+};
 export async function libraryModal(App, { tab = "creatures", onAdd } = {}) {
   const lib = await loadLibrary(), c = C();
   const st = { sys: lib[c.system] ? c.system : "homebrew", tab, q: "" };
@@ -63,8 +73,8 @@ export async function libraryModal(App, { tab = "creatures", onAdd } = {}) {
       }).join("") || `<p style="color:var(--faint);padding:12px">Nothing matches.</p>`;
       $$("[data-add]", m).forEach(b => b.onclick = () => { add(st.tab, [rows[+b.dataset.add]]); toast(`${rows[+b.dataset.add][0]} added to the ${st.tab === "creatures" ? "Bestiary" : "Codex (Spells)"}`); draw(); });
       $("#lbAll", m).onclick = () => { const n = add(st.tab, rows); toast(n ? `Added ${n} to the ${st.tab === "creatures" ? "Bestiary" : "Codex"}` : "All of these are in already"); draw(); };
-      $("#lbFoot", m).innerHTML = (st.sys === "dnd5e" ? "Includes material from the System Reference Document 5.1 by Wizards of the Coast LLC, licensed under CC-BY-4.0. " : "")
-        + "Starting points written for this app: check the numbers against your book and tune them for your table. Added entries are yours to edit.";
+      $("#lbFoot", m).innerHTML = (CREDIT[st.sys] || "")
+        + (CREDIT[st.sys] ? "Added entries are yours to edit." : "Written for this app in the style of the game, not taken from its books: check the numbers against your copy and tune them for your table. Added entries are yours to edit.");
     };
     $("#lbSys", m).onchange = e => { st.sys = e.target.value; draw(); };
     $("#lbQ", m).oninput = e => { st.q = e.target.value.toLowerCase(); draw(); };

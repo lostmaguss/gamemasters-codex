@@ -47,7 +47,7 @@ export function createBestiary(el, App) {
       box.innerHTML = bar + `<article class="mcard">
         ${x.img ? `<div class="mimg" style="background-image:url(${x.img})"></div>` : ""}
         <div class="mhead"><div><h2>${esc(x.name || "Unnamed")}</h2><div class="mkind">${esc(x.kind || "")}${x.tags ? ` · ${esc(x.tags)}` : ""}</div></div><div class="threat" title="Threat ${x.threat || 0}/5">${[1, 2, 3, 4, 5].map(i => skull(i <= (x.threat || 0))).join("")}</div></div>
-        <div class="mstats">${tpl.map(k => `<div class="mstat ${k.toLowerCase() === "hp" ? "hp" : ""}"><span>${esc(k)}</span><b>${esc(x.stats[k] ?? "—")}</b></div>`).join("")}</div>
+        <div class="mstats">${tpl.filter(k => !x.lib || x.stats[k] != null).map(k => `<div class="mstat ${k.toLowerCase() === "hp" ? "hp" : ""}"><span>${esc(k)}</span><b>${esc(x.stats[k] ?? "—")}</b></div>`).join("")}</div>
         <div class="mabil">${x.abilities.map(a => `<div class="ab"><div class="ab-h"><b>${esc(a.name)}</b>${a.roll ? `<button class="rollchip" data-roll="${a.id}" title="Roll ${esc(a.roll)}${st.secret ? " secretly" : ""}">${icon("dice")} ${esc(a.roll)}</button>` : ""}</div>${a.text ? `<p>${inlineRolls(esc(a.text))}</p>` : ""}</div>`).join("") || `<p style="opacity:.6">No abilities yet. Switch to Edit.</p>`}</div>
         ${x.notes ? `<div class="msec"><span class="eyebrow">Tactics & notes</span><p>${esc(x.notes)}</p></div>` : ""}
         ${x.loot ? `<div class="msec"><span class="eyebrow">Loot</span><p>${esc(x.loot)}</p></div>` : ""}
