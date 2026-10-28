@@ -18,5 +18,6 @@ jobs:
           code=$?
           enc() { sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | cut -c1-3000; }
           echo "::warning title=exit and report::exit $code; report file: $(ls -la "$CODEX_SMOKE" 2>&1)%0A$(cat "$CODEX_SMOKE" 2>&1 | enc)"
-          echo "::warning title=self-test lines::$(grep -i 'SELF-TEST' "$RUNNER_TEMP/app.log" | enc)"
+          echo "::warning title=self-test lines::$(grep -i 'SELF-TEST' "$RUNNER_TEMP/app.log" | enc) (none means the app never entered self-test mode)"
+          echo "::warning title=log tail::$(grep -v '^\s*$' "$RUNNER_TEMP/app.log" | tail -12 | enc)"
           echo "::warning title=env::RUNNER_TEMP=$RUNNER_TEMP; whoami=$(whoami)"
