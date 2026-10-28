@@ -201,6 +201,12 @@ The bot only answers while the app is open.
 | `8d6>=5` | Dice pool: count the hits |
 
 Which die makes a critical, whether high or low is good, and initiative order are set in *Campaign menu → Rules & genre*.
+
+### Game system templates
+
+Pick your game when you create a campaign and the Codex sets up the dice rules, the party sheet, the bestiary's stat block, quick rolls and the genre (generators, sounds, look). Change systems later in *Rules & genre*, or just borrow a sheet in *Party → Sheet layout → Start from a system*. Everything stays editable.
+
+D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Daggerheart · Call of Cthulhu 7e · Powered by the Apocalypse · Blades in the Dark · Vampire V5 · Savage Worlds · Fate Core · Fate Accelerated · Cyberpunk RED · Shadowrun 6e · Mothership · Traveller · Star Wars-style d6 · Homebrew d20
 </details>
 
 <details>

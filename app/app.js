@@ -1,6 +1,7 @@
 import { stashSummary, UNIT as STASH_UNIT } from "./stash.js";
 import { t, setLang, LANGS } from "./i18n.js";
 import { initPoll } from "./poll.js";
+import { SYSTEMS, systemById, applySystem } from "./systems.js";
 import { syncCustomDice } from "./customdice.js";
 import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
 import { $, $$, esc, h, icon, toast, uid, keys, isMac } from "./util.js";
@@ -234,12 +235,38 @@ function show(key, arg) {
 
 function renderCampName() { $("#campName").textContent = C().name || "Untitled campaign"; document.title = `${C().name} · Gamemaster's Codex`; }
 function switchCampaign(id) {
-  S.data.currentId = id; save(); syncCustomDice(); setLang(C().playerLang || "en"); App.botConfig?.();
+  S.data.currentId = id; save(); syncCustomDice(); setLang(C().playerLang || "en"); ls.set("rules", C().rules); App.botConfig?.();
   for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; }
   $("#views").innerHTML = ""; current = null;
   renderCampName(); show(C().ui.view || "prep");
 }
 
+const GENRE_NAME = { fantasy: "Fantasy", scifi: "Sci-fi", cyberpunk: "Cyberpunk" };
+const sysCards = sel => SYSTEMS.map(s => `<button type="button" class="syscard ${s.id === sel ? "on" : ""}" data-sys="${s.id}"><b>${esc(s.name)}</b><span>${esc(s.blurb)}</span><em>${GENRE_NAME[s.genre]}</em></button>`).join("");
+// new campaign: a name, and the game it runs on, which sets up rules, sheets, bestiary and quick rolls
+export function newCampaignModal() {
+  let pick = "homebrew";
+  App.modal(`<h2>New campaign</h2>
+    <label class="f"><span>Name</span><input type="text" id="ncName" placeholder="The Ash Crown"></label>
+    <label class="f"><span>Tagline</span><input type="text" id="ncTag" placeholder="Grim frontier fantasy · Fridays on Discord"></label>
+    <div class="f"><span>Game system</span><div class="sysgrid" id="ncSys">${sysCards(pick)}</div></div>
+    <p class="md-help" id="ncNote" style="margin:0"></p>
+    <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Create campaign</button></div>`, (m, close) => {
+    const note = () => { const s = systemById(pick); $("#ncNote", m).textContent = `Sets the dice and crits, the party sheet (${s.sheet.stats.slice(0, 4).join(", ")}…), the bestiary's stat block and quick rolls${s.genre !== "fantasy" ? `, plus ${GENRE_NAME[s.genre].toLowerCase()} generators and look` : ""}. ${s.note} You can change all of it later.`; };
+    $$("[data-sys]", m).forEach(b => b.onclick = () => { pick = b.dataset.sys; $$("[data-sys]", m).forEach(x => x.classList.toggle("on", x === b)); note(); });
+    note();
+    $("[data-x]", m).onclick = close;
+    const ok = () => {
+      const s = systemById(pick), n = blankCampaign($("#ncName", m).value.trim() || "New campaign");
+      n.tagline = $("#ncTag", m).value.trim() || `${s.name} · ${GENRE_NAME[s.genre].toLowerCase()}`;
+      n.genre = s.genre; n.tables = starterTables(s.genre); n.presets = [];
+      applySystem(n, s.id, uid);
+      S.data.campaigns.push(n); close(); App.genreChanged(n, true); switchCampaign(n.id);
+      toast(`${n.name} is ready: ${s.name}`);
+    };
+    $("[data-ok]", m).onclick = ok; $("#ncName", m).onkeydown = e => { if (e.key === "Enter") ok(); }; $("#ncName", m).focus();
+  });
+}
 function renameModal(c) {
   App.modal(`<h2>Campaign</h2>
     <label class="f"><span>Name</span><input type="text" id="mName" value="${esc(c.name)}"></label>
@@ -277,6 +304,8 @@ export function partyModal() {
 export function rulesModal() {
   const c = C(); const R = { ...DEFAULT_RULES, ...(c.rules || {}) };
   App.modal(`<h2>Rules & genre</h2>
+    <label class="f"><span>Game system</span><select id="rgS"><option value="">${c.system && systemById(c.system) ? `${esc(systemById(c.system).name)} (current)` : "Keep what I have"}</option>${SYSTEMS.filter(s => s.id !== c.system).map(s => `<option value="${s.id}">${esc(s.name)}: ${esc(s.blurb)}</option>`).join("")}</select></label>
+    <p class="md-help" style="margin:-6px 0 0">Picking another system resets the dice rules, the party sheet layout, the bestiary's stat block and adds its quick rolls. Characters keep their numbers.</p>
     <label class="f"><span>Genre</span><select id="rgG"><option value="fantasy">Fantasy</option><option value="scifi">Sci-fi</option><option value="cyberpunk">Cyberpunk</option></select></label>
     <p class="md-help" style="margin:-6px 0 0">Changes what the Forge generates, the built-in sounds, starter tables, dice and the app's look.</p>
     <label class="f"><span>Players' language</span><select id="rgLang">${Object.entries(LANGS).map(([k, n]) => `<option value="${k}">${n}</option>`).join("")}</select></label>
@@ -290,9 +319,11 @@ export function rulesModal() {
     <p class="md-help" style="margin:0">For roll-under systems, roll against a target: <code>1d100&lt;=45</code> shows Success or Failure. For dice pools, count hits: <code>8d6&gt;=5</code>.</p>
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
     $("#rgG", m).value = c.genre || "fantasy"; $("#rgLang", m).value = c.playerLang || "en"; $("#rgL", m).value = c.look || "auto"; $("#rgD", m).value = String(R.critDie); $("#rgM", m).value = R.critMode; $("#rgI", m).value = R.initHigh ? "high" : "low";
+    $("#rgS", m).onchange = e => { const s = systemById(e.target.value); if (!s) return; $("#rgD", m).value = String(s.rules.critDie); $("#rgM", m).value = s.rules.critMode; $("#rgI", m).value = s.rules.initHigh ? "high" : "low"; $("#rgG", m).value = s.genre; };
     $("[data-x]", m).onclick = close;
     $("[data-ok]", m).onclick = () => {
       const d = $("#rgD", m).value; const g = $("#rgG", m).value;
+      if ($("#rgS", m).value) applySystem(c, $("#rgS", m).value, uid);
       c.rules = { critDie: d === "any" ? "any" : Number(d), critMode: $("#rgM", m).value, initHigh: $("#rgI", m).value === "high" };
       const changedGenre = (c.genre || "fantasy") !== g; c.genre = g; c.look = $("#rgL", m).value; c.playerLang = $("#rgLang", m).value;
       save(); ls.set("rules", c.rules); close(); applyGenre(c); App.botConfig?.(); if (changedGenre) App.genreChanged?.(c); else toast("Rules saved");
@@ -301,7 +332,7 @@ export function rulesModal() {
   });
 }
 App.rulesModal = rulesModal;
-App.genreChanged = c => {
+App.genreChanged = (c, quiet) => {
   if (c.stash && ["gold", "credits", "eddies"].includes(c.stash.unit)) c.stash.unit = STASH_UNIT[c.genre] || c.stash.unit;
   const have = new Set(c.tables.map(t => t.name.toLowerCase() + "|" + (t.folder || "")));
   const add = starterTables(c.genre).filter(t => !have.has(t.name.toLowerCase() + "|" + (t.folder || "")));
@@ -309,7 +340,7 @@ App.genreChanged = c => {
   const dice = { fantasy: ["ember", "oxblood"], cyberpunk: ["neon", "neon"], scifi: ["hull", "deck"] }[c.genre];
   ls.set("dice.theme", dice[0]); ls.set("dice.felt", dice[1]);
   applyGenre(c); save();
-  toast(`Switched to ${({ fantasy: "fantasy", cyberpunk: "cyberpunk", scifi: "sci-fi" })[c.genre]}${add.length ? `. Added ${add.length} starter tables` : ""}`);
+  if (!quiet) toast(`Switched to ${({ fantasy: "fantasy", cyberpunk: "cyberpunk", scifi: "sci-fi" })[c.genre]}${add.length ? `. Added ${add.length} starter tables` : ""}`);
 };
 
 function confirmModal(title, text, okText, run) {
@@ -325,7 +356,7 @@ function campaignMenu() {
   App.menu($("#campBtn"), [
     { label: "Campaigns" },
     ...S.data.campaigns.map(x => ({ text: x.name, cur: x.id === c.id, icon: x.id === c.id ? "book" : "", run: () => switchCampaign(x.id) })),
-    { text: "New campaign", icon: "plus", run: () => { const n = blankCampaign("New campaign"); S.data.campaigns.push(n); switchCampaign(n.id); renameModal(n); } },
+    { text: "New campaign", icon: "plus", run: newCampaignModal },
     "-",
     { text: "Rename campaign", icon: "type", run: () => renameModal(c) },
     { text: "Party & sheets", icon: "social", run: () => App.go("party") },

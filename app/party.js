@@ -1,3 +1,4 @@
+import { SYSTEMS } from "./systems.js";
 // Party: character sheets for the players, laid out the way your system works.
 import { $, $$, esc, h, icon, toast, uid, debounce, ls } from "./util.js";
 import { C, save } from "./store.js";
@@ -9,12 +10,8 @@ const PALETTE = ["#ef7f8f", "#c39bd3", "#a7cf9e", "#8fc3d9", "#f0c35a", "#ff9a66
 export function sheetLayout(c = C()) {
   return (c.sheet ||= { stats: [...(c.statTemplate || ["Might", "Agility", "Wits", "Will"]).filter(s => !/^(hp|defense|speed)$/i.test(s))], resources: ["HP"], roll: "1d20+{value}", fields: ["Abilities", "Inventory", "Notes"] });
 }
-// ready-made sheet layouts; anything can be edited after
-export const SHEET_PRESETS = {
-  "Fate Core": { stats: ["Athletics", "Burglary", "Contacts", "Crafts", "Deceive", "Drive", "Empathy", "Fight", "Investigate", "Lore", "Notice", "Physique", "Provoke", "Rapport", "Resources", "Shoot", "Stealth", "Will"], resources: ["Physical stress", "Mental stress", "Fate points"], fields: ["Aspects", "Stunts", "Consequences", "Notes"], roll: "4dF+{value}" },
-  "Fate Accelerated": { stats: ["Careful", "Clever", "Flashy", "Forceful", "Quick", "Sneaky"], resources: ["Stress", "Fate points"], fields: ["Aspects", "Stunts", "Consequences", "Notes"], roll: "4dF+{value}" },
-  "d20": { stats: ["Might", "Agility", "Wits", "Will"], resources: ["HP"], fields: ["Abilities", "Inventory", "Notes"], roll: "1d20+{value}" },
-};
+// ready-made sheet layouts (one per game system); anything can be edited after
+export const SHEET_PRESETS = Object.fromEntries(SYSTEMS.map(s => [s.name, s.sheet]));
 export function member(c, id) { return c.party.find(m => m.id === id); }
 export function res(m, name) { m.res ||= {}; return (m.res[name] ||= { cur: "", max: "" }); }
 
@@ -116,11 +113,11 @@ export function createParty(el, App) {
         <label class="f"><span>Text tabs</span><textarea id="lF" rows="8">${esc(L.fields.join("\n"))}</textarea></label>
       </div>
       <label class="f"><span>Stat roll</span><input type="text" id="lRoll" class="mono" value="${esc(L.roll)}"></label>
-      <div class="row" style="gap:6px;align-items:center"><span class="eyebrow">Start from</span>${Object.keys(SHEET_PRESETS).map(k => `<button class="chip" data-preset="${esc(k)}">${esc(k)}</button>`).join("")}</div>
+      <label class="f"><span>Start from a system</span><select id="lPre"><option value="">Pick one to fill the layout…</option>${Object.keys(SHEET_PRESETS).map(k => `<option>${esc(k)}</option>`).join("")}</select></label>
       <p class="md-help" style="margin:0"><code>{value}</code> is the stat. Examples: <code>1d20+{value}</code> (add the stat), <code>{value}d6&gt;=5</code> (dice pool, count 5s and 6s), <code>1d100&lt;={value}</code> (roll under the stat), <code>2d6+{value}</code>, <code>4dF+{value}</code> (Fate: results read off the ladder, +2 Fair, +3 Good…). Shift-click a stat for a secret roll. Name a resource <b>HP</b> to link it to the combat tracker.</p>
       <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save layout</button></div>`, (mm, close) => {
       $("[data-x]", mm).onclick = close;
-      $$("[data-preset]", mm).forEach(b => b.onclick = () => { const P = SHEET_PRESETS[b.dataset.preset]; $("#lS", mm).value = P.stats.join("\n"); $("#lR", mm).value = P.resources.join("\n"); $("#lF", mm).value = P.fields.join("\n"); $("#lRoll", mm).value = P.roll; toast(`${b.dataset.preset} layout filled in. Save to use it`); });
+      $("#lPre", mm).onchange = e => { const k = e.target.value, P = SHEET_PRESETS[k]; if (!P) return; $("#lS", mm).value = P.stats.join("\n"); $("#lR", mm).value = P.resources.join("\n"); $("#lF", mm).value = P.fields.join("\n"); $("#lRoll", mm).value = P.roll; toast(`${k} layout filled in. Save to use it`); };
       $("[data-ok]", mm).onclick = () => {
         const lines = id => $(id, mm).value.split("\n").map(s => s.trim()).filter(Boolean);
         Object.assign(L, { stats: lines("#lS"), resources: lines("#lR"), fields: lines("#lF").length ? lines("#lF") : ["Notes"], roll: $("#lRoll", mm).value.trim() || "1d20+{value}" });

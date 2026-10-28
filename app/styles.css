@@ -1015,3 +1015,12 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 /* macOS: native traffic-light buttons sit in the title bar */
 .os-darwin .winctl { display: none; }
 .os-darwin .titlebar { padding-left: 84px; }
+
+/* game system picker (new campaign) */
+.sysgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; max-height: 300px; overflow: auto; padding: 2px; }
+.syscard { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; }
+.syscard b { font-size: 13px; }
+.syscard span { font-size: 11.5px; color: var(--dim); line-height: 1.3; }
+.syscard em { font-style: normal; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin-top: 2px; }
+.syscard:hover { border-color: var(--ember); }
+.syscard.on { border-color: var(--ember); box-shadow: inset 0 0 0 1px var(--ember); background: color-mix(in srgb, var(--ember) 12%, transparent); }

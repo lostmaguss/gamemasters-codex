@@ -1,6 +1,7 @@
 // "What's new" after an update, so features don't go unnoticed.
 import { esc } from "./util.js";
 export const NEWS = [
+  { v: "1.26.0", title: "Game system templates", items: ["New campaign now asks which game you're running: D&D 5e, Pathfinder 2e and 1e, OSR, Daggerheart, Call of Cthulhu, PbtA, Blades in the Dark, Vampire, Savage Worlds, Fate, Cyberpunk RED, Shadowrun, Mothership, Traveller and more", "One pick sets the dice and crits, the party sheet, the bestiary's stat block, quick rolls and the genre", "Switch systems later in Rules & genre. Characters keep their numbers", "Sheet layout → Start from a system borrows any of them"] },
   { v: "1.25.0", title: "Fate dice", items: ["A dF button in the Dice view (one click adds the usual four) and on the stream window", "Results read off the Fate ladder: +2 Fair, +3 Good, +4 Great… down to Terrible (in Turkish too)", "Bold + and − faces you can read on stream from any angle", "Party → Sheet layout → Start from: Fate Core (18 skills, stress, fate points, aspects, stunts, consequences) or Fate Accelerated"] },
   { v: "1.24.1", title: "Intel Macs too", items: ["macOS downloads for Intel Macs (x64) alongside Apple Silicon (arm64)"] },
   { v: "1.24.0", title: "Now on macOS and Linux", items: ["Gamemaster's Codex runs on macOS (Apple Silicon and Intel) and Linux (AppImage, and a .deb for Ubuntu / Debian)", "On a Mac: the native window buttons, ⌘ shortcuts, and copy / paste work as you'd expect", "Every release is now built and tested on all three systems before it ships"] },
