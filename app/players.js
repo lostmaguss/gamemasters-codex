@@ -85,7 +85,8 @@ export function initPlayers(app) {
 const newKey = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("");
 export async function startTable() {
   const P = prefs(); P.key ||= newKey(); P.gmKey ||= newKey();
-  const r = await T().start({ port: P.port, key: P.key, gmKey: P.gmKey });
+  let r = await T().start({ port: P.port, key: P.key, gmKey: P.gmKey });
+  if (r?.on && P.ip && T().setIp) r = await T().setIp(P.ip);
   if (r?.on) import("./checklist.js").then(m => m.markSeen("table"));
   if (r.error) { toast(`Couldn't start the table link: ${r.error}`); return r; }
   status = r; P.on = true; save(); push();
@@ -121,10 +122,19 @@ export function tableModal() {
         <div class="tl-grid"><div class="tl-qr ${link ? "" : "off"}">${svg || `<div class="tl-noqr">${icon("stream")}</div>`}</div><div>
           ${web && !link ? webPane : `<div class="eyebrow">${web ? "For phones anywhere" : "For phones on your Wi-Fi"}</div><div class="tl-url mono">${esc(link)}</div>
           <div class="row" style="gap:6px;margin-top:8px"><button class="btn sm" id="tlCopy">${icon("copy")} Copy link</button>${web ? `<button class="btn sm ghost" id="tlWebOff">Stop sharing</button>` : ""}<button class="btn sm ghost" id="tlNew" title="Old links and QR codes stop working">New key</button><button class="btn sm ghost" id="tlOff">Turn off</button></div>`}
+          ${!web && (s.addrs || []).length > 1 ? `<label class="f" style="margin-top:12px"><span>Network</span><select id="tlIp">${s.addrs.map(a => `<option value="${esc(a.ip)}" ${a.ip === s.ip ? "selected" : ""}>${esc(a.name)} · ${esc(a.ip)}</option>`).join("")}</select></label>` : ""}
           <div class="eyebrow" style="margin-top:16px">At the table now</div>
           <div class="chips">${party.map(p => `<span class="chip ${online.includes(p.id) ? "tl-on" : ""}" style="border-color:${esc(p.color)}">${online.includes(p.id) ? "● " : ""}${esc(p.character || p.player)}</span>`).join("") || `<span class="carried">Add your party first</span>`}</div>
           <label class="toggle" style="margin-top:12px"><input type="checkbox" id="tlHp" ${P.hp !== false ? "checked" : ""}> Players can change their own HP and resources</label>
         </div></div>
+        ${web ? "" : `<details class="tl-obs" ${P.helpOpen ? "open" : ""} id="tlHelp"><summary><b>Phone can't open the link?</b> <span class="carried">· a few things to check</span></summary>
+          <ol class="md-help tl-help">
+            <li><b>Same Wi-Fi.</b> The phone must be on the same network as this computer, not mobile data or a guest network (guest Wi-Fi keeps devices apart).</li>
+            <li><b>VPN off on the phone.</b> A VPN on the phone sends everything out to the internet, so it can't reach this computer.</li>
+            <li><b>Right network.</b> If this computer has more than one (Ethernet and Wi-Fi, or a VPN), pick the one your phone is on under <i>Network</i> above.</li>
+            ${navigator.userAgent.includes("Windows") ? `<li><b>Windows Firewall.</b> If the network is set to Public, or the first-time prompt was closed, Windows blocks the app. <button class="btn sm" id="tlFw">${icon("check")} Allow the app through the firewall</button> Windows asks for permission once.</li>` : `<li><b>Firewall.</b> If your computer has a firewall turned on, allow Gamemaster's Codex to accept incoming connections.</li>`}
+            <li>Still stuck? <b>Anywhere (internet)</b> works on any network, including mobile data.</li>
+          </ol></details>`}
         <details class="tl-obs"><summary><b>OBS browser sources</b> <span class="carried">· for streaming with OBS instead of a window capture</span></summary>
           <p class="md-help">In OBS: Sources → + → Browser, paste a link, set 1920 × 1080. The background is see-through. Add as many as you like and place them anywhere. While one with dice is open, rolls happen there (you don't need the stream window).</p>
           <div class="tl-obs-list">${OBS.map(([k, n, d]) => { const u = `${s.local}/obs?k=${s.key}${k ? "&only=" + k : ""}`; return `<div class="tl-obs-row"><div><b>${n}</b><span class="carried">${d}</span></div><code class="mono">${esc(u)}</code><button class="tb" data-cp="${esc(u)}" title="Copy">${icon("copy")}</button></div>`; }).join("")}</div>
@@ -138,6 +148,9 @@ export function tableModal() {
         await T().tunnel(true); draw();
       });
       $("#tlWebOff", body)?.addEventListener("click", async () => { await T().tunnel(false); P.mode = "lan"; save(); draw(); });
+      $("#tlIp", body)?.addEventListener("change", async e => { P.ip = e.target.value; save(); await T().setIp(P.ip); draw(); });
+      $("#tlHelp", body)?.addEventListener("toggle", e => { P.helpOpen = e.target.open; save(); });
+      $("#tlFw", body)?.addEventListener("click", async e => { e.target.disabled = true; const r = await T().firewall(); toast(r.ok ? "The app is allowed through the firewall. Try the QR code again" : `Couldn't change the firewall: ${r.error}`); e.target.disabled = false; });
       $$("[data-cp]", body).forEach(b => b.onclick = () => copyText(b.dataset.cp, "OBS link copied"));
       $("#tlHp", body).onchange = e => { P.hp = e.target.checked; save(); push(); };
       $("#tlOff", body)?.addEventListener("click", async () => { await T().stop(); P.on = false; save(); draw(); });

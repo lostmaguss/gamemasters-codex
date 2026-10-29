@@ -40,6 +40,8 @@ contextBridge.exposeInMainWorld("codex", {
     info: () => ipcRenderer.invoke("table:info"),
     qr: text => ipcRenderer.invoke("table:qr", text),
     tunnel: on => ipcRenderer.invoke("table:tunnel", on),
+    setIp: ip => ipcRenderer.invoke("table:ip", ip),
+    firewall: () => ipcRenderer.invoke("table:firewall"),
     players: v => ipcRenderer.send("table:players", v),
     inbox: (member, list) => ipcRenderer.send("table:inbox", { member, list }),
     to: (member, t, v) => ipcRenderer.send("table:to", { member, t, v }),

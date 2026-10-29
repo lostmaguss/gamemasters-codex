@@ -1,5 +1,6 @@
 // Talks to the stream dice window: Electron IPC in the app, BroadcastChannel when opened in a browser.
 import { getLang } from "./i18n.js";
+import { openLink } from "./link.js";
 const api = window.codex?.stage;
 let bc = null; try { bc = new BroadcastChannel("codex-stage"); } catch {}
 const subs = { result: [], state: [], roll: [], clear: [], close: [], sound: [], show: [], hide: [], overlay: [], rollShow: [] };
@@ -7,12 +8,7 @@ const subs = { result: [], state: [], roll: [], clear: [], close: [], sound: [],
 const Q = new URLSearchParams(location.search);
 export const remote = !api && Q.get("k") && /^https?:/.test(location.protocol) ? { key: Q.get("k"), only: Q.get("only") } : null;
 if (remote) {
-  const connect = () => {
-    const es = new EventSource(`/events?k=${encodeURIComponent(remote.key)}&role=obs${remote.only ? "&only=" + encodeURIComponent(remote.only) : ""}`);
-    es.onmessage = e => { const { t, v } = JSON.parse(e.data); (subs[t] || []).forEach(f => f(v)); };
-    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
-  };
-  connect();
+  openLink(() => `k=${encodeURIComponent(remote.key)}&role=obs${remote.only ? "&only=" + encodeURIComponent(remote.only) : ""}`, ({ t, v }) => (subs[t] || []).forEach(f => f(v)));
 }
 const post = a => fetch(`/act?k=${encodeURIComponent(remote.key)}`, { method: "POST", body: JSON.stringify(a) }).catch(() => {});
 const lastOverlay = {};

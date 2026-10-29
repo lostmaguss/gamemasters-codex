@@ -1288,3 +1288,4 @@ body.tn-focus .checklist { display: block; }
 .deck:hover, .mini:hover, .hand-face:hover { transform: none; }
 .forge-table { background: var(--bg); }
 .cx-toolbar { background: var(--bg); }
+.tl-help { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; } .tl-help .btn { margin: 4px 0; }

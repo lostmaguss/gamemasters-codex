@@ -1,4 +1,5 @@
 // The GM remote on the GM's phone. Talks to the desk through the table server with the GM's own key.
+import { openLink } from "./link.js";
 const g = new URLSearchParams(location.search).get("g") || "";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -88,17 +89,8 @@ function wire(st) {
 }
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; localStorage.setItem("gm.tab", S.tab); render(); window.scrollTo(0, 0); });
 
-let es = null, retry = 1000;
-function connect() {
-  es?.close();
-  es = new EventSource(`/events?g=${encodeURIComponent(g)}`);
-  es.onopen = () => { retry = 1000; $("#off").classList.remove("show"); $("#dot").classList.add("on"); };
-  es.onmessage = e => {
-    const m = JSON.parse(e.data);
-    if (m.t === "gm") { S.st = m.v; render(); }
-    if (m.t === "result") { S.last = m.v; if (S.tab === "roll") render(); else { S.tab = "roll"; render(); } navigator.vibrate?.([20, 40, 20]); }
-  };
-  es.onerror = () => { $("#dot").classList.remove("on"); $("#off").classList.add("show"); es.close(); setTimeout(connect, retry); retry = Math.min(15000, retry * 2); };
-}
-connect();
+openLink(() => `g=${encodeURIComponent(g)}`, m => {
+  if (m.t === "gm") { S.st = m.v; render(); }
+  if (m.t === "result") { S.last = m.v; S.tab = "roll"; render(); navigator.vibrate?.([20, 40, 20]); }
+}, up => { $("#off").classList.toggle("show", !up); $("#dot").classList.toggle("on", up); });
 setInterval(() => { if (S.st?.session?.live) $("#clock").textContent = clock(Date.now() - S.st.session.startedAt); }, 20000);

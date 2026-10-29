@@ -1,6 +1,7 @@
 // The player's phone: opened from the GM's table link. Read-mostly view of the table,
 // plus rolls, votes and HP taps that go back to the GM's app.
 import { t, setLang } from "./i18n.js";
+import { openLink } from "./link.js";
 import { drawMap, loadImg, loadFresh, fitView, makeFogTexture } from "./maprender.js";
 
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -12,13 +13,11 @@ const post = a => fetch(`/act?k=${encodeURIComponent(key)}`, { method: "POST", b
 const me = () => S.players?.party.find(p => p.id === S.me) || null;
 
 // ---- connection ----
-let es = null;
+let link = null;
 function connect() {
-  es?.close();
-  es = new EventSource(`/events?k=${encodeURIComponent(key)}&role=player${S.me ? "&member=" + encodeURIComponent(S.me) : ""}`);
-  es.onopen = () => $("#dot").classList.add("on");
-  es.onerror = () => { $("#dot").classList.remove("on"); es.close(); setTimeout(connect, 2500); };
-  es.onmessage = e => { const { t, v } = JSON.parse(e.data); on[t]?.(v); };
+  const q = () => `k=${encodeURIComponent(key)}&role=player${S.me ? "&member=" + encodeURIComponent(S.me) : ""}`;
+  if (link) return link.reconnect();
+  link = openLink(q, ({ t, v }) => on[t]?.(v), up => $("#dot").classList.toggle("on", up));
 }
 const on = {
   players(v) {
