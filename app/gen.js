@@ -5,8 +5,14 @@ import * as cyberpunk from "./genre-cyberpunk.js";
 import * as scifi from "./genre-scifi.js";
 
 export const GENRES = { fantasy: { label: "Fantasy", ...fantasy }, scifi: { label: "Sci-fi", ...scifi }, cyberpunk: { label: "Cyberpunk", ...cyberpunk } };
-let P = GENRES.fantasy;
-export function setGenre(g) { P = GENRES[g] || GENRES.fantasy; }
+import { KITS } from "./kits.js";
+let P = GENRES.fantasy, G = "fantasy";
+// a system kit (D&D 5e, Call of Cthulhu) lays its own names and tables over the genre's
+export function setGenre(g, sys) {
+  G = GENRES[g] ? g : "fantasy";
+  const base = GENRES[G], k = KITS[sys]?.forge;
+  P = k ? { ...base, ...k, label: base.label, T: { ...base.T, ...k.T } } : base;
+}
 export const genre = () => P;
 // compatibility exports used by the quick-name box
 export const NAMES = new Proxy({}, { get: (_, k) => P.NAMES[k], ownKeys: () => Reflect.ownKeys(P.NAMES), getOwnPropertyDescriptor: (_, k) => ({ enumerable: true, configurable: true, value: P.NAMES[k] }) });
@@ -62,7 +68,7 @@ export const GEN = {
     title: c => P.ITEM.title(c),
     sub: (c, f) => P.ITEM.sub(c, f),
     fields: {
-      rarity: ["Rarity", () => wpick(P.ITEM.rarity)], look: ["Look", () => cap(pick(P.ITEM.look))],
+      rarity: ["Rarity", c => c.rarity || wpick(P.ITEM.rarity)], look: ["Look", () => cap(pick(P.ITEM.look))],
       power: ["Power", c => P.ITEM.power(c)], quirk: ["Quirk", () => cap(pick(P.ITEM.quirk))],
       history: ["History", () => cap(pick(P.ITEM.history))], value: ["Worth", (c, f) => cap(P.ITEM.value[f.rarity] || Object.values(P.ITEM.value)[0])],
     },
@@ -83,7 +89,7 @@ const EXTRA = {
     activity: ["salvaging a wreck", "boarding a ship", "repairing a breach", "guarding a dig site", "holding hostages", "fleeing a quarantine", "scanning for the crew", "hunting in the vents"], terrain: ["a zero-g cargo bay", "a derelict corridor with failing lights", "an asteroid surface", "a station promenade", "a jungle under twin suns", "a reactor room", "a crashed shuttle", "a frozen research outpost"],
     fallback: ["pirates", "security drones", "xenomorphs", "Union marines", "a rogue AI", "void cultists", "salvagers", "a bounty hunter"] },
 };
-const X = () => EXTRA[Object.keys(GENRES).find(k => GENRES[k] === P)] || EXTRA.fantasy;
+const X = () => P.EXTRA || EXTRA[G] || EXTRA.fantasy;
 const MULT = { easy: 1, standard: 3, hard: 10, deadly: 40 };
 function bestiaryPick(diff) {
   const c = __C(); const want = { easy: [1, 2], standard: [2, 3], hard: [3, 4], deadly: [4, 5] }[diff];
@@ -100,7 +106,7 @@ GEN.loot = {
   fields: {
     coin: ["Coin", c => X().coin((rnd(20) + 5) * MULT[c.diff])],
     valuables: ["Valuables", c => Array.from({ length: Math.min(3, 1 + (c.diff === "hard") + 2 * (c.diff === "deadly")) }, () => pick(X().valuables)).join(", ")],
-    item: ["Item", c => { const r = wpick(P.ITEM.rarity); const it = P.ITEM.init(pick(P.ITEM.pool)); return `${P.ITEM.title(it)} (${r.toLowerCase()})`; }],
+    item: ["Item", c => { const it = P.ITEM.init(pick(P.ITEM.pool)); const r = it.rarity || wpick(P.ITEM.rarity); return `${P.ITEM.title(it)} (${r.toLowerCase()})`; }],
     odd: ["Odd find", () => cap(pick(P.ITEM.history))],
     where: ["Hidden", () => cap(pick(X().hide))],
   },

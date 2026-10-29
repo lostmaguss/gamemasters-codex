@@ -7,6 +7,7 @@ import { DEFAULT_RULES } from "./roll.js";
 import { LANGS } from "./i18n.js";
 import { THEMES as DICE, FELTS } from "./dice3d.js";
 import { md } from "./codex.js";
+import { addSystemTables } from "./kits.js";
 import { setDeskLang } from "./deski18n.js";
 
 // app themes: palette preview [background, sidebar, surface, accent, text]
@@ -97,8 +98,9 @@ export function openSettings(App, ctx, tab = "general") {
         $("#rgS", el).onchange = e => {
           const s = systemById(e.target.value); if (!s) return;
           applySystem(c, s.id, uid); const g = s.genre !== (c.genre || "fantasy"); c.genre = s.genre; save(); ls.set("rules", c.rules); App.botConfig?.();
+          const nt = addSystemTables(c); save();
           if (g) App.genreChanged?.(c, true); else ctx.applyGenre(c);
-          dirty = true; toast(`Switched to ${s.name}. Ctrl+Z undoes it`); PANES.rules(el);
+          dirty = true; toast(`Switched to ${s.name}${nt ? `, added ${nt} ${s.name} tables` : ""}. Ctrl+Z undoes it`); PANES.rules(el);
         };
       },
       look(el) {

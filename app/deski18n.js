@@ -2,6 +2,8 @@
 // Works on the rendered page: a MutationObserver swaps known English text nodes and placeholder/title/aria-label
 // attributes for their translation. User content (notes, names, prose) is left alone.
 const TR = {
+  "Start with a ready-to-play adventure:": "Hazır bir maceraya başla:",
+  "Add this game system's random tables": "Bu oyun sisteminin rastgele tablolarını ekle",
   "Network": "Ağ",
   "Phone can't open the link?": "Telefon bağlantıyı açamıyor mu?",
   "· a few things to check": "· kontrol edilecek birkaç şey",

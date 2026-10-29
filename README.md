@@ -78,6 +78,19 @@ D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Dagge
 </tr>
 </table>
 
+## Ready-to-play adventures
+
+Pick **D&D 5e** or **Call of Cthulhu** in *New campaign* and tick *Start with a ready-to-play adventure*. You get a whole campaign you can run tonight: pregenerated characters on the party sheets, Codex pages for every place, NPC, faction and clue, a bestiary with stat blocks, a clue board, threat clocks, handouts, a played prologue in the Chronicle with its read-aloud recap, and the next sessions planned in Prep with strong starts, scenes, secrets, encounters and treasure.
+
+- **The Barrow of Thornbury** (D&D 5e, levels 1 to 3, four sessions). Goblins raid a harvest village, a barrow under Gallows Hill holds a sleeping dead king, and a green hag in the bog wants his crown. Monsters and magic items from the SRD 5.1.
+- **The Silence at Ashby Falls** (Call of Cthulhu, 1925, three sessions). A reporter is missing, the church bell won't ring, and the mill's night shift keeps getting smaller. Four investigators, a cult, and ghouls beneath the falls.
+
+<img src="docs/media/adventure-prep.jpg" alt="The Ashby Falls adventure open in Prep: strong start, scenes, secrets, cast and handouts" width="100%">
+
+Both systems also get their own **random tables** (traps, encounters by level, pocket treasure, magic items, crits and fumbles for D&D; strange occurrences, library research, 1920s headlines, phobias, manias, Mythos tomes and temporary insanity for Cthulhu) and their own **Forge**: D&D deals dragonborn and tieflings, SRD magic items with their real rules and rarity, and rewards in gp; Cthulhu deals 1920s names, occupations, speakeasies, churches and asylums, Mythos tomes and dollars. Existing campaigns can add the tables with `Ctrl+K` → *Add this game system's random tables*.
+
+<img src="docs/media/system-tables.jpg" alt="D&D 5e random tables: traps, encounters, treasure" width="100%">
+
 ## Built for streaming
 
 Open the **stream window** and share it in Discord (or load the overlays in OBS). Your notes stay private. Players only see what you choose to show.

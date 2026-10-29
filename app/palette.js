@@ -1,6 +1,7 @@
 // Ctrl+K: one box to find anything or do anything.
 import { $, $$, esc, h, icon, toast } from "./util.js";
-import { C } from "./store.js";
+import { C, save } from "./store.js";
+import { kitFor, addSystemTables } from "./kits.js";
 import { parseRoll } from "./roll.js";
 import { rollTable } from "./tables.js";
 import { BUILTIN } from "./sound.js";
@@ -25,6 +26,7 @@ export function openPalette(App, VIEWS) {
     cmd("Homebrew packs: share or load", "plus", () => App.packs(), "pack share export import homebrew community");
     cmd("GM remote on your phone", "dice", () => App.gmRemote?.(), "phone remote control gm mobile");
     cmd("Make a handout: letter, wanted poster, newspaper…", "image", () => import("./handoutmaker.js").then(x => x.handoutMaker(App)), "handout letter wanted poster newspaper decree datapad chat");
+    if (kitFor(C().system)) cmd("Add this game system's random tables", "tables", () => { const n = addSystemTables(C()); save(); App.refreshAll?.(); toast(n ? `Added ${n} tables` : "You already have them all"); }, "tables random system dnd cthulhu encounters traps sanity");
     cmd("Theme & appearance", "image", () => App.settings("look"), "theme dark light colour color look skin");
     cmd("Accessibility", "fit", () => App.settings("a11y"), "contrast motion font colourblind colorblind");
     cmd("Rules & genre settings", "gear", () => App.rulesModal(), "settings crit initiative system");

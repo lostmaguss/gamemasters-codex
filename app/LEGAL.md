@@ -119,6 +119,8 @@ All trademarks belong to their owners. They are used here only to identify which
 
 For Call of Cthulhu, Vampire V5, Savage Worlds, Cyberpunk RED, Shadowrun 6e, Mothership, Traveller, Powered by the Apocalypse, the OSR template, the Space opera d6 template and the Homebrew template, the creatures, NPCs, powers, gear and descriptions are original writing for Gamemaster's Codex. Names of rules (such as a skill, move or power name) are used only so the entries fit those games. No text, art or stat blocks are copied from those games' books. To use the official versions, check your own copy of the rules.
 
+The ready-to-play adventures are original writing for Gamemaster's Codex. *The Barrow of Thornbury* (D&D 5e) uses monsters, magic items and rules terms from the System Reference Document 5.1 under CC-BY-4.0; its story, characters and places are original. *The Silence at Ashby Falls* (Call of Cthulhu) is original apart from Mythos elements from H. P. Lovecraft's public-domain stories (ghouls, the Necronomicon, the Pnakotic Manuscripts); it takes nothing from Chaosium's books. The D&D 5e and Call of Cthulhu random tables and Forge content are written for the app in the same way.
+
 The sheet layouts in the system templates list game terms (stat and skill names) so the sheets match each game. They contain no rules text.
 
 ## Software and fonts

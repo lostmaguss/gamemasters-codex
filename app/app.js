@@ -39,9 +39,10 @@ import * as Discord from "./discord.js";
 import { rnd, ls, storeImage, toDataURL, mapStrings } from "./util.js";
 import { setGenre } from "./gen.js";
 import { starterTables } from "./store.js";
+import { kitFor, ownStarters, addSystemTables } from "./kits.js";
 
 export function applyGenre(c = C()) {
-  setGenre(c.genre || "fantasy"); setLang(c.playerLang || "en");
+  setGenre(c.genre || "fantasy", c.system); setLang(c.playerLang || "en");
   const look = lookFor(c);
   if (look === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = look;
   ls.set("look", look);
@@ -260,22 +261,34 @@ export function newCampaignModal() {
     <div class="f"><span>Game system</span><div class="sysgrid" id="ncSys">${sysCards(pick)}</div></div>
     <p class="md-help" id="ncNote" style="margin:0"></p>
     <label class="toggle"><input type="checkbox" id="ncLib" checked> ${icon("book")} Fill the Bestiary and Codex from the system's library (monsters, spells, gear)</label>
+    <label class="toggle nc-adv" id="ncAdvRow" hidden><input type="checkbox" id="ncAdv"> <span>${icon("star")} <b>Start with a ready-to-play adventure:</b> <span id="ncAdvT"></span><small id="ncAdvB" style="display:block;color:var(--dim);margin-top:2px"></small></span></label>
     <p class="md-help" style="margin:0">Unofficial and not affiliated with any publisher. Sources and licenses: <a href="#" id="ncLegal">Legal & credits</a>.</p>
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Create campaign</button></div>`, (m, close) => {
     $("#ncLegal", m).onclick = e => { e.preventDefault(); close(); legalModal(); };
-    const note = () => { const s = systemById(pick); $("#ncNote", m).textContent = `Sets the dice and crits, the party sheet (${s.sheet.stats.slice(0, 4).join(", ")}…), the bestiary's stat block and quick rolls${s.genre !== "fantasy" ? `, plus ${GENRE_NAME[s.genre].toLowerCase()} generators and look` : ""}. ${s.note} You can change all of it later.`; };
+    const adv = () => { const k = kitFor(pick)?.adventure; $("#ncAdvRow", m).hidden = !k; if (k) { $("#ncAdvT", m).textContent = k.title; $("#ncAdvB", m).textContent = `${k.blurb} Pregenerated characters, Codex pages, a clue board, clocks, handouts, a played prologue in the Chronicle and the next sessions planned.`; } };
+    const note = () => { adv(); const s = systemById(pick); $("#ncNote", m).textContent = `Sets the dice and crits, the party sheet (${s.sheet.stats.slice(0, 4).join(", ")}…), the bestiary's stat block and quick rolls${s.genre !== "fantasy" ? `, plus ${GENRE_NAME[s.genre].toLowerCase()} generators and look` : ""}. ${s.note} You can change all of it later.`; };
     $$("[data-sys]", m).forEach(b => b.onclick = () => { pick = b.dataset.sys; $$("[data-sys]", m).forEach(x => x.classList.toggle("on", x === b)); note(); });
     note();
     $("[data-x]", m).onclick = close;
     const ok = async () => {
-      const s = systemById(pick), n = blankCampaign($("#ncName", m).value.trim() || "New campaign");
-      const L = $("#ncLib", m).checked && (await loadLibrary())[s.id];
-      if (L) { n.bestiary = L.creatures.map(r => toCreature(s, r)); n.notes = L.spells.map(r => toSpell(s, r)); }
-      n.tagline = $("#ncTag", m).value.trim() || `${s.name} · ${GENRE_NAME[s.genre].toLowerCase()}`;
-      n.genre = s.genre; n.tables = starterTables(s.genre); n.presets = [];
-      applySystem(n, s.id, uid);
+      const s = systemById(pick), kit = kitFor(pick), useAdv = !!kit?.adventure && $("#ncAdv", m).checked;
+      const lib = (await loadLibrary())[s.id], L = $("#ncLib", m).checked && lib;
+      let n;
+      if (useAdv) {
+        // the adventure brings its own party, Codex, bestiary and sessions; the library's spells come along
+        n = kit.campaign({ blank: blankCampaign, uid, lib, sys: s, toCreature });
+        if ($("#ncName", m).value.trim()) n.name = $("#ncName", m).value.trim();
+        if (!L) n.notes = n.notes.filter(x => !x.lib);
+      } else {
+        n = blankCampaign($("#ncName", m).value.trim() || "New campaign");
+        if (L) { n.bestiary = L.creatures.map(r => toCreature(s, r)); n.notes = L.spells.map(r => toSpell(s, r)); }
+        n.tagline = $("#ncTag", m).value.trim() || `${s.name} · ${GENRE_NAME[s.genre].toLowerCase()}`;
+      }
+      if ($("#ncTag", m).value.trim()) n.tagline = $("#ncTag", m).value.trim();
+      n.genre = s.genre; n.tables = ownStarters(s.id) ? [] : starterTables(s.genre); n.presets = [];
+      applySystem(n, s.id, uid); addSystemTables(n);
       S.data.campaigns.push(n); close(); App.genreChanged(n, true); switchCampaign(n.id);
-      toast(`${n.name} is ready: ${s.name}${L ? `, with ${n.bestiary.length} creatures and ${n.notes.length} ${L.label.toLowerCase()}` : ""}`);
+      toast(useAdv ? `${n.name} is ready to play: ${n.party.length} characters, ${n.sessions.filter(x => x.status === "planned").length} sessions planned` : `${n.name} is ready: ${s.name}${L ? `, with ${n.bestiary.length} creatures and ${n.notes.length} ${L.label.toLowerCase()}` : ""}`);
     };
     $("[data-ok]", m).onclick = ok; $("#ncName", m).onkeydown = e => { if (e.key === "Enter") ok(); }; $("#ncName", m).focus();
   });
@@ -322,8 +335,9 @@ App.rulesModal = rulesModal;
 App.genreChanged = (c, quiet) => {
   if (c.stash && ["gold", "credits", "eddies"].includes(c.stash.unit)) c.stash.unit = STASH_UNIT[c.genre] || c.stash.unit;
   const have = new Set(c.tables.map(t => t.name.toLowerCase() + "|" + (t.folder || "")));
-  const add = starterTables(c.genre).filter(t => !have.has(t.name.toLowerCase() + "|" + (t.folder || "")));
+  const add = ownStarters(c.system) ? [] : starterTables(c.genre).filter(t => !have.has(t.name.toLowerCase() + "|" + (t.folder || "")));
   c.tables.push(...add);
+  addSystemTables(c);
   const dice = { fantasy: ["ember", "oxblood"], cyberpunk: ["neon", "neon"], scifi: ["hull", "deck"] }[c.genre];
   ls.set("dice.theme", dice[0]); ls.set("dice.felt", dice[1]);
   applyGenre(c); save();
