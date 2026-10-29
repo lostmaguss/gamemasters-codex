@@ -611,7 +611,7 @@ function wireBot() {
       if (!member) return fail(unlinked);
       const L = c.sheet || { stats: [], resources: [] };
       const res = (L.resources || []).map(n => { const x = member.res?.[n] || {}; return `**${n}** ${x.cur ?? "?"}/${x.max ?? "?"}`; }).join("  ·  ");
-      const stats = (L.stats || []).map(n => `${n} **${member.stats?.[n] ?? "—"}**`).join("  ·  ");
+      const stats = (L.stats || []).map(n => `${n} **${member.stats?.[n] ?? "–"}**`).join("  ·  ");
       B.reply({ id: req.id, ok: true, embed: { color: parseInt(String(member.color || "#ff7a3d").slice(1), 16) || 0xff7a3d, title: member.character || member.player, description: [member.role, res, stats, member.conds?.length ? `*${member.conds.join(", ")}*` : ""].filter(Boolean).join("\n\n") } });
       return;
     }

@@ -1,6 +1,6 @@
 {
   "name": "gamemasters-codex",
-  "version": "1.33.0",
+  "version": "1.33.1",
   "description": "Companion app for game masters: 3D dice, prep, maps, a world wiki and stream overlays, built for Discord games.",
   "main": "main.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "dist:linux": "electron-builder --linux AppImage deb",
     "dist:mac": "electron-builder --mac dmg zip"
   },
-  "license": "ISC",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@fontsource/chakra-petch": "^5.3.0",
     "@fontsource/grenze-gotisch": "^5.3.0",
@@ -32,13 +32,14 @@
   "build": {
     "appId": "com.gamemasters.codex",
     "productName": "Gamemasters Codex",
-    "copyright": "Gamemaster's Codex",
+    "copyright": "Copyright © 2026 lostmaguss. All rights reserved.",
     "directories": {
       "output": "dist-installer",
       "buildResources": "build"
     },
     "files": [
       "main.js",
+      "LICENSE",
       "preload.js",
       "bot.js",
       "tableserver.js",

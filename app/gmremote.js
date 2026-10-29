@@ -74,7 +74,7 @@ export async function gmRemoteModal() {
     <p style="margin:0;color:var(--dim)">Scan this with <b>your</b> phone to run the table from it: next turn, damage, party health, rolls, scenes, secrets, handouts and the break screen. ${info.gmPublicUrl ? "It works from anywhere while the internet link is on." : "Your phone needs to be on the same Wi-Fi."}</p>
     <div class="gm-qr">${svg}</div>
     <div class="row" style="gap:6px"><input type="text" class="mono" readonly value="${esc(url)}" style="flex:1"><button class="btn" id="gmCopy">${icon("copy")} Copy</button></div>
-    <p class="md-help" style="margin:0;color:var(--bad)">Keep this link to yourself. It isn't the players' link: whoever has it can control the game.</p>
+    <p class="md-help" style="margin:0;color:var(--bad)">Keep this link to yourself: whoever has it can control the game. Players use the table link.</p>
     <div class="foot"><button class="btn primary" data-x>Done</button></div>`, (m, close) => {
     $("[data-x]", m).onclick = close;
     $("#gmCopy", m).onclick = () => navigator.clipboard.writeText(url).then(() => toast("Copied"));

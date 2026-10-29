@@ -322,4 +322,6 @@ Electron · three.js + cannon-es for the dice · discord.js for the bot. Pushing
 
 ## Legal
 
+Gamemaster's Codex © 2026 lostmaguss. **All rights reserved.** The app is free to download and use for your games; the code is not open source and may not be copied, modified or redistributed. See [LICENSE](LICENSE).
+
 Gamemaster's Codex is an unofficial fan tool, not affiliated with or endorsed by any game publisher. Game names are used only to say which rules a template works with. The library includes open content under the CC-BY-4.0 (D&D SRD 5.1), ORC (Pathfinder 2e), OGL 1.0a (Pathfinder 1e), DPCGL (Daggerheart) and CC-BY 3.0 (Fate, Blades in the Dark) licenses; everything else is original writing. Full notices, attributions, trademarks and software licenses: [app/LEGAL.md](app/LEGAL.md), also in the app under *Settings → Legal & credits*. Privacy: [PRIVACY.md](PRIVACY.md).

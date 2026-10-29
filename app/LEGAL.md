@@ -2,7 +2,7 @@
 
 Gamemaster's Codex is an unofficial, fan-made tool for running tabletop roleplaying games. It is not affiliated with, endorsed, sponsored or approved by any of the publishers or rights holders named below. Game names are used only to say which rules a template or library entry is meant to work with.
 
-Gamemaster's Codex © 2026 lostmaguss. The app's own code, interface, artwork, sound design and the original library text written for it belong to its author, apart from the material credited below, which keeps its own license.
+Gamemaster's Codex © 2026 lostmaguss. All rights reserved. The app's own code, interface, artwork, sound design and the original library text written for it belong to its author, apart from the material credited below, which keeps its own license.
 
 ## Contents
 
@@ -10,6 +10,7 @@ Gamemaster's Codex © 2026 lostmaguss. The app's own code, interface, artwork, s
 - Trademarks
 - Content written for the app
 - Software and fonts
+- Terms of use
 - Privacy
 
 ## Game content and licenses
@@ -132,6 +133,10 @@ Gamemaster's Codex is built with these open-source projects. Each keeps its own 
 - qrcode (MIT)
 - Fonts through Fontsource, all under the SIL Open Font License 1.1: Chakra Petch, Grenze Gotisch, IBM Plex Sans Condensed, IM Fell English, JetBrains Mono, Oxanium
 - cloudflared (Apache License 2.0), which is not bundled. The app downloads it from Cloudflare's official GitHub releases only when you turn on "Anywhere (internet)" phone access.
+
+## Terms of use
+
+You may use the official releases of Gamemaster's Codex for free to prepare and run your own games, including streamed, recorded and paid games. What you make with it is yours. You may not copy, modify, redistribute, sell or rehost the app or its source code, or use its name and artwork for another product, without written permission. The source being visible on GitHub doesn't grant a license to it. The app comes as is, with no warranty: keep backups. The full text is in the LICENSE file that ships with the app and sits at the top of the repository.
 
 ## Privacy
 

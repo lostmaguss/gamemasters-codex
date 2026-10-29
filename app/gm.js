@@ -10,8 +10,8 @@ const TR = {
   "Nothing planned.": "Plan yok.", "Scenes": "Sahneler", "Secrets & clues": "Sırlar ve ipuçları", "Log it": "Kaydet", "What just happened": "Az önce ne oldu", "Log": "Kaydet",
   "Break screen": "Ara ekranı", "Back to the table": "Masaya dön", "Open the stream window": "Yayın penceresini aç", "Handouts": "Belgeler", "Take down": "Kaldır", "Show": "Göster",
   "No handouts yet.": "Henüz belge yok.", "Secret: only you saw it": "Gizli: sadece sen gördün", "Secret roll (not on stream)": "Gizli atış (yayında değil)", "Roll": "At",
-  "Party": "Grup", "Session": "Oturum", "Live": "Canlı", "Next up": "Sıradaki", "GM remote": "OY kumandası", "Fight": "Savaş", "Scene": "Sahne",
-  "Lost the connection to the GM's computer.": "OY'nin bilgisayarıyla bağlantı koptu.", "Trying again…": "Yeniden deneniyor…",
+  "Party": "Grup", "Session": "Oturum", "Live": "Canlı", "Next up": "Sıradaki", "GM remote": "GM kumandası", "Fight": "Savaş", "Scene": "Sahne",
+  "Lost the connection to the GM's computer.": "GM'in bilgisayarıyla bağlantı koptu.", "Trying again…": "Yeniden deneniyor…",
 };
 const L = s => S.st?.lang === "tr" ? TR[s] ?? s : s;
 const S = { tab: localStorage.getItem("gm.tab") || "fight", st: null, last: null, secret: localStorage.getItem("gm.secret") === "1" };

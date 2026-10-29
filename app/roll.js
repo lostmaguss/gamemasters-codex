@@ -108,7 +108,7 @@ export function critLabel(r, tr = fmt) {
   return r.crit ? tr("Critical · natural {v}", { v }) : r.fumble ? tr("Fumble · natural {v}", { v }) : r.success != null ? tr(r.success ? "Success" : "Failure") : "";
 }
 export const successWord = (r, tr = fmt) => tr(r.total === 1 ? "success" : "successes");
-export function shownTotal(r) { return r.symbolic ? (r.tally || "—") : r.single != null ? r.single : isFate(r) && r.total > 0 ? "+" + r.total : r.total; }
+export function shownTotal(r) { return r.symbolic ? (r.tally || "–") : r.single != null ? r.single : isFate(r) && r.total > 0 ? "+" + r.total : r.total; }
 export function breakdown(r) {
   const parts = r.groups.map((g, i) => {
     const show = x => g.custom ? (x.sym || "·") : g.fate ? (x.v > 0 ? "+" : x.v < 0 ? "−" : "0") : (x.was != null ? `${x.was}→` : "") + x.v + (g.explode && x.v === g.sides ? "!" : "");

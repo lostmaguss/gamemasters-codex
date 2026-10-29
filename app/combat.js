@@ -107,7 +107,7 @@ export function createCombat(el, App) {
     const b = cb(), box = $("#cbHead", el), cur = b.list[b.turn];
     box.innerHTML = b.active
       ? `<div class="cb-round"><span>Round</span><b>${b.round}</b></div>
-         <div class="cb-now"><span class="eyebrow">Now acting</span><b>${esc(cur?.name || "—")}</b></div>
+         <div class="cb-now"><span class="eyebrow">Now acting</span><b>${esc(cur?.name || "–")}</b></div>
          <button class="btn icon" id="cbPrev" title="Previous turn">${icon("up")}</button>
          <button class="btn primary roll-btn" id="cbNext">Next turn <span class="mono" style="font-size:11px;opacity:.6">SPACE</span></button>
          <div style="flex:1"></div>${threat(b, true)}
@@ -164,7 +164,7 @@ export function createCombat(el, App) {
     box.innerHTML = add + `<ol class="cb-rows">${b.list.map((x, i) => {
       const max = Number(x.max) || 0, hp = Number(x.hp) || 0, pct = max ? Math.max(0, Math.min(100, hp / max * 100)) : 0, K = KIND[x.kind];
       return `<li class="cb-row ${x === cur && b.active ? "current" : ""} ${x.id === st.sel ? "sel" : ""} ${max && hp <= 0 ? "down" : ""}" data-id="${x.id}" style="--kc:${x.color || K.color}">
-        <input class="cb-init mono" type="number" value="${esc(x.init)}" placeholder="—" title="Initiative" aria-label="Initiative">
+        <input class="cb-init mono" type="number" value="${esc(x.init)}" placeholder="–" title="Initiative" aria-label="Initiative">
         <div class="cb-who"><b>${esc(x.name)}</b><span><i class="kd"></i>${K.label}${x.def ? ` · Def ${esc(x.def)}` : ""}${x.hidden ? ` · <em>hidden from stream</em>` : ""}</span></div>
         <div class="cb-hp">${max ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}<span class="mono">${max ? `${hp}<small>/${max}</small>` : `<small>no HP</small>`}</span><input type="text" class="cb-dmg mono" placeholder="dmg / +heal" aria-label="Damage or healing"></div>
         <div class="cb-conds">${(x.conds || []).map(k => `<button class="cond" data-cond="${k.id}" title="${esc((ruleText(C().system, k.name).slice(0, 220) + "\n\n").trimStart())}Click to remove">${esc(k.name)}${k.rounds ? `<b>${k.rounds}</b>` : ""}</button>`).join("")}<button class="cond add" data-addcond title="Add a condition">${icon("plus")}</button></div>

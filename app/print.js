@@ -32,7 +32,7 @@ function sessionSheet(c) {
   const s = c.sessions.find(x => x.status === "live") || nextPlanned(c, false);
   if (!s) return null;
   const P = s.plan || {}, L = sheetLayout(c);
-  const items = arr => (arr || []).filter(x => x.text).map(x => `<li>${md(x.text)}</li>`).join("") || `<li style="color:#a08b7f">—</li>`;
+  const items = arr => (arr || []).filter(x => x.text).map(x => `<li>${md(x.text)}</li>`).join("") || `<li style="color:#a08b7f">–</li>`;
   const cast = (P.cast || []).map(id => c.notes.find(n => n.id === id)).filter(Boolean);
   const enc = (P.encounters || []).map(e => { const x = c.bestiary.find(b => b.id === e.creature); if (!x) return ""; const hp = creatureHP(x);
     return `<tr><td><b>${esc(x.name)}</b>${e.count > 1 ? ` ×${e.count}` : ""}<div class="eb">${esc(["Def " + (x.stats?.Defense || "?"), x.stats?.Speed].filter(Boolean).join(" · "))}</div>${(x.abilities || []).filter(a => a.roll).slice(0, 3).map(a => `<div style="font-size:8.5pt">${esc(a.name)} <b>${esc(a.roll)}</b></div>`).join("")}</td><td>${Array.from({ length: e.count }, (_, i) => `<div style="margin-bottom:1mm"><span class="eb">#${i + 1}</span> ${boxes(hp)}</div>`).join("")}</td></tr>`; }).join("");
@@ -42,7 +42,7 @@ function sessionSheet(c) {
     <div class="cols">
       <div><h2>Scenes</h2><ul class="ck">${items(P.scenes)}</ul></div>
       <div><h2>Secrets &amp; clues</h2><ul class="ck">${items(P.secrets)}</ul></div>
-      <div><h2>Cast</h2>${cast.map(n => `<div style="margin-bottom:2mm"><b>${esc(n.title)}</b> <span class="eb">${esc(n.tags || n.cat)}</span><div style="font-size:9pt;color:#4a3c3f">${md(String(n.body || "").split("\n").find(l => l.trim() && !/^#/.test(l.trim())) || "").slice(0, 220)}</div></div>`).join("") || `<div style="color:#a08b7f">—</div>`}</div>
+      <div><h2>Cast</h2>${cast.map(n => `<div style="margin-bottom:2mm"><b>${esc(n.title)}</b> <span class="eb">${esc(n.tags || n.cat)}</span><div style="font-size:9pt;color:#4a3c3f">${md(String(n.body || "").split("\n").find(l => l.trim() && !/^#/.test(l.trim())) || "").slice(0, 220)}</div></div>`).join("") || `<div style="color:#a08b7f">–</div>`}</div>
       <div><h2>Treasure</h2><ul class="ck">${items(P.treasure)}</ul></div>
       ${enc ? `<div class="full"><h2>Encounters</h2><table><tr><th style="width:42%">Foe</th><th>HP</th></tr>${enc}</table></div>` : ""}
       <div class="full"><h2>The party</h2><table><tr><th>Character</th>${L.resources.map(r => `<th>${esc(r)}</th>`).join("")}${L.stats.map(x => `<th>${esc(x)}</th>`).join("")}<th>Notes</th></tr>

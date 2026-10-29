@@ -144,7 +144,7 @@ export function createChronicle(el, App) {
   }
   function renderQuotes(s) {
     const box = $("#sQuotes", el);
-    box.innerHTML = s.quotes.length ? s.quotes.map((q, i) => `<div class="quote" data-q="${q.id}" style="--r:${[-1.2, .8, -.4, 1.4][i % 4]}deg"><button class="x" title="Remove">${icon("x")}</button><textarea placeholder="The line…">${esc(q.line)}</textarea><input type="text" placeholder="— who said it" value="${esc(q.who)}"></div>`).join("")
+    box.innerHTML = s.quotes.length ? s.quotes.map((q, i) => `<div class="quote" data-q="${q.id}" style="--r:${[-1.2, .8, -.4, 1.4][i % 4]}deg"><button class="x" title="Remove">${icon("x")}</button><textarea placeholder="The line…">${esc(q.line)}</textarea><input type="text" placeholder="Who said it" value="${esc(q.who)}"></div>`).join("")
       : `<div style="color:var(--faint);font-size:14px">The jokes, threats and accidental prophecies worth remembering.</div>`;
     $$(".quote", box).forEach(d => {
       const q = s.quotes.find(x => x.id === d.dataset.q);
@@ -228,7 +228,7 @@ export function createChronicle(el, App) {
     const present = c.party.filter(m => s.attendance[m.id] !== false);
     const mvp = names(s.mvp);
     return `<div class="ch-kicker">Chapter ${esc(s.num)}</div><h1>${esc(s.title || "Untitled")}</h1>
-      <div class="ch-meta">${[s.ingame, s.date && new Date(s.date + "T12:00").toLocaleDateString(undefined, { dateStyle: "long" }), s.ambience, s.moods.join(" · ")].filter(Boolean).map(esc).join(" — ")}</div>
+      <div class="ch-meta">${[s.ingame, s.date && new Date(s.date + "T12:00").toLocaleDateString(undefined, { dateStyle: "long" }), s.ambience, s.moods.join(" · ")].filter(Boolean).map(esc).join(" · ")}</div>
       ${s.recap ? `<div class="prose" style="font-style:italic;color:var(--dim)">${md(s.recap, c.notes)}</div>` : ""}
       ${s.beats.map(b => { const B = BEATS[b.type] || BEATS.social; return `<div class="ch-beat ${b.star ? "star" : ""}" style="--bt:${B.color}">${icon(b.type)}<div class="prose" style="font-size:17px">${md(b.text, c.notes) || "<p>…</p>"}</div></div>`; }).join("")}
       ${s.quotes.filter(q => q.line).map(q => `<blockquote>“${esc(q.line)}”<cite>${esc(q.who || "someone at the table")}</cite></blockquote>`).join("")}

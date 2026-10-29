@@ -1,0 +1,46 @@
+Gamemaster's Codex
+Copyright (c) 2026 lostmaguss. All rights reserved.
+
+This software, including its source code, interface, artwork, icons, sounds,
+trailers, screenshots and the original text written for it, is the property of
+its author and is protected by copyright law.
+
+WHAT YOU MAY DO
+
+You may download the official releases from
+https://github.com/lostmaguss/gamemasters-codex/releases and use them, free of
+charge, to prepare and run your own games, including games you stream,
+record or run for paying players. Everything you create with the app (your
+campaigns, notes, maps, handouts, recaps and recordings) is yours.
+
+WHAT YOU MAY NOT DO WITHOUT WRITTEN PERMISSION
+
+- Copy, modify, translate, or create derivative works of the software or its
+  source code, other than as needed to install and run it.
+- Redistribute, sell, rent, sublicense, rehost or publish the software, its
+  installers or its source code, in whole or in part.
+- Use the name "Gamemaster's Codex", its logo or its artwork to identify
+  another product or service.
+
+The source code being visible on GitHub does not grant any license to it.
+
+THIRD-PARTY AND OPEN CONTENT
+
+Some content inside the app is not covered by this notice and keeps its own
+license: open game content (SRD 5.1 under CC-BY-4.0, Pathfinder material under
+the ORC License, Pathfinder 1e material under the Open Game License 1.0a, the
+Daggerheart SRD under the Darrington Press Community Gaming License, and the
+Fate and Blades in the Dark SRDs under CC-BY 3.0), and the open-source
+libraries and fonts the app is built with. Where one of those licenses requires
+material derived from it to stay under the same license, that material stays
+under it. Full notices: app/LEGAL.md (in the app: Settings -> Legal & credits).
+
+NO WARRANTY
+
+The software is provided "as is", without warranty of any kind, express or
+implied. In no event shall the author be liable for any claim, damages or other
+liability arising from the use of the software, including lost campaign data.
+Keep backups (Settings -> Backups & data).
+
+For permissions, open an issue at
+https://github.com/lostmaguss/gamemasters-codex/issues

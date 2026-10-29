@@ -118,7 +118,7 @@ function sampleCampaign() {
     },
   }];
   c.sessions[1].plan.encounters = [{ id: uid(), creature: c.bestiary[1].id, count: 2, hp: [22, 22] }, { id: uid(), creature: c.bestiary[0].id, count: 2, hp: [14, 14] }];
-  c.handouts = [{ id: uid(), title: "A note under the door", type: "text", style: "letter", text: "They know about the maps.\nCome to the shrine before the bell, or don't come at all.\n\n— Y." }];
+  c.handouts = [{ id: uid(), title: "A note under the door", type: "text", style: "letter", text: "They know about the maps.\nCome to the shrine before the bell, or don't come at all.\n\nY." }];
   return c;
 }
 

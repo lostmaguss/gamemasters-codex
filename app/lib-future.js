@@ -94,7 +94,7 @@ export default {
       ["Cantina Thug", "Thug", 1, ["1", "9", "10", "3"], [["Hold-out blaster", "3d6", "Blaster 3D.", "3d6"]], ""],
       ["Bounty Hunter", "Mercenary", 3, ["2", "13", "10", "6"], [["Heavy blaster", "6d6", "Blaster 6D.", "5d6"], ["Jetpack", "", "Moves twice in a round."]], ""],
       ["Battle Robot", "Robot", 2, ["1", "10", "10", "4"], [["Blaster", "4d6", "Blaster 4D.", "4d6"]], "Follows orders to the letter."],
-      ["Swamp Beast", "Creature", 3, ["2", "12", "8", "—"], [["Bite", "5d6", "Brawling 5D.", "5d6"]], ""],
+      ["Swamp Beast", "Creature", 3, ["2", "12", "8", "–"], [["Bite", "5d6", "Brawling 5D.", "5d6"]], ""],
       ["Dark Adept", "Gifted", 5, ["3", "14", "10", "5"], [["Energy blade", "7d6", "Melee 7D.", "5d6"], ["Mind shove", "6d6", "Telekinesis.", "4d6"]], ""],
     ],
     spells: [

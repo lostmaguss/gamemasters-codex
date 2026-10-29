@@ -24,7 +24,7 @@ export function customDiceModal(App, die, onDone) {
     <div class="foot">${isNew ? "" : `<button class="btn ghost danger" data-del>Delete</button><div style="flex:1"></div>`}<button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save die</button></div>`, (m, close) => {
     const drawFaces = () => {
       while (d.faces.length < d.sides) d.faces.push({ label: "", value: "" }); d.faces.length = d.sides;
-      $("#cdF", m).innerHTML = d.faces.map((f, i) => `<div class="cd-face"><span class="eyebrow">${i + 1}</span><input type="text" data-l="${i}" value="${esc(f.label)}" placeholder="—" maxlength="8"><input type="text" class="mono" data-v="${i}" value="${esc(f.value)}" placeholder="0" title="Value"></div>`).join("");
+      $("#cdF", m).innerHTML = d.faces.map((f, i) => `<div class="cd-face"><span class="eyebrow">${i + 1}</span><input type="text" data-l="${i}" value="${esc(f.label)}" placeholder="–" maxlength="8"><input type="text" class="mono" data-v="${i}" value="${esc(f.value)}" placeholder="0" title="Value"></div>`).join("");
       $$("[data-l]", m).forEach(x => x.oninput = () => d.faces[+x.dataset.l].label = x.value);
       $$("[data-v]", m).forEach(x => x.oninput = () => d.faces[+x.dataset.v].value = x.value.trim());
     };

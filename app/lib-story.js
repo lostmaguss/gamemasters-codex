@@ -60,7 +60,7 @@ export default {
       ["Feral Hound Pack", "Landscape · pit", 2, ["4", "0", "2 harm", "To hunt the weak"], [["Tear", "", "2 harm, close, messy.", "1d6"]], ""],
       ["Cult Prophet", "Brute · cult", 3, ["6", "1", "1 harm", "To convert"], [["Sermon", "", "Everyone listening acts under fire to resist."]], "Speaks in the voice of your dead."],
       ["Warlord", "Warlord · slaver", 4, ["10", "2", "3 harm", "To own everything"], [["Hammer", "", "3 harm, hand, messy.", "1d8"]], ""],
-      ["The Thing in the Static", "Affliction · disease", 5, ["—", "—", "—", "To spread"], [["Whisper", "", "Anyone who opens their brain to it takes 1 harm (ap)."]], ""],
+      ["The Thing in the Static", "Affliction · disease", 5, ["–", "–", "–", "To spread"], [["Whisper", "", "Anyone who opens their brain to it takes 1 harm (ap)."]], ""],
     ],
     spells: [
       ["Act Under Fire", "Basic move", "Roll `2d6`+Cool. 10+ you do it. 7–9 you stumble, hesitate or flinch: the GM offers a worse outcome, a hard bargain or an ugly choice."],
@@ -75,9 +75,9 @@ export default {
     label: "Abilities & reference",
     creatures: [
       ["Watch Patrol", "Example · city watch gang", 2, ["Level 2", "Armor", "III", "Standard"], [["Clubs and crossbows", "", "Harm 2. Calls for backup when outnumbered."]], "Take a bribe if no sergeant is watching."],
-      ["Dock Gang", "Example · street gang", 1, ["Level 1", "—", "I", "Standard"], [["Hooks and knives", "", "Harm 1–2."]], ""],
+      ["Dock Gang", "Example · street gang", 1, ["Level 1", "–", "I", "Standard"], [["Hooks and knives", "", "Harm 1–2."]], ""],
       ["Hollow", "Example · undead", 3, ["Level 3", "Tough", "II", "Risky"], [["Rending grip", "", "Harm 3. Ignores harm short of fire or electroplasm."]], ""],
-      ["Restless Ghost", "Example · spirit", 3, ["—", "Ethereal", "II", "Desperate"], [["Possess", "", "Attune to resist. On a failure the ghost takes the body for a scene."], ["Chill", "", "Harm 2, cold. Weapons pass through."]], "Wants one thing it lost."],
+      ["Restless Ghost", "Example · spirit", 3, ["–", "Ethereal", "II", "Desperate"], [["Possess", "", "Attune to resist. On a failure the ghost takes the body for a scene."], ["Chill", "", "Harm 2, cold. Weapons pass through."]], "Wants one thing it lost."],
       ["Death Warden", "Example · keeper of the dead", 4, ["Level 3", "Heavy", "IV", "Desperate"], [["Lightning hook", "", "Harm 3. Binds spirits into a bottle."]], "Shows up when anyone dies near a ghost field."],
       ["Lesser Demon", "Example · demon", 5, ["Level 4", "Armor ×2", "V", "Desperate"], [["Claws and will", "", "Harm 4. Bargains for anything."]], ""],
     ],
@@ -102,12 +102,12 @@ export default {
   vtm5: {
     label: "Disciplines",
     creatures: [
-      ["Ghoul Retainer", "Mortal, blood-bound", 1, ["6", "1", "5", "—"], [["Brawl", "5d10>=6", "Superficial damage.", ""], ["Pistol", "4d10>=6", "+2 damage.", ""]], "Loyal to the domitor. Drinks the blood monthly."],
-      ["Task-Force Hunter", "Hunter, trained", 2, ["7", "2", "6", "—"], [["Assault rifle", "6d10>=6", "+3 damage. Uses UV and fire.", ""], ["Intel", "", "Knows the coterie's haven if they were sloppy."]], ""],
+      ["Ghoul Retainer", "Mortal, blood-bound", 1, ["6", "1", "5", "–"], [["Brawl", "5d10>=6", "Superficial damage.", ""], ["Pistol", "4d10>=6", "+2 damage.", ""]], "Loyal to the domitor. Drinks the blood monthly."],
+      ["Task-Force Hunter", "Hunter, trained", 2, ["7", "2", "6", "–"], [["Assault rifle", "6d10>=6", "+3 damage. Uses UV and fire.", ""], ["Intel", "", "Knows the coterie's haven if they were sloppy."]], ""],
       ["Anarch Brawler", "Kindred, 13th generation", 2, ["7", "1", "7", "1"], [["Fists", "7d10>=6", "Potence adds damage.", ""], ["Blood surge", "", "Rouse check: add 2 dice to one physical pool. `1d10>=6`"]], ""],
       ["Sheriff's Enforcer", "Kindred, 11th generation", 3, ["9", "2", "8", "2"], [["Sword", "8d10>=6", "+2 aggravated against mortals.", ""], ["Celerity", "", "Acts twice when it counts."]], "Asks once."],
       ["Thin-blood Alchemist", "Duskborn", 2, ["5", "0", "5", "0"], [["Alchemical flame", "5d10>=6", "Fire, aggravated damage.", ""]], "Can walk in daylight. Wants a place in the city."],
-      ["Werewolf", "Shapeshifter, enraged", 5, ["13", "3", "10", "—"], [["Claws", "10d10>=6", "Aggravated damage to Kindred.", ""], ["Rage", "", "Heals 1 superficial each turn."]], "Run."],
+      ["Werewolf", "Shapeshifter, enraged", 5, ["13", "3", "10", "–"], [["Claws", "10d10>=6", "Aggravated damage to Kindred.", ""], ["Rage", "", "Heals 1 superficial each turn."]], "Run."],
       ["Methuselah's Envoy", "Elder Kindred", 5, ["10", "2", "11", "5"], [["Dominate", "11d10>=6", "Contested with Resolve + Intelligence.", ""]], ""],
     ],
     spells: [

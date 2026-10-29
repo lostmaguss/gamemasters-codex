@@ -85,7 +85,7 @@ export async function postRecap(s, opts = {}) {
   return post({ embeds }, { ...opts, files: imgs.map(({ dataURL, name }) => ({ dataURL, name })) });
 }
 export function postCard(title, sub, fields, opts) {
-  return post({ embeds: [{ color: COLOR.info, title, description: sub ? `*${sub}*` : "", fields: fields.slice(0, 20).map(([name, value]) => ({ name, value: String(value).slice(0, 1000) || "—", inline: false })) }] }, opts);
+  return post({ embeds: [{ color: COLOR.info, title, description: sub ? `*${sub}*` : "", fields: fields.slice(0, 20).map(([name, value]) => ({ name, value: String(value).slice(0, 1000) || "–", inline: false })) }] }, opts);
 }
 
 export function discordModal(App) {

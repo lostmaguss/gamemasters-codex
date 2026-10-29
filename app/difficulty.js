@@ -42,6 +42,6 @@ export function meterHTML(r, compact = false) {
   if (!r.band) return `<div class="dmeter none"><span class="carried">${esc(r.why)}</span></div>`;
   const pct = Math.min(100, r.score / 1.8 * 100);
   const facts = [`${r.f} foe${r.f > 1 ? "s" : ""} vs ${r.n}`, `${r.fHP} HP vs ${r.pHP}`, r.fDPR ? `~${Math.round(r.fDPR)} damage a round${r.roundsToDrop ? ` (party down in ~${r.roundsToDrop})` : ""}` : "damage unknown"].join(" · ");
-  return `<div class="dmeter d-${r.band} ${compact ? "compact" : ""}" title="Estimated from HP, damage rolls and head count. A guide, not a rule.">
+  return `<div class="dmeter d-${r.band} ${compact ? "compact" : ""}" title="A rough estimate from HP, damage rolls and head count.">
     <b>${r.label}</b><div class="dbar"><i style="width:${pct}%"></i><span style="left:25%"></span><span style="left:47%"></span><span style="left:72%"></span></div>${compact ? "" : `<small>${esc(facts)}</small>`}</div>`;
 }

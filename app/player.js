@@ -123,7 +123,7 @@ function meView(P, m) {
       return `<div class="res"><div class="rh"><span>${esc(r.name)}</span><span>${esc(r.cur === "" ? "?" : r.cur)} / ${esc(r.max === "" ? "?" : r.max)}</span></div><div class="bar"><i style="width:${pct}%"></i></div>${P.hpEdit ? `<div class="rb">${[-5, -1, 1, 5].map(d => `<button data-hp="${esc(r.name)}" data-d="${d}">${d > 0 ? "+" : "−"}${Math.abs(d)}</button>`).join("")}</div>` : ""}</div>`; }).join("")}
     ${m.conds.length ? `<div class="conds" style="margin-top:12px">${m.conds.map(c => `<span>${esc(c)}</span>`).join("")}</div>` : ""}</div>
     <div class="card"><div class="eyebrow" style="margin-bottom:10px">${t("Tap a stat to roll it on the table")}</div>
-      <div class="stats">${m.stats.map(s => `<button data-stat="${esc(s.name)}"><small>${esc(s.name)}</small><b>${esc(s.value === "" ? "—" : s.value)}</b></button>`).join("")}</div>
+      <div class="stats">${m.stats.map(s => `<button data-stat="${esc(s.name)}"><small>${esc(s.name)}</small><b>${esc(s.value === "" ? "–" : s.value)}</b></button>`).join("")}</div>
       <div class="rollrow"><input id="expr" placeholder="2d6+1" inputmode="text" autocomplete="off" spellcheck="false"><button class="btn primary big" id="rollGo">${t("Roll")}</button></div></div>
     ${m.text.map(x => `<div class="card"><div class="eyebrow" style="margin-bottom:6px">${esc(x.name)}</div><div class="txt">${esc(x.body)}</div></div>`).join("")}`;
 }
