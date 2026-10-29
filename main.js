@@ -253,7 +253,7 @@ ipcMain.handle("discord:send", async (_e, { url, payload, file, files }) => {
     }
     if (res.status === 429) { const j = await res.json().catch(() => ({})); return { ok: false, status: 429, error: `Discord says slow down (${Math.ceil(j.retry_after || 1)}s)` }; }
     return { ok: res.ok, status: res.status, error: res.ok ? "" : (await res.text()).slice(0, 200) };
-  } catch (e) { return { ok: false, status: 0, error: String(e.message || e) }; }
+  } catch (e) { const m = String(e.message || e); return { ok: false, status: 0, error: /ERR_NAME|ERR_CONNECTION|ERR_TIMED_OUT|ERR_INTERNET|ERR_ADDRESS|ERR_NETWORK|ENOTFOUND|ECONN|ETIMEDOUT|fetch failed/i.test(m) ? "Couldn't reach Discord. If Discord is blocked where you are and you use a per-app VPN or split tunneling (WireSock, Proton, Mullvad…), add Gamemasters Codex to its app list too, not only Discord." : m }; }
 });
 
 // ---- printables: render a page in a hidden window and save it as a PDF ----

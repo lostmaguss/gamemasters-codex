@@ -70,7 +70,7 @@ async function start(token) {
   try { await client.login(token); }
   catch (e) {
     const m = String(e.message || e);
-    status = { state: "error", error: /token/i.test(m) ? "Discord rejected the token. Copy it again from the Developer Portal (Bot → Reset Token)." : /ENOTFOUND|ECONN|ETIMEDOUT|network/i.test(m) ? "Couldn't reach Discord. Check your internet connection and try again." : /intent/i.test(m) ? "Discord refused the bot's permissions. Recreate the bot without extra intents." : m };
+    status = { state: "error", error: /token/i.test(m) ? "Discord rejected the token. Copy it again from the Developer Portal (Bot → Reset Token)." : /ENOTFOUND|ECONN|ETIMEDOUT|network/i.test(m) ? "Couldn't reach Discord. Check your internet connection. If Discord is blocked where you are and you use a per-app VPN or split tunneling (WireSock, Proton, Mullvad…), add Gamemasters Codex to its app list too, not only Discord." : /intent/i.test(m) ? "Discord refused the bot's permissions. Recreate the bot without extra intents." : m };
     client = null; tell();
   }
 }
