@@ -1,0 +1,69 @@
+# Builds app/rules-srd.js from the open SRDs: D&D 5e (SRD 5.1, CC-BY-4.0), Daggerheart (SRD 1.0, DPCGL), Fate Core / FAE (CC-BY 3.0).
+import json, re, sys
+S, OUT = sys.argv[1], sys.argv[2]
+def clean(t):
+    t = re.sub(r'<[^>]+>', '', t); t = re.sub(r'\{example\}', '', t); t = t.replace('￼', '')
+    t = re.sub(r'\n{3,}', '\n\n', t); return t.strip()
+def dice(t): return re.sub(r'(?<![\w`])(\d*d\d+(?:\s?[+−-]\s?\d+)?)(?![\w`])', lambda m: '`' + m.group(1).replace(' ', '') + '`', t)
+R = {}
+# --- D&D 5e
+C = json.load(open(f"{S}/5e/Conditions.json"))
+e5 = [{"cat": "Conditions", "name": c["name"], "text": "\n".join(("- " + d.lstrip("- ").strip()) if d.strip().startswith("-") or not d.strip().endswith(":") else d for d in c["desc"])} for c in C]
+RS = {r["name"]: r["desc"] for r in json.load(open(f"{S}/5e/Rule-Sections.json"))}
+def split(desc, cat, keep=None):
+    out = []
+    for part in re.split(r'\n(?=#{2,4} )', desc):
+        m = re.match(r'#{2,4} (.+)\n', part)
+        if not m: continue
+        name = m.group(1).strip()
+        if keep and name not in keep: continue
+        out.append({"cat": cat, "name": name, "text": dice(clean(part[m.end():]))})
+    return out
+e5 += split(RS["Actions in Combat"], "Actions")
+e5 += [{"cat": "Combat", "name": "Advantage and Disadvantage", "text": clean(re.sub(r'^##+ .+\n', '', RS["Advantage and Disadvantage"]))}]
+e5 += [{"cat": "Combat", "name": "Cover", "text": clean(re.sub(r'^##+ .+\n', '', RS["Cover"]))}]
+e5 += split(RS["Damage and Healing"], "Combat", {"Dropping to 0 Hit Points", "Instant Death", "Falling Unconscious", "Death Saving Throws", "Stabilizing a Creature", "Knocking a Creature Out", "Temporary Hit Points", "Critical Hits", "Healing"})
+e5 += split(RS["Resting"], "Resting")
+R["dnd5e"] = e5
+# --- Daggerheart
+md = open(f"{S}/dh/README.md").read().split("\n")
+def section(title, cat, name=None, stop_level=None):
+    for i, l in enumerate(md):
+        m = re.match(r'^(#+) (.+)$', l)
+        if m and m.group(2).strip().upper() == title.upper():
+            lvl = len(m.group(1)); body = []
+            for l2 in md[i + 1:]:
+                m2 = re.match(r'^(#+) ', l2)
+                if m2 and len(m2.group(1)) <= (stop_level or lvl): break
+                body.append(l2)
+            txt = re.sub(r'^#+ (.+)$', lambda x: "**" + x.group(1).title() + "**", "\n".join(body), flags=re.M)
+            return {"cat": cat, "name": name or title.title(), "text": dice(clean(txt))}
+    raise SystemExit("missing " + title)
+R["daggerheart"] = [section("HIDDEN", "Conditions", "Hidden"), section("RESTRAINED", "Conditions", "Restrained"), section("VULNERABLE", "Conditions", "Vulnerable"),
+  section("TEMPORARY TAGS & SPECIAL CONDITIONS", "Conditions", "Temporary & special conditions"),
+  section("ACTION ROLLS", "Core rules", "Action rolls"), section("REACTION ROLLS", "Core rules", "Reaction rolls"), section("GROUP ACTION ROLLS", "Core rules", "Group action rolls"),
+  section("ADVANTAGE & DISADVANTAGE", "Core rules", "Advantage & disadvantage"), section("HOPE & FEAR", "Core rules", "Hope & Fear"), section("EVASION", "Combat", "Evasion"),
+  section("HIT POINTS & DAMAGE THRESHOLDS", "Combat", "Hit Points & damage thresholds"), section("STRESS", "Combat", "Stress"), section("DAMAGE ROLLS", "Combat", "Damage rolls"),
+  section("CRITICAL DAMAGE", "Combat", "Critical damage"), section("MAPS, RANGE, AND MOVEMENT", "Combat", "Range & movement"), section("DEATH", "Combat", "Death"),
+  section("QUICK REFERENCE: RESOLVING ACTION ROLLS", "GM", "Resolving action rolls"), section("USING FEAR", "GM", "Using Fear")]
+# --- Fate Core
+fc = open(f"{S}/fate/docs/markdown/fate-core.md").read().split("\n")
+def fsec(title, cat, name=None, start=0):
+    for i in range(start, len(fc)):
+        m = re.match(r'^(#+) (.+)$', fc[i])
+        if m and m.group(2).strip().lower() == title.lower():
+            lvl = len(m.group(1)); body = []
+            for l2 in fc[i + 1:]:
+                m2 = re.match(r'^(#+) ', l2)
+                if m2 and len(m2.group(1)) <= lvl: break
+                body.append(l2)
+            txt = re.sub(r'^#+ (.+)$', lambda x: "**" + x.group(1) + "**", "\n".join(body), flags=re.M)
+            txt = re.sub(r'\{example\}.*?(?=\n\n|\Z)', '', txt, flags=re.S)
+            return {"cat": cat, "name": name or title.title(), "text": clean(txt)[:2600]}
+    raise SystemExit("missing fate " + title)
+fate = [fsec("The Four Outcomes", "Core rules", "The four outcomes", 1700), fsec("Overcome", "Actions", start=1840), fsec("Create an Advantage", "Actions", start=1840), fsec("Attack", "Actions", start=1940), fsec("Defend", "Actions", start=1970),
+  fsec("Invoking an Aspect", "Aspects", "Invoking an aspect"), fsec("Compels", "Aspects"), fsec("Stress", "Conflict", start=2300), fsec("Consequences", "Conflict", start=2340), fsec("Conceding the Conflict", "Conflict", "Conceding")]
+R["fate"] = fate; R["fae"] = fate
+js = "// Rules reference from the open SRDs, generated by scripts/gen-rules.py. Do not edit by hand.\n// D&D 5e: SRD 5.1 (Wizards of the Coast, CC-BY-4.0). Daggerheart: SRD 1.0 (© Critical Role, LLC, DPCGL). Fate Core: Evil Hat Productions, CC-BY 3.0.\nexport default " + json.dumps(R, ensure_ascii=False, indent=0) + ";\n"
+open(OUT, "w").write(js)
+for k, v in R.items(): print(k, len(v), [x["name"] for x in v][:30])

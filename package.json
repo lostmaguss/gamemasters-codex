@@ -1,6 +1,6 @@
 {
   "name": "gamemasters-codex",
-  "version": "1.30.0",
+  "version": "1.31.0",
   "description": "Companion app for game masters: 3D dice, prep, maps, a world wiki and stream overlays, built for Discord games.",
   "main": "main.js",
   "scripts": {

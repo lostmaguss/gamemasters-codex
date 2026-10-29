@@ -146,18 +146,21 @@ ipcMain.handle("data:save", async (_e, text) => {
   await dailyBackup(file);
   return true;
 });
-ipcMain.handle("data:export", async (_e, { text, name }) => {
+// kind "pack": a homebrew pack to share (.codexpack); otherwise a campaign backup
+const FILE_KIND = { pack: { title: "homebrew pack", filter: { name: "Codex homebrew pack", extensions: ["codexpack", "json"] } }, backup: { title: "campaign backup", filter: { name: "Codex backup", extensions: ["json"] } } };
+ipcMain.handle("data:export", async (_e, { text, name, kind }) => {
+  const K = FILE_KIND[kind] || FILE_KIND.backup;
   const { canceled, filePath } = await dialog.showSaveDialog(desk, {
-    title: "Export campaign backup", defaultPath: name || "codex-backup.json",
-    filters: [{ name: "Codex backup", extensions: ["json"] }],
+    title: "Export " + K.title, defaultPath: name || "codex-backup.json", filters: [K.filter],
   });
   if (canceled || !filePath) return false;
   await fs.promises.writeFile(filePath, text, "utf8");
   return filePath;
 });
-ipcMain.handle("data:import", async () => {
+ipcMain.handle("data:import", async (_e, kind) => {
+  const K = FILE_KIND[kind] || FILE_KIND.backup;
   const { canceled, filePaths } = await dialog.showOpenDialog(desk, {
-    title: "Import campaign backup", properties: ["openFile"], filters: [{ name: "Codex backup", extensions: ["json"] }],
+    title: "Import " + K.title, properties: ["openFile"], filters: [K.filter],
   });
   if (canceled || !filePaths[0]) return null;
   return fs.promises.readFile(filePaths[0], "utf8");

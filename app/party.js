@@ -1,3 +1,4 @@
+import { dropZone } from "./dnd.js";
 import { SYSTEMS } from "./systems.js";
 // Party: character sheets for the players, laid out the way your system works.
 import { $, $$, esc, h, icon, toast, uid, debounce, ls } from "./util.js";
@@ -79,6 +80,7 @@ export function createParty(el, App) {
       render();
     };
     $("[data-rm]", card).onclick = () => App.confirm(`Remove ${m.character || m.player || "this character"}?`, "Their sheet is deleted. Past sessions keep their history.", "Remove", () => { C().party = C().party.filter(x => x !== m); save(); render(); pushParty(); });
+    dropZone($("[data-portrait]", card), { image: url => { m.portrait = url; save(); render(); pushParty(); toast("Portrait set"); }, max: 320, label: "Drop portrait" });
     $("[data-portrait]", card).onclick = () => { const f = h(`<input type="file" accept="image/*">`); f.onchange = async () => { if (f.files[0]) { m.portrait = await shrinkImage(f.files[0], 320); save(); render(); pushParty(); } }; f.click(); };
     $$(".resrc", card).forEach(rd => {
       const x = res(m, rd.dataset.res);

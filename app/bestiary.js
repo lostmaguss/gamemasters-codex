@@ -1,3 +1,4 @@
+import { draggable, dropZone } from "./dnd.js";
 // Bestiary: creatures with a stat layout you define for your own system. Ability rolls are clickable.
 import { $, $$, esc, h, icon, toast, uid, debounce, ls } from "./util.js";
 import { C, save } from "./store.js";
@@ -32,6 +33,7 @@ export function createBestiary(el, App) {
     const list = B().filter(x => !q || `${x.name} ${x.kind} ${x.tags}`.toLowerCase().includes(q)).sort((a, b) => a.name.localeCompare(b.name));
     $("#bItems", el).innerHTML = list.map(x => `<button class="cx-item ${x.id === st.sel ? "on" : ""}" data-id="${x.id}"><b>${esc(x.name || "Unnamed")}</b><span class="threat-line">${[1, 2, 3, 4, 5].map(i => skull(i <= (x.threat || 0))).join("")} <span>${esc(x.kind || "")}</span></span></button>`).join("")
       || `<p style="padding:14px;color:var(--faint)">${B().length ? "No matches." : "No creatures yet."}</p>`;
+    $$("[data-id]", $("#bItems", el)).forEach(b => { const x = B().find(y => y.id === b.dataset.id); draggable(b, { kind: "creature", id: x.id, name: x.name }); b.title = "Drag into Combat, Tonight or the Map"; });
     $$("[data-id]", $("#bItems", el)).forEach(b => b.onclick = () => { st.sel = b.dataset.id; C().ui.creature = st.sel; st.edit = false; renderList(); renderCard(); });
   }
   function rollAbility(x, a) { if (!a.roll) return; App.roll(a.roll, `${x.name}: ${a.name}`, { secret: st.secret }); }
@@ -55,6 +57,7 @@ export function createBestiary(el, App) {
       </article>`;
       $$("[data-roll]", box).forEach(b => b.onclick = () => rollAbility(x, x.abilities.find(a => a.id === b.dataset.roll)));
       $$("[data-mdroll]", box).forEach(b => b.onclick = () => App.roll(b.dataset.mdroll, x.name, { secret: st.secret }));
+      dropZone($(".mcard", box), { image: url => { x.img = url; save(); renderCard(); toast("Picture set"); }, max: 700, label: "Drop to set the picture" });
     } else {
       box.innerHTML = bar + `<article class="mcard editing">
         <div class="mhead"><div style="flex:1;display:flex;flex-direction:column;gap:6px"><input class="m-name" type="text" data-k="name" value="${esc(x.name)}" placeholder="Creature name"><div class="row"><input type="text" data-k="kind" value="${esc(x.kind)}" placeholder="Kind (undead beast, elite soldier…)" style="flex:1"><input type="text" data-k="tags" value="${esc(x.tags)}" placeholder="tags" style="flex:1"></div></div>

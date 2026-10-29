@@ -1,3 +1,5 @@
+import { conditionsFor, ruleText } from "./rulesref.js";
+import { draggable, dropZone } from "./dnd.js";
 // Combat tracker: initiative, HP, conditions with round timers. The turn order shows on the stream window.
 import { t } from "./i18n.js";
 import { rate, meterHTML, creatureDPR } from "./difficulty.js";
@@ -34,6 +36,54 @@ export function streamCombatState(c = C()) {
 let pushT;
 export function pushCombat() { clearTimeout(pushT); pushT = setTimeout(() => { Stage.overlay(streamCombatState()); dispatchEvent(new Event("codex:combat")); }, 60); }
 
+// shared by Combat, Tonight and the GM phone remote
+export function combatLog(msg) { const b = combat(), L = b.log; L.unshift({ t: Date.now(), r: b.round, msg }); L.length = Math.min(L.length, 80); }
+export function combatChanged() {
+  // player HP lives on their party sheet; keep the two in step
+  const c = C();
+  for (const x of combat().list) if (x.kind === "pc" && x.ref) { const m = c.party.find(p => p.id === x.ref); if (m) { m.res ||= {}; m.res.HP ||= { cur: "", max: "" }; m.res.HP.cur = x.hp; if (x.max !== "") m.res.HP.max = x.max; } }
+  save(); pushCombat(); import("./party.js").then(p => p.pushParty());
+}
+export function advanceTurn(dir) {
+  const b = combat(); if (!b.active || !b.list.length) return false;
+  if (dir > 0) {
+    // conditions on the combatant whose turn is ending tick down
+    const ending = b.list[b.turn];
+    ending?.conds?.forEach(k => { if (k.rounds) k.rounds--; });
+    const expired = ending?.conds?.filter(k => k.rounds === 0) || [];
+    if (expired.length) { ending.conds = ending.conds.filter(k => k.rounds !== 0); combatLog(`${ending.name}: ${expired.map(k => k.name).join(", ")} wore off`); toast(`${ending.name}: ${expired.map(k => k.name).join(", ")} wore off`); }
+  }
+  let guard = b.list.length, newRound = false;
+  do {
+    b.turn += dir;
+    if (b.turn >= b.list.length) { b.turn = 0; b.round++; combatLog(`Round ${b.round}`); newRound = true; }
+    if (b.turn < 0) { b.turn = b.list.length - 1; b.round = Math.max(1, b.round - 1); }
+  } while (b.autoSkip && dir > 0 && --guard > 0 && b.list[b.turn].kind === "foe" && Number(b.list[b.turn].hp) <= 0 && Number(b.list[b.turn].max) > 0);
+  combatChanged();
+  if (newRound && Discord.settings().autoRounds && Discord.connected()) Discord.postCombat(streamCombatState(), { quiet: true });
+  return true;
+}
+// "7" is damage, "+5" healing, "=20" sets HP
+export function applyDamage(x, raw) {
+  const s = String(raw).trim(); if (!s) return false;
+  const old = Number(x.hp) || 0;
+  if (/^[+-]\d+$/.test(s)) x.hp = old + Number(s);
+  else if (/^\d+$/.test(s)) x.hp = old - Number(s);
+  else if (/^=\d+$/.test(s)) x.hp = Number(s.slice(1));
+  else { toast("Type damage like 7, healing like +5, or =20 to set HP"); return false; }
+  if (x.max) x.hp = Math.min(x.hp, Number(x.max) * 2);
+  const d = x.hp - old;
+  combatLog(`${x.name} ${d < 0 ? "takes " + -d : "heals " + d}${x.hp <= 0 ? " and goes down" : ""}`);
+  if (x.hp <= 0 && old > 0) toast(`${x.name} is down`);
+  return true;
+}
+
+// a creature from the bestiary joins the fight, numbered after any of its kind already there
+export function addCreature(x, count = 1) {
+  const b = combat(), have = b.list.filter(y => y.ref === x.id).length;
+  for (let i = 0; i < count; i++) b.list.push(fromCreature(x, count + have > 1 ? have + i + 1 : 0));
+  if (b.active) sortCombat(b);
+}
 function fromCreature(x, n, hp) {
   const max = parseInt(x.stats?.HP || x.hp) || 0;
   const initMod = initModOf(x.stats);
@@ -48,14 +98,10 @@ export function createCombat(el, App) {
     return meterHTML(rate(foes.map(x => ({ hp: Number(live ? x.hp : x.max) || Number(x.max) || 0, dpr: creatureDPR(c.bestiary.find(y => y.id === x.ref)) })), c.party), true);
   };
   el.innerHTML = `<div class="combat"><header class="cb-head" id="cbHead"></header><div class="cb-grid"><section class="cb-list" id="cbList"></section><aside class="cb-side" id="cbSide"></aside></div></div>`;
+  dropZone($("#cbList", el), { accept: p => p.kind === "creature", label: p => `Add ${p.name} to the fight`, drop: p => { const x = C().bestiary.find(y => y.id === p.id); if (x) { addCreature(x); combatChanged(); render(); toast(`${x.name} joins the fight`); } } });
   const cb = () => combat();
-  const log = msg => { const L = cb().log; L.unshift({ t: Date.now(), r: cb().round, msg }); L.length = Math.min(L.length, 80); };
-  const changed = (full = true) => {
-    // player HP lives on their party sheet; keep the two in step
-    const c = C();
-    for (const x of cb().list) if (x.kind === "pc" && x.ref) { const m = c.party.find(p => p.id === x.ref); if (m) { m.res ||= {}; m.res.HP ||= { cur: "", max: "" }; m.res.HP.cur = x.hp; if (x.max !== "") m.res.HP.max = x.max; } }
-    save(); pushCombat(); import("./party.js").then(p => p.pushParty()); if (full) render();
-  };
+  const log = combatLog;
+  const changed = (full = true) => { combatChanged(); if (full) render(); };
 
   function renderHead() {
     const b = cb(), box = $("#cbHead", el), cur = b.list[b.turn];
@@ -105,36 +151,11 @@ export function createCombat(el, App) {
     App.logBeat?.("combat", `Fight: ${b.list.filter(x => x.kind === "foe").map(x => x.name).join(", ")}`, true);
   }
   function next(dir) {
-    const b = cb(); if (!b.active || !b.list.length) return;
-    if (dir > 0) {
-      // conditions on the combatant whose turn is ending tick down
-      const ending = b.list[b.turn];
-      ending?.conds?.forEach(k => { if (k.rounds) k.rounds--; });
-      const expired = ending?.conds?.filter(k => k.rounds === 0) || [];
-      if (expired.length) { ending.conds = ending.conds.filter(k => k.rounds !== 0); log(`${ending.name}: ${expired.map(k => k.name).join(", ")} wore off`); toast(`${ending.name}: ${expired.map(k => k.name).join(", ")} wore off`); }
-    }
-    let guard = b.list.length;
-    do {
-      b.turn += dir;
-      if (b.turn >= b.list.length) { b.turn = 0; b.round++; log(`Round ${b.round}`); b._newRound = true; }
-      if (b.turn < 0) { b.turn = b.list.length - 1; b.round = Math.max(1, b.round - 1); }
-    } while (b.autoSkip && dir > 0 && --guard > 0 && b.list[b.turn].kind === "foe" && Number(b.list[b.turn].hp) <= 0 && Number(b.list[b.turn].max) > 0);
-    st.sel = b.list[b.turn]?.id; changed();
-    if (b._newRound) { delete b._newRound; if (Discord.settings().autoRounds && Discord.connected()) Discord.postCombat(streamCombatState(), { quiet: true }); }
+    if (!advanceTurn(dir)) return;
+    st.sel = cb().list[cb().turn]?.id; render();
     setTimeout(() => $(".cb-row.current", el)?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 30);
   }
-  function applyHp(x, raw) {
-    const s = String(raw).trim(); if (!s) return;
-    const old = Number(x.hp) || 0;
-    if (/^[+-]\d+$/.test(s)) x.hp = old + Number(s);
-    else if (/^\d+$/.test(s)) x.hp = old - Number(s); // a plain number is damage, the common case
-    else if (/^=\d+$/.test(s)) x.hp = Number(s.slice(1));
-    else return toast("Type damage like 7, healing like +5, or =20 to set HP");
-    if (x.max) x.hp = Math.min(x.hp, Number(x.max) * 2);
-    const d = x.hp - old;
-    log(`${x.name} ${d < 0 ? "takes " + -d : "heals " + d}${x.hp <= 0 ? " and goes down" : ""}`);
-    if (x.hp <= 0 && old > 0) toast(`${x.name} is down`);
-  }
+  const applyHp = applyDamage;
 
   function renderList() {
     const b = cb(), box = $("#cbList", el), cur = b.list[b.turn];
@@ -146,7 +167,7 @@ export function createCombat(el, App) {
         <input class="cb-init mono" type="number" value="${esc(x.init)}" placeholder="—" title="Initiative" aria-label="Initiative">
         <div class="cb-who"><b>${esc(x.name)}</b><span><i class="kd"></i>${K.label}${x.def ? ` · Def ${esc(x.def)}` : ""}${x.hidden ? ` · <em>hidden from stream</em>` : ""}</span></div>
         <div class="cb-hp">${max ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}<span class="mono">${max ? `${hp}<small>/${max}</small>` : `<small>no HP</small>`}</span><input type="text" class="cb-dmg mono" placeholder="dmg / +heal" aria-label="Damage or healing"></div>
-        <div class="cb-conds">${(x.conds || []).map(k => `<button class="cond" data-cond="${k.id}" title="Click to remove">${esc(k.name)}${k.rounds ? `<b>${k.rounds}</b>` : ""}</button>`).join("")}<button class="cond add" data-addcond title="Add a condition">${icon("plus")}</button></div>
+        <div class="cb-conds">${(x.conds || []).map(k => `<button class="cond" data-cond="${k.id}" title="${esc((ruleText(C().system, k.name).slice(0, 220) + "\n\n").trimStart())}Click to remove">${esc(k.name)}${k.rounds ? `<b>${k.rounds}</b>` : ""}</button>`).join("")}<button class="cond add" data-addcond title="Add a condition">${icon("plus")}</button></div>
         <div class="cb-ops"><button data-up title="Move up">${icon("up")}</button><button data-down title="Move down">${icon("down")}</button><button data-hide title="${x.hidden ? "Show on stream" : "Hide from stream"}" class="${x.hidden ? "on" : ""}">${icon("lock")}</button><button data-rm title="Remove">${icon("x")}</button></div>
       </li>`; }).join("")}</ol>`;
     bindAdd(box);
@@ -168,7 +189,7 @@ export function createCombat(el, App) {
   }
   function condPicker(anchor, x) {
     App.modal(`<h2>Condition on ${esc(x.name)}</h2>
-      <div class="chips" id="cpL">${CONDITIONS.map(n => `<button class="chip" data-n="${n}">${n}</button>`).join("")}</div>
+      <div class="chips" id="cpL">${(conditionsFor(C().system) || CONDITIONS).map(n => `<button class="chip" data-n="${esc(n)}" title="${esc(ruleText(C().system, n).slice(0, 220))}">${esc(n)}</button>`).join("")}</div>
       <div class="row"><label class="f" style="flex:1"><span>Or type one</span><input type="text" id="cpT" placeholder="Cursed by the bell"></label>
       <label class="f"><span>Lasts (rounds)</span><div class="stepper"><button data-r="-1">−</button><output id="cpR">∞</output><button data-r="1">+</button></div></label></div>
       <p class="md-help" style="margin:0">Rounds count down at the end of ${esc(x.name)}'s turn. ∞ lasts until you remove it.</p>

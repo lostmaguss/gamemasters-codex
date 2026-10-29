@@ -21,6 +21,8 @@ export function openPalette(App, VIEWS) {
     cmd("Open the stream window", "stream", () => App.stage.open(), "stream discord share");
     cmd("New note in the Codex", "codex", () => App.go("codex", { title: "New page " + new Date().toLocaleTimeString() }), "page write");
     cmd("Settings", "gear", () => App.settings(), "preferences options config");
+    cmd("Rules reference", "book", () => App.rules(), "conditions srd rules prone grapple actions death");
+    cmd("Homebrew packs: share or load", "plus", () => App.packs(), "pack share export import homebrew community");
     cmd("Theme & appearance", "image", () => App.settings("look"), "theme dark light colour color look skin");
     cmd("Accessibility", "fit", () => App.settings("a11y"), "contrast motion font colourblind colorblind");
     cmd("Rules & genre settings", "gear", () => App.rulesModal(), "settings crit initiative system");

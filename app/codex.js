@@ -1,3 +1,4 @@
+import { dropZone } from "./dnd.js";
 import { libraryModal, inlineRolls } from "./library.js";
 // The Codex: world notes as a small wiki. [[Title]] links notes together; backlinks show who mentions a page.
 import { $, $$, esc, h, icon, toast, uid, debounce } from "./util.js";
@@ -88,6 +89,7 @@ export function createCodex(el, App) {
       </div>
       <div class="manuscript" id="cxBody"></div>`;
     const body = $("#cxBody", page);
+    dropZone(body, { image: url => { n.img = url; n.updated = Date.now(); save(); renderPage(); toast("Picture set"); }, max: 700, label: "Drop to set the page's picture" });
     if (st.mode === "read") {
       body.innerHTML = `${n.img ? `<img class="cx-img" src="${n.img}" alt="">` : ""}<h1 class="cx-title">${esc(n.title || "Untitled")}</h1>
         <div class="meta"><span class="tag" style="border-color:${CATS[n.cat]};color:${CATS[n.cat]}">${esc(n.cat)}</span>${(n.tags || "").split(",").map(t => t.trim()).filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join("")}<span>Edited ${new Date(n.updated || Date.now()).toLocaleDateString()}</span></div>

@@ -1,3 +1,4 @@
+import { draggable, dropZone } from "./dnd.js";
 // Battle map: image + grid + tokens + fog of war you paint away. Mirrors to the stream window.
 import { $, $$, esc, h, icon, toast, uid, ls, debounce } from "./util.js";
 import { C, save } from "./store.js";
@@ -173,6 +174,13 @@ export function createMap(el, App) {
     v.x = cx - (cx - v.x) / v.z * nz; v.y = cy - (cy - v.y) / v.z * nz; v.z = nz; render(); if (ui().follow) pushState(); saveView();
   }, { passive: false });
   const saveView = debounce(save, 500);
+  dropZone(stage, { accept: p => p.kind === "creature" && !!M(), label: p => `Place ${p.name}`, drop: async (p, e) => {
+    const x = C().bestiary.find(y => y.id === p.id), m = M(); if (!x || !m) return;
+    const at = toMap(e.clientX, e.clientY), n = m.tokens.filter(t => t.name.startsWith(x.name)).length;
+    const t = { id: uid(), name: n ? `${x.name} ${n + 1}` : x.name, color: "#f39da8", size: 1, img: x.img || null, x: at.x, y: at.y }; snap(t);
+    if (t.img) t._img = await loadImg(t.img);
+    m.tokens.push(t); st.sel = t.id; save(); renderSide(); render(); pushState(); toast(`${t.name} placed`);
+  } });
   stage.addEventListener("dragover", e => e.preventDefault());
   stage.addEventListener("drop", e => { e.preventDefault(); const f = [...e.dataTransfer.files].find(x => x.type.startsWith("image/")); if (f) addMap(f); });
 

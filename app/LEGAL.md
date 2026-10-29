@@ -16,13 +16,13 @@ Gamemaster's Codex © 2026 lostmaguss. The app's own code, interface, artwork, s
 
 ### Dungeons & Dragons 5th Edition: System Reference Document 5.1
 
-The D&D 5e library (creatures and spells) uses material from the SRD 5.1, condensed and reformatted for the app.
+The D&D 5e library (creatures and spells) and the D&D 5e rules reference (conditions, combat actions, death saves, resting) use material from the SRD 5.1. Library entries are condensed and reformatted; rules reference text is quoted from the SRD.
 
 This work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.
 
 ### Pathfinder Second Edition: ORC License
 
-The Pathfinder 2e library uses game rules (statistics and mechanics) from Pathfinder Monster Core and Pathfinder Player Core. The descriptions are written for the app.
+The Pathfinder 2e library uses game rules (statistics and mechanics) from Pathfinder Monster Core and Pathfinder Player Core, and the Pathfinder 2e rules reference summarises Player Core's conditions and core rules. The descriptions and summaries are written for the app.
 
 **ORC Notice:** This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including paizo.com/orclicense, azoralaw.com/orclicense, gitlab.com/azoralaw/orclicense, and others. All warranties are disclaimed as set forth therein.
 
@@ -86,13 +86,13 @@ Gamemaster's Codex. Copyright 2026, lostmaguss.
 
 ### Daggerheart: Darrington Press Community Gaming License
 
-The Daggerheart library (adversaries and domain cards) is Public Game Content from the Daggerheart SRD, with minor modifications to format and structure.
+The Daggerheart library (adversaries and domain cards) and the Daggerheart rules reference (conditions, action rolls, Hope and Fear, damage, death) are Public Game Content from the Daggerheart SRD, with minor modifications to format and structure.
 
 This product includes materials from the Daggerheart System Reference Document 1.0, © Critical Role, LLC. under the terms of the Darrington Press Community Gaming (DPCGL) License. More information can be found at https://www.daggerheart.com/. There are minor modifications to format and structure.
 
 ### Fate Core and Fate Accelerated: Creative Commons Attribution 3.0
 
-The Fate library (stunts, nameless NPC rules, stress and the ladder) uses the Fate Core and Fate Accelerated SRDs, shortened for the app.
+The Fate library (stunts, nameless NPC rules, stress and the ladder) and the Fate rules reference (the four actions and outcomes, aspects, compels, stress, consequences, conceding) use the Fate Core and Fate Accelerated SRDs. Library entries are shortened; rules reference text is quoted from the Fate Core SRD.
 
 This work is based on Fate Core System and Fate Accelerated Edition (found at http://www.faterpg.com/), products of Evil Hat Productions, LLC, developed, authored, and edited by Leonard Balsera, Brian Engard, Jeremy Keller, Ryan Macklin, Mike Olson, Clark Valentine, Amanda Valentine, Fred Hicks, and Rob Donoghue, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 

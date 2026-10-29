@@ -4,6 +4,9 @@ import { initPoll } from "./poll.js";
 import { SYSTEMS, systemById, applySystem } from "./systems.js";
 import { openSettings, applyPrefs, LOOKS, lookFor } from "./settings.js";
 import { initChecklist, markSeen } from "./checklist.js";
+import { railSwitching } from "./dnd.js";
+import { toggleRules, openRules } from "./rulesref.js";
+import { packsModal, importModal as importPack } from "./packs.js";
 import { loadLibrary, toCreature, toSpell } from "./library.js";
 import { syncCustomDice } from "./customdice.js";
 import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
@@ -17,6 +20,7 @@ import { createChronicle } from "./chronicle.js";
 import { createDice } from "./dicedesk.js";
 import { createPrep } from "./prep.js";
 import { createLive } from "./live.js";
+import { createTonight } from "./tonight.js";
 import { createTables } from "./tables.js";
 import { createBestiary } from "./bestiary.js";
 import { createSoundEngine } from "./sound.js";
@@ -44,6 +48,7 @@ export function applyGenre(c = C()) {
 
 const VIEWS = [
   { key: "prep", label: "Prep", icon: "book", make: createPrep, group: "Session" },
+  { key: "tonight", label: "Tonight", icon: "star", make: createTonight },
   { key: "live", label: "Live", icon: "stream", make: createLive },
   { key: "combat", label: "Combat", icon: "combat", make: createCombat },
   { key: "map", label: "Map", icon: "map", make: createMap },
@@ -218,7 +223,7 @@ function onStageResult(r) {
 
 function buildRail() {
   const rail = $("#rail");
-  rail.innerHTML = VIEWS.map((v, i) => `${v.group && i ? `<div class="rail-sep"></div>` : ""}<a href="#" data-v="${v.key}" title="${v.label} (Ctrl+${(i + 1) % 10})">${icon(v.icon)}<span>${v.label}</span></a>`).join("") + `<div class="grow"></div>`;
+  rail.innerHTML = VIEWS.map((v, i) => `${v.group && i ? `<div class="rail-sep"></div>` : ""}<a href="#" data-v="${v.key}" title="${v.label}${i < 10 ? ` (${keys("Ctrl+" + (i + 1) % 10)})` : ""}">${icon(v.icon)}<span>${v.label}</span></a>`).join("") + `<div class="grow"></div>`;
   $$("a", rail).forEach(a => a.onclick = e => { e.preventDefault(); show(a.dataset.v); });
 }
 function show(key, arg) {
@@ -386,7 +391,7 @@ const settingsCtx = {
   exportBackup, importBackup, restoreModal: () => restoreModal(), deleteCampaign, legalText,
 };
 export function settings(tab) { openSettings(App, settingsCtx, tab); }
-App.settings = settings; App.tableModal = () => tableModal(); App.discordConnected = () => Discord.connected();
+App.settings = settings; App.packs = () => packsModal(App); App.settingsRemount = () => settingsCtx.remount(); App.tableModal = () => tableModal(); App.discordConnected = () => Discord.connected();
 function campaignMenu() {
   const c = C();
   App.menu($("#campBtn"), [
@@ -414,6 +419,14 @@ function wireChrome() {
   }
   $("#campBtn").onclick = campaignMenu;
   $("#searchBtn").onclick = () => openPalette(App, VIEWS);
+  $("#rulesBtn").onclick = () => toggleRules(App);
+  // a homebrew pack dropped anywhere on the window opens its preview
+  addEventListener("dragover", e => { if ([...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
+  addEventListener("drop", async e => {
+    const f = [...(e.dataTransfer?.files || [])].find(x => /\.codexpack$/i.test(x.name)); if (!f) return;
+    e.preventDefault(); importPack(App, await f.text());
+  });
+  App.rules = q => openRules(App, q ? { q } : {});
   const st = $("#saveState");
   onSaved(s => { st.className = "save-state no-drag " + s; st.textContent = s === "saving" ? "Saving…" : s === "error" ? "Not saved" : "Saved"; });
   const sb = $("#streamBtn");
@@ -457,6 +470,7 @@ function wireChrome() {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(App, VIEWS); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") { e.preventDefault(); quickLog(); }
     if (e.key === "F1") { e.preventDefault(); helpSheet(); }
+    if (e.key === "F2") { e.preventDefault(); toggleRules(App); }
     if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+" || e.key === "-")) { e.preventDefault(); zoomBy(e.key === "-" ? -.1 : .1); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); flush(); toast("Saved"); }
     if ((e.ctrlKey || e.metaKey) && e.key === ",") { e.preventDefault(); settings(); }
@@ -488,7 +502,7 @@ async function restoreModal() {
   });
 }
 function helpSheet() {
-  const rows = [["Anywhere", [["Ctrl+K", "Search everything, run commands, type a roll"], ["Ctrl+L", "Log what just happened (live session)"], ["Ctrl+1…9, Ctrl+0", "Jump to a section"], ["Ctrl+S", "Save now"], ["Ctrl+,", "Settings"], ["Ctrl+Z · Ctrl+Shift+Z", "Undo · redo (outside text boxes)"], ["Ctrl + / Ctrl −", "Bigger / smaller interface"], ["F1", "This sheet"]]],
+  const rows = [["Anywhere", [["Ctrl+K", "Search everything, run commands, type a roll"], ["Ctrl+L", "Log what just happened (live session)"], ["Ctrl+1…9, Ctrl+0", "Jump to a section"], ["Ctrl+S", "Save now"], ["Ctrl+,", "Settings"], ["Ctrl+Z · Ctrl+Shift+Z", "Undo · redo (outside text boxes)"], ["Ctrl + / Ctrl −", "Bigger / smaller interface"], ["F1", "This sheet"], ["F2", "Rules reference"]]],
     ["Dice", [["Enter", "Throw"], ["Shift+Enter", "Secret roll"], ["Shift-click a die", "Throw it right away"], ["Right-click a die", "Take it out of the pool"], ["2d20kh1 · 4d6dl1", "Keep highest / drop lowest"], ["3d6! · 4d6r1 · 4dF", "Exploding · reroll 1s · Fate"], ["1d100<=45 · 8d6>=5", "Roll-under target · count hits"]]],
     ["Combat", [["Space", "Next turn (or start)"], ["7 · +5 · =20 in HP box", "Damage · heal · set"]]],
     ["Map", [["M R H B", "Move · Reveal · Hide · Box"], ["Right-drag", "Pan"], ["Delete", "Remove the selected token"]]],
@@ -634,7 +648,7 @@ async function checkUpdates() {
   applyPrefs(); setTimeout(() => initChecklist(App), 400);
   if (S.data.prefs.zoom && S.data.prefs.zoom !== 1) { if (window.codex?.zoom) window.codex.zoom(S.data.prefs.zoom); else document.body.style.zoom = S.data.prefs.zoom; }
   try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
-  buildRail(); wireChrome(); renderCampName(); ls.set("rules", C().rules);
+  buildRail(); railSwitching($("#rail"), v => show(v)); wireChrome(); renderCampName(); ls.set("rules", C().rules);
   show(C().ui.view || "prep");
   // one-time move of big embedded images out of the save file
   if (window.codex?.saveMedia && !S.data.prefs.mediaMoved) {

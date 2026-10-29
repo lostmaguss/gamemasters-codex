@@ -1,3 +1,4 @@
+import { dropZone } from "./dnd.js";
 // Live: the screen you run the session from. Soundboard, handouts on stream, and tonight's plan.
 import { $, $$, esc, h, icon, toast, uid, ls, debounce } from "./util.js";
 import { C, save } from "./store.js";
@@ -21,6 +22,7 @@ export function createLive(el, App) {
       <section class="lv-col lv-plan" id="lvPlan"></section>
     </div></div>`;
   const live = () => C().sessions.find(s => s.status === "live");
+  dropZone($("#lvHand", el), { image: async (url, f) => { C().handouts.push({ id: uid(), title: f.name.replace(/\.[^.]+$/, ""), type: "image", src: url }); save(); renderHand(); toast("Handout added"); }, max: 1800, label: "Drop to add a handout" });
   const touch = debounce(save, 300);
   let timer = null;
 
