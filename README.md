@@ -80,14 +80,19 @@ D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Dagge
 
 ## Ready-to-play adventures
 
-Pick **D&D 5e** or **Call of Cthulhu** in *New campaign* and tick *Start with a ready-to-play adventure*. You get a whole campaign you can run tonight: pregenerated characters on the party sheets, Codex pages for every place, NPC, faction and clue, a bestiary with stat blocks, a clue board, threat clocks, handouts, a played prologue in the Chronicle with its read-aloud recap, and the next sessions planned in Prep with strong starts, scenes, secrets, encounters and treasure.
+Pick **D&D 5e**, **Pathfinder 2e**, **Daggerheart**, **Call of Cthulhu** or **Cyberpunk RED** in *New campaign* and tick *Start with a ready-to-play adventure*. You get a whole campaign you can run tonight: pregenerated characters on the party sheets, Codex pages for every place, NPC, faction and clue, a bestiary with stat blocks, a clue board, threat clocks, handouts, a played prologue in the Chronicle with its read-aloud recap, and the next sessions planned in Prep with strong starts, scenes, secrets, encounters and treasure.
 
 - **The Barrow of Thornbury** (D&D 5e, levels 1 to 3, four sessions). Goblins raid a harvest village, a barrow under Gallows Hill holds a sleeping dead king, and a green hag in the bog wants his crown. Monsters and magic items from the SRD 5.1.
 - **The Silence at Ashby Falls** (Call of Cthulhu, 1925, three sessions). A reporter is missing, the church bell won't ring, and the mill's night shift keeps getting smaller. Four investigators, a cult, and ghouls beneath the falls.
+- **The Lantern Road** (Pathfinder 2e, levels 1 to 3, four sessions). Guard a caravan on a moor road whose lantern-shrines are going dark: paid-off goblins, a haunted waystation, a troll under the Weeping Bridge. Creatures from Monster Core.
+- **The Hungry Root** (Daggerheart, level 1, four sessions). Bandits raid an orchard village, the Great Tree weeps black sap, and a demon bound in its roots is waking. Adversaries, classes and domain cards from the SRD, a Fear tracker and a countdown.
+- **Dead Air** (Cyberpunk RED, a starting crew, three sessions). Pull a braindance editor out of a gang-held tower before a corp kill team does, then decide what to do with the recording everyone wants.
 
 <img src="docs/media/adventure-prep.jpg" alt="The Ashby Falls adventure open in Prep: strong start, scenes, secrets, cast and handouts" width="100%">
 
-Both systems also get their own **random tables** (traps, encounters by level, pocket treasure, magic items, crits and fumbles for D&D; strange occurrences, library research, 1920s headlines, phobias, manias, Mythos tomes and temporary insanity for Cthulhu) and their own **Forge**: D&D deals dragonborn and tieflings, SRD magic items with their real rules and rarity, and rewards in gp; Cthulhu deals 1920s names, occupations, speakeasies, churches and asylums, Mythos tomes and dollars. Existing campaigns can add the tables with `Ctrl+K` → *Add this game system's random tables*.
+<img src="docs/media/more-adventures.jpg" alt="The Pathfinder, Daggerheart and Cyberpunk RED adventures in Prep, and the Cyberpunk crew's sheets" width="100%">
+
+Each of the five systems also gets its own **random tables** (traps, encounters by level, pocket treasure, magic items, crits and fumbles for D&D; strange occurrences, library research, 1920s headlines, phobias, manias, Mythos tomes and temporary insanity for Cthulhu; hazards with DCs and Hero Point moments for Pathfinder; Fear moves, countdowns and campfire questions for Daggerheart; gig complications, netrun hazards and cyberware glitches for Cyberpunk RED) and its own **Forge**: D&D deals dragonborn and tieflings, SRD magic items with their real rules and rarity, and rewards in gp; Cthulhu deals 1920s names, occupations, speakeasies, churches and asylums, Mythos tomes and dollars; Pathfinder deals goblins, item levels and runes; Daggerheart deals katari, ribbets and galapa and pays in handfuls and bags of gold; Cyberpunk RED pays in eb. Existing campaigns can add the tables with `Ctrl+K` → *Add this game system's random tables*.
 
 <img src="docs/media/system-tables.jpg" alt="D&D 5e random tables: traps, encounters, treasure" width="100%">
 

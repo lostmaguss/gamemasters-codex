@@ -8,7 +8,7 @@ const FIRST = {
 };
 const LAST = ["Okafor", "Tanaka", "Reyes", "Volkov", "Park", "Silva", "Novak", "Mendez", "Ishikawa", "Kowalski", "Haddad", "Osei", "Duarte", "Lindqvist", "Nakamura", "Petrov", "Achebe", "Moreau", "Castellanos", "Zhang"];
 const HANDLE = ["Razor", "Glitch", "Static", "Ghost", "Halo", "Chrome", "Patch", "Neon", "Cipher", "Rust", "Vandal", "Spider", "Zero", "Hex", "Bishop", "Saint", "Viper", "Wire", "Lucky", "Smoke", "Jackknife", "Daemon", "Brick", "Kitsune", "Echo", "Mantis"];
-const CORP_LAST = ["Vance", "Takeda", "Ashgrove", "Kessler", "Montague", "Arasaka-Vale", "Whitlock", "Kurosawa", "Delacroix", "Sterling", "Harrow", "Ishida-Crane"];
+const CORP_LAST = ["Vance", "Takeda", "Ashgrove", "Kessler", "Montague", "Aramaki-Vale", "Whitlock", "Kurosawa", "Delacroix", "Sterling", "Harrow", "Ishida-Crane"];
 const NOMAD_CLAN = ["Dustrunners", "Iron Coyotes", "Salt Kings", "Long Road", "Black Wind", "Rattlers", "Sunburn Family", "Highway Saints"];
 const NET_A = ["null", "zer0", "ghost", "black", "deep", "cold", "dead", "silent", "glass", "void"], NET_B = ["pointer", "_kid", "ICE", "byte", "loop", "socket", "daemon", "fox", "proxy", "signal"];
 
@@ -92,7 +92,7 @@ export const ITEM = {
     program: ["ICE breaker", "daemon", "worm", "ghost protocol", "camera spoofer", "neural spike"],
     drug: ["inhaler", "injector", "patch", "capsule"],
   },
-  init(type) { return { type, base: pick(this.base[type]), maker: pick(["Militech", "Kessler-Vance", "Takeda", "Helix", "street-built", "Kiroshi", "Arasaka-grade", "prototype"]) }; },
+  init(type) { return { type, base: pick(this.base[type]), maker: pick(["Ostrava Arms", "Kessler-Vance", "Takeda", "Helix", "street-built", "Shirogane Optics", "mil-spec", "prototype"]) }; },
   title(c) {
     if (c.type === "drug") return `${pick(["Black Lace", "Glitter", "Overdrive", "Snow", "Synapse", "Redline", "Ghost"])} ${cap(c.base)}`;
     if (c.type === "program") return `${pick(["Hydra", "Lazarus", "Wraith", "Mongoose", "Kraken", "Silencer"])} ${cap(c.base)}`;
