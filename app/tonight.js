@@ -51,7 +51,7 @@ export function createTonight(el, App) {
       <button class="btn primary tn-next" id="tnNext">Next turn <span class="mono">SPACE</span></button>
       <ol class="tn-turns">${b.list.map(x => {
         const max = Number(x.max) || 0, hp = Number(x.hp) || 0, pct = max ? Math.max(0, Math.min(100, hp / max * 100)) : 0;
-        return `<li class="${x === cur ? "cur" : ""} ${max && hp <= 0 ? "down" : ""}" data-id="${x.id}" style="--kc:${x.color || (x.kind === "foe" ? "#f39da8" : x.kind === "ally" ? "#b8d8a8" : "#a8d3e4")}">
+        return `<li class="${x === cur ? "cur" : ""} ${max && hp <= 0 ? "down" : ""}" data-id="${x.id}" style="--kc:${x.color || (x.kind === "foe" ? "#cf8577" : x.kind === "ally" ? "#9bb08a" : "#8daebe")}">
           <span class="mono ti">${esc(x.init ?? "")}</span><div class="tw"><b>${esc(x.name)}</b>${max ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}${(x.conds || []).length ? `<small>${x.conds.map(k => esc(k.name)).join(" · ")}</small>` : ""}</div>
           <span class="mono th">${max ? `${hp}<small>/${max}</small>` : ""}</span><input class="mono" data-dmg placeholder="dmg" title="Damage like 7, healing like +5"></li>`;
       }).join("")}</ol>`;

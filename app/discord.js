@@ -60,13 +60,13 @@ export async function postRecap(s, opts = {}) {
   const c = C(), strip = t => String(t || "").replace(/\[\[([^\]]+)\]\]/g, "$1");
   const clip = (t, n) => { t = String(t); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
   const field = (name, lines, n = 1000) => lines.length ? [{ name, value: clip(lines.join("\n"), n), inline: false }] : [];
-  const stars = (s.beats || []).filter(b => b.star && b.text).map(b => "⭐ " + strip(b.text));
+  const stars = (s.beats || []).filter(b => b.star && b.text).map(b => "- " + strip(b.text));
   const happened = stars.length ? stars : (s.beats || []).filter(b => b.text).slice(-5).map(b => "• " + strip(b.text));
-  const quotes = (s.quotes || []).filter(q => q.line).slice(0, 3).map(q => `> "${q.line}"\n> — ${q.who || "someone"}`);
+  const quotes = (s.quotes || []).filter(q => q.line).slice(0, 3).map(q => `> "${q.line}" (${q.who || "someone"})`);
   const sp = Object.entries(s.spotlight || {}).sort((a, b) => b[1] - a[1]), top = sp[0]?.[1] || 0;
   const mvps = s.mvp ? [c.party.find(m => m.id === s.mvp)].filter(Boolean) : top ? sp.filter(x => x[1] === top).map(([id]) => c.party.find(m => m.id === id)).filter(Boolean) : [];
   const loot = (s.loot || []).filter(l => l.item).map(l => l.item + (l.to ? ` → ${l.to}` : ""));
-  const votes = (s.beats || []).filter(b => /^The party voted:/.test(b.text || "")).map(b => "🗳️ " + b.text.replace(/^The party voted:\s*/, ""));
+  const votes = (s.beats || []).filter(b => /^The party voted:/.test(b.text || "")).map(b => "Vote: " + b.text.replace(/^The party voted:\s*/, ""));
   const next = c.ui.cast?.next;
   const imgs = [];
   for (const id of (s.shown || []).slice(-4)) {

@@ -17,13 +17,7 @@ export function drawMap(ctx, W, H, { map, img, fog, view, gm, current, fogTex })
   ctx.translate(view.x, view.y); ctx.scale(view.z, view.z);
   ctx.drawImage(img, 0, 0, map.w, map.h);
   const g = map.grid || {};
-  if (g.show && g.size > 4) {
-    ctx.strokeStyle = g.color || "rgba(0,0,0,.35)"; ctx.lineWidth = 1 / view.z;
-    ctx.beginPath();
-    for (let x = (g.ox || 0) % g.size; x <= map.w; x += g.size) { ctx.moveTo(x, 0); ctx.lineTo(x, map.h); }
-    for (let y = (g.oy || 0) % g.size; y <= map.h; y += g.size) { ctx.moveTo(0, y); ctx.lineTo(map.w, y); }
-    ctx.stroke();
-  }
+  if (g.show && g.size > 4) drawGrid(ctx, map, g, view);
   const cell = g.size || 70;
   // area templates (circles, cones, lines) sit under the tokens
   for (const a of map.areas || []) drawArea(ctx, a, view);
@@ -62,6 +56,51 @@ export function drawMap(ctx, W, H, { map, img, fog, view, gm, current, fogTex })
   }
   ctx.restore();
 }
+// ---- grids: squares, or hexes with pointy tops (rows) or flat tops (columns) ----
+// size is the distance between neighbouring cell centres
+const SQ3 = Math.sqrt(3);
+const hexR = g => g.size / SQ3;
+const isHex = g => g.type === "hex" || g.type === "hexflat";
+function cubeRound(q, r) {
+  let x = q, z = r, y = -x - z, rx = Math.round(x), ry = Math.round(y), rz = Math.round(z);
+  const dx = Math.abs(rx - x), dy = Math.abs(ry - y), dz = Math.abs(rz - z);
+  if (dx > dy && dx > dz) rx = -ry - rz; else if (dy <= dz) rz = -rx - ry;
+  return [rx, rz];
+}
+const toAxial = (g, x, y) => { const R = hexR(g); x -= g.ox || 0; y -= g.oy || 0; return g.type === "hexflat" ? [(2 / 3 * x) / R, (-1 / 3 * x + SQ3 / 3 * y) / R] : [(SQ3 / 3 * x - 1 / 3 * y) / R, (2 / 3 * y) / R]; };
+const fromAxial = (g, q, r) => { const R = hexR(g); return g.type === "hexflat" ? { x: R * 1.5 * q + (g.ox || 0), y: R * SQ3 * (r + q / 2) + (g.oy || 0) } : { x: R * SQ3 * (q + r / 2) + (g.ox || 0), y: R * 1.5 * r + (g.oy || 0) }; };
+// the centre of the cell a point is in; square grids put even-sized tokens on a corner instead
+export function snapPoint(g, x, y, size = 1) {
+  if (isHex(g)) { const [q, r] = cubeRound(...toAxial(g, x, y)); return fromAxial(g, q, r); }
+  const odd = size % 2 === 1, ox = g.ox || 0, oy = g.oy || 0, f = v => odd ? Math.floor(v / g.size) * g.size + g.size / 2 : Math.round(v / g.size) * g.size;
+  return { x: f(x - ox) + ox, y: f(y - oy) + oy };
+}
+// distance in cells: hex steps on hex grids, straight-line cells on squares
+export function gridDistance(g, a, b) {
+  if (isHex(g)) { const [q1, r1] = cubeRound(...toAxial(g, a.x, a.y)), [q2, r2] = cubeRound(...toAxial(g, b.x, b.y)); return (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs(q1 + r1 - q2 - r2)) / 2; }
+  return Math.hypot(b.x - a.x, b.y - a.y) / (g.size || 70);
+}
+export function drawGrid(ctx, map, g, view) {
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, map.w, map.h); ctx.clip();
+  ctx.strokeStyle = g.color || "rgba(0,0,0,.35)"; ctx.lineWidth = 1 / view.z; ctx.beginPath();
+  if (!isHex(g)) {
+    for (let x = (g.ox || 0) % g.size; x <= map.w; x += g.size) { ctx.moveTo(x, 0); ctx.lineTo(x, map.h); }
+    for (let y = (g.oy || 0) % g.size; y <= map.h; y += g.size) { ctx.moveTo(0, y); ctx.lineTo(map.w, y); }
+  } else {
+    const R = hexR(g), a0 = g.type === "hexflat" ? 0 : Math.PI / 6;
+    const corners = Array.from({ length: 6 }, (_, i) => [Math.cos(a0 + i * Math.PI / 3) * R, Math.sin(a0 + i * Math.PI / 3) * R]);
+    // walk every cell whose centre is on the map, plus a margin
+    const [q0, r0] = toAxial(g, -g.size, -g.size), [q1, r1] = toAxial(g, map.w + g.size, map.h + g.size), [qa] = toAxial(g, map.w + g.size, -g.size), [qb] = toAxial(g, -g.size, map.h + g.size);
+    const qMin = Math.floor(Math.min(q0, q1, qa, qb)) - 1, qMax = Math.ceil(Math.max(q0, q1, qa, qb)) + 1;
+    const rs = [r0, r1, toAxial(g, map.w + g.size, -g.size)[1], toAxial(g, -g.size, map.h + g.size)[1]], rMin = Math.floor(Math.min(...rs)) - 1, rMax = Math.ceil(Math.max(...rs)) + 1;
+    for (let q = qMin; q <= qMax; q++) for (let r = rMin; r <= rMax; r++) {
+      const c = fromAxial(g, q, r); if (c.x < -g.size || c.y < -g.size || c.x > map.w + g.size || c.y > map.h + g.size) continue;
+      ctx.moveTo(c.x + corners[0][0], c.y + corners[0][1]); for (let i = 1; i < 6; i++) ctx.lineTo(c.x + corners[i][0], c.y + corners[i][1]); ctx.closePath();
+    }
+  }
+  ctx.stroke(); ctx.restore();
+}
+
 export function drawArea(ctx, a, view, live) {
   ctx.save();
   const col = a.color || "#ff7a3d";

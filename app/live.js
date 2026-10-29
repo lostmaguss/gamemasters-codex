@@ -170,7 +170,7 @@ export function createLive(el, App) {
     const sorted = [...H].sort((a, b) => (ready.includes(b.id) ? 1 : 0) - (ready.includes(a.id) ? 1 : 0));
     box.innerHTML = `<div class="sec-h"><h3>Handouts</h3><div class="line"></div></div>
       <div class="on-air ${onAir ? "live" : ""}">${onAir ? `<div class="eyebrow" style="color:var(--ember)">On stream now</div><b>${esc(onAir.title || "Handout")}</b><button class="btn sm" id="lvHide">${icon("x")} Take it down</button>` : `<span class="eyebrow">Nothing on stream</span><span style="color:var(--faint);font-size:13.5px">Click a handout to put it in front of your players.</span>`}</div>
-      <div class="row" style="margin:12px 0"><button class="btn sm" id="hImg">${icon("image")} Image</button><button class="btn sm" id="hTxt">${icon("codex")} Letter or note</button><input type="file" id="hFile" accept="image/*" multiple hidden></div>
+      <div class="row" style="margin:12px 0"><button class="btn sm" id="hImg">${icon("image")} Image</button><button class="btn sm" id="hTxt">${icon("codex")} Letter or note</button><button class="btn sm primary" id="hMake" title="Letters, wanted posters, newspapers, decrees, data pads, chat logs">${icon("plus")} Make one</button><input type="file" id="hFile" accept="image/*" multiple hidden></div>
       <div class="hand-grid">${sorted.map(hd => `<div class="hand ${onAir?.id === hd.id ? "air" : ""}" data-id="${hd.id}">
         <button class="hand-face ${hd.type === "image" ? "img" : "txt s-" + (hd.style || "letter")}" ${hd.type === "image" ? `style="background-image:url(${hd.src})"` : ""}>${hd.type === "image" ? "" : `<span>${esc((hd.text || "").slice(0, 90))}</span>`}</button>
         <div class="hand-meta"><b>${esc(hd.title || "Untitled")}</b>${ready.includes(hd.id) ? `<span class="eyebrow" style="color:var(--ember)">Tonight</span>` : ""}<span style="flex:1"></span><button class="tb" data-post title="Post to Discord">${icon("discord")}</button><button class="tb" data-wh title="Whisper to one player">${icon("lock")}</button><button class="tb" data-ed title="Edit">${icon("type")}</button><button class="tb" data-del title="Delete">${icon("trash")}</button></div></div>`).join("")
@@ -179,6 +179,7 @@ export function createLive(el, App) {
     $("#hImg", box).onclick = () => $("#hFile", box).click();
     $("#hFile", box).onchange = async e => { for (const f of e.target.files) C().handouts.push({ id: uid(), title: f.name.replace(/\.[^.]+$/, ""), type: "image", src: await shrinkImage(f, 1800) }); save(); renderHand(); e.target.value = ""; };
     $("#hTxt", box).onclick = () => editText();
+    $("#hMake", box).onclick = () => import("./handoutmaker.js").then(x => x.handoutMaker(App, { onDone: renderHand }));
     $$(".hand", box).forEach(d => {
       const hd = H.find(x => x.id === d.dataset.id);
       $(".hand-face", d).onclick = () => App.onAir?.id === hd.id ? App.hideHandout() : App.showHandout(hd);

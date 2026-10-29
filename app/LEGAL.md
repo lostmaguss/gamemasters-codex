@@ -10,7 +10,7 @@ Gamemaster's Codex © 2026 lostmaguss. The app's own code, interface, artwork, s
 - Trademarks
 - Content written for the app
 - Software and fonts
-- Your campaigns
+- Privacy
 
 ## Game content and licenses
 
@@ -133,8 +133,23 @@ Gamemaster's Codex is built with these open-source projects. Each keeps its own 
 - Fonts through Fontsource, all under the SIL Open Font License 1.1: Chakra Petch, Grenze Gotisch, IBM Plex Sans Condensed, IM Fell English, JetBrains Mono, Oxanium
 - cloudflared (Apache License 2.0), which is not bundled. The app downloads it from Cloudflare's official GitHub releases only when you turn on "Anywhere (internet)" phone access.
 
-## Your campaigns
+## Privacy
 
-Everything you create in the app (campaigns, notes, maps, pictures, sounds) is yours and stays on your computer. The app only sends data out when you use Discord posting, the Discord bot, the phone link or the internet tunnel, and then only to the services you set up. Content you import from your own books is your responsibility; the library entries you add to a campaign are yours to edit under the licenses above.
+Gamemaster's Codex has no account, no analytics, no ads and no tracking. It never sends anything to its author.
+
+**What stays on your computer.** Your campaigns, notes, maps, pictures, sounds, settings, your Discord webhook links and bot token, and the daily backups are saved in the app's data folder on your computer (Settings → Backups & data → Open save folder). Uninstalling the app and deleting that folder removes them.
+
+**What leaves it, and only when you turn it on:**
+
+- **Discord.** Things you post (rolls, recaps, handouts, turn order, votes) go to the Discord channels you connected, through Discord's own servers. With the bot on, Discord sends the app the slash commands your players use and their Discord names. Discord's privacy policy applies to what you post there.
+- **The table link.** Phones, OBS and the GM remote connect to a small server on your computer. On the same Wi-Fi, nothing goes through the internet. Anyone with a link can see what that link shows, so share the players' link only with your players and keep the GM remote link to yourself.
+- **Internet phone access.** "Anywhere (internet)" runs a Cloudflare quick tunnel, so traffic between phones and your computer passes through Cloudflare. The app downloads Cloudflare's cloudflared program from its official GitHub releases the first time. Cloudflare's privacy policy applies to the tunnel.
+- **Updates.** The app asks GitHub whether a newer version exists, and downloads it from GitHub when you agree. GitHub sees that request, like any download.
+
+**Players.** The phone page keeps a player's choice of character and their tab in that phone's browser storage. Journals and goals they write are saved in your campaign on your computer, where you as the GM can read them.
+
+**Children.** The app isn't aimed at children and collects nothing from anyone, but Discord and Cloudflare have their own age rules.
+
+Questions or problems: open an issue at https://github.com/lostmaguss/gamemasters-codex/issues.
 
 The app is provided "as is", without warranty of any kind.

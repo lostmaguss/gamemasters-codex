@@ -84,8 +84,8 @@ export function initPlayers(app) {
 // 128-bit keys: the link is the only lock once it's shared over the internet
 const newKey = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("");
 export async function startTable() {
-  const P = prefs(); P.key ||= newKey();
-  const r = await T().start({ port: P.port, key: P.key });
+  const P = prefs(); P.key ||= newKey(); P.gmKey ||= newKey();
+  const r = await T().start({ port: P.port, key: P.key, gmKey: P.gmKey });
   if (r?.on) import("./checklist.js").then(m => m.markSeen("table"));
   if (r.error) { toast(`Couldn't start the table link: ${r.error}`); return r; }
   status = r; P.on = true; save(); push();

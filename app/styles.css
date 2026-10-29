@@ -1218,3 +1218,62 @@ body.dragging-codex .rail a:hover { background: color-mix(in srgb, var(--ember) 
 .rr-item .rr-h:hover b { color: var(--ember); } .rr-item.open .rr-h b { color: var(--ember); }
 .rr-item .prose { padding: 0 6px 12px; font-size: 14px; } .rr-item .prose p, .rr-item .prose li { font-size: 14px; line-height: 1.5; }
 .rr-src { margin: 0; padding: 8px 16px 12px; border-top: 1px solid var(--line-soft); font-size: 11.5px; }
+.gm-qr { align-self: center; width: 230px; height: 230px; padding: 10px; background: #fff; border-radius: 10px; } .gm-qr svg { width: 100%; height: 100%; display: block; }
+
+/* ---------- handout maker ---------- */
+.modal.wide-hm { width: min(1180px, 100%); }
+.hm { display: grid; grid-template-columns: 180px 1fr 440px; gap: 16px; min-height: 0; }
+.hm-tpl { display: flex; flex-direction: column; gap: 4px; }
+.hm-tpl button { text-align: left; border: 1px solid transparent; background: transparent; color: var(--ink); padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+.hm-tpl button small { display: block; color: var(--faint); font-size: 11.5px; } .hm-tpl button:hover { background: var(--surface-2); }
+.hm-tpl button.on { background: var(--surface-2); border-color: var(--ember); }
+.hm-form { display: flex; flex-direction: column; gap: 10px; min-width: 0; max-height: 62vh; overflow: auto; } .hm-form h2 { font-size: 28px; }
+.hm-prev { display: grid; place-items: start center; background: var(--bg-2); border-radius: 10px; padding: 10px; } .hm-prev canvas { max-width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+@media (max-width: 1100px) { .hm { grid-template-columns: 150px 1fr; } .hm-prev { grid-column: 1 / -1; } }
+
+/* ---------- DESIGN PASS ----------
+   Flatter, tighter and quieter: no coloured side stripes (a small dot carries the colour), 4–8px corners,
+   pills only for real tags, thin borders instead of big soft shadows, muted card colours, firmer icons. */
+:root { --c-mustard: #d4a54a; --c-rose: #cf8577; --c-lichen: #9bb08a; --c-sky: #8daebe; --c-plum: #a98fb6; }
+.ic { stroke-width: 2; stroke-linecap: square; stroke-linejoin: round; }
+.rail a .ic { stroke-width: 1.9; }
+/* corners */
+.btn, input[type=text], input[type=search], input[type=number], input[type=date], select, textarea { border-radius: 6px; }
+.chip { border-radius: 6px; } .chip.tag, .tag { border-radius: 999px; }
+.modal { border-radius: 10px; } .menu { border-radius: 8px; } .toast { border-radius: 6px; }
+.tcard, .mcard, .csheet, .clock, .checklist, .theme-card, .set-body .grp, .syscard, .lib-row, .tn-turns li, .tn-pc, .rtoast, .cb-row, .lt-item { border-radius: 8px; }
+.checklist.closed { border-radius: 8px; } .sp { border-radius: 6px; }
+/* shadows: a line, and a small drop only where something floats over the page */
+.modal { box-shadow: 0 12px 32px rgba(0,0,0,.35); } .menu { box-shadow: 0 8px 22px rgba(0,0,0,.3); }
+.mcard, .tcard { box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 6px 18px rgba(0,0,0,.28); }
+.checklist, .rtoast { box-shadow: 0 6px 16px rgba(0,0,0,.25); } .rules-panel { box-shadow: none; }
+.cb-row.current { box-shadow: none; transform: none; } .drop-over::after { box-shadow: none; }
+/* no side stripes: selection is a tint, colour is a dot */
+.cx-item { border-left: 0; } .cx-item.on { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.prose blockquote, .chapter blockquote { border-left: 2px solid var(--line); }
+.log li { border-left: 1px solid var(--line-soft); }
+.rtoast, .rtoast.crit, .rtoast.fumble, .rtoast.secret { border-left: 1px solid var(--line); }
+.rtoast.crit { border-color: color-mix(in srgb, var(--crit) 60%, var(--line)); } .rtoast.fumble { border-color: color-mix(in srgb, var(--bad) 60%, var(--line)); }
+.rtoast.secret { background: var(--surface); border-style: dashed; }
+.cb-row, .cb-row.sel { border-left: 1px solid var(--line-soft); } .cb-row.sel { border-color: var(--line); }
+.cb-row.current { background: color-mix(in srgb, var(--ember) 13%, var(--surface)); border-color: var(--ember); }
+.lt-item, .lt-item:hover { border-left: 1px solid var(--line-soft); } .lt-item b::before, .sp::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--mc); margin-right: 7px; vertical-align: 1px; }
+.clock { border-left: 1px solid var(--line-soft); }
+.sp { border-left: 1px solid var(--line); }
+.csheet { border-top: 1px solid var(--line-soft); position: relative; } .csheet::before { content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: 2px; background: var(--mc); opacity: .8; }
+.set-nav button.on { box-shadow: none; }
+.tn-turns li, .tn-pc { border-left: 1px solid var(--line-soft); } .tn-turns .tw b::before, .tn-pc .tw b::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--kc, var(--mc)); margin-right: 8px; vertical-align: 1px; }
+.tn-turns li.cur { box-shadow: none; } .tn-chk.now { box-shadow: none; }
+.tn-start, .start-card { border-radius: 8px; }
+
+/* the checklist lives in the title bar so it never covers the page */
+.checklist { position: relative; left: auto; bottom: auto; width: auto; z-index: 80; background: transparent; border: 0; box-shadow: none !important; overflow: visible; -webkit-app-region: no-drag; }
+.checklist header { height: 30px; border: 1px solid var(--line-soft); border-radius: 6px; background: var(--bg-2); }
+.checklist .cl-toggle { padding: 0 10px 0 4px; gap: 8px; height: 28px; } .checklist .cl-toggle small { display: none; } .checklist .cl-toggle b { font-size: 12.5px; font-weight: 600; }
+.checklist .cl-ring, .checklist.closed .cl-ring { width: 22px; height: 22px; } .checklist .cl-ring b, .checklist.closed .cl-ring b { width: 16px; height: 16px; font-size: 0; }
+.checklist .cl-x { padding: 0 8px; } .checklist .cl-x .ic { width: 14px; height: 14px; }
+.checklist ol { position: absolute; top: 36px; right: 0; width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px; box-shadow: 0 8px 22px rgba(0,0,0,.3); max-height: 70vh; }
+body.tn-focus .checklist { display: block; }
+/* the Forge stage: a flat surface, not a glowing pool */
+.forge-table { background: var(--bg); }
+.tcard { box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 6px 18px rgba(0,0,0,.22); }

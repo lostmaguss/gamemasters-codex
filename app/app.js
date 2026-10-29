@@ -7,6 +7,7 @@ import { initChecklist, markSeen } from "./checklist.js";
 import { railSwitching } from "./dnd.js";
 import { toggleRules, openRules } from "./rulesref.js";
 import { packsModal, importModal as importPack } from "./packs.js";
+import { initGmRemote, pushGm } from "./gmremote.js";
 import { loadLibrary, toCreature, toSpell } from "./library.js";
 import { syncCustomDice } from "./customdice.js";
 import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
@@ -300,7 +301,7 @@ export function partyModal() {
     <button class="btn sm" id="pAdd" style="align-self:flex-start">${icon("plus")} Add member</button>
     <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save party</button></div>`, (m, close) => {
     const rows = $("#pRows", m);
-    const palette = ["#ef7f8f", "#c39bd3", "#a7cf9e", "#8fc3d9", "#f0c35a", "#ff9a66", "#e2e2e2"];
+    const palette = ["#d9776f", "#a98fb6", "#8fb07f", "#7fa8bd", "#d4a54a", "#e08a55", "#cfc8bf"];
     const draw = () => {
       rows.innerHTML = `<div class="party-row eyebrow"><span></span><span>Player</span><span>Character</span><span>Role / class</span><span></span></div>` +
         draft.map((p, i) => `<div class="party-row" data-i="${i}"><input type="color" value="${esc(p.color)}" data-k="color" aria-label="Color"><input type="text" value="${esc(p.player)}" data-k="player" placeholder="Player"><input type="text" value="${esc(p.character)}" data-k="character" placeholder="Character"><input type="text" value="${esc(p.role)}" data-k="role" placeholder="Role"><button class="btn sm icon ghost danger" data-del title="Remove">${icon("x")}</button></div>`).join("");
@@ -432,7 +433,7 @@ function wireChrome() {
   const sb = $("#streamBtn");
   const setLive = on => {
     const was = !!App.streamLive;
-    if (on) markSeen("stage");
+    if (on) markSeen("stage"); if (was !== on) pushGm();
     sb.classList.toggle("live", on); $("#streamLbl").textContent = on ? "Stream window live" : "Stream window"; App.streamLive = on; mounted.dice?.streamState?.(on);
     if (was !== on) App.sound.streamChanged(on);
     if (!on && App.onAir) { App.onAir = null; App._air.forEach(f => f()); }
@@ -645,7 +646,7 @@ async function checkUpdates() {
   await loadData();
   try { await Promise.all([document.fonts.load('700 40px "Grenze Gotisch"'), document.fonts.load('400 15px "IBM Plex Sans Condensed"')]); } catch {}
   applyGenre();
-  applyPrefs(); setTimeout(() => initChecklist(App), 400);
+  applyPrefs(); setTimeout(() => initChecklist(App), 400); initGmRemote(App); App.onAirChange(pushGm);
   if (S.data.prefs.zoom && S.data.prefs.zoom !== 1) { if (window.codex?.zoom) window.codex.zoom(S.data.prefs.zoom); else document.body.style.zoom = S.data.prefs.zoom; }
   try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
   buildRail(); railSwitching($("#rail"), v => show(v)); wireChrome(); renderCampName(); ls.set("rules", C().rules);

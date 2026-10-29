@@ -231,7 +231,7 @@ export function createChronicle(el, App) {
       <div class="ch-meta">${[s.ingame, s.date && new Date(s.date + "T12:00").toLocaleDateString(undefined, { dateStyle: "long" }), s.ambience, s.moods.join(" · ")].filter(Boolean).map(esc).join(" — ")}</div>
       ${s.recap ? `<div class="prose" style="font-style:italic;color:var(--dim)">${md(s.recap, c.notes)}</div>` : ""}
       ${s.beats.map(b => { const B = BEATS[b.type] || BEATS.social; return `<div class="ch-beat ${b.star ? "star" : ""}" style="--bt:${B.color}">${icon(b.type)}<div class="prose" style="font-size:17px">${md(b.text, c.notes) || "<p>…</p>"}</div></div>`; }).join("")}
-      ${s.quotes.filter(q => q.line).map(q => `<blockquote>“${esc(q.line)}”<cite>— ${esc(q.who || "someone at the table")}</cite></blockquote>`).join("")}
+      ${s.quotes.filter(q => q.line).map(q => `<blockquote>“${esc(q.line)}”<cite>${esc(q.who || "someone at the table")}</cite></blockquote>`).join("")}
       ${s.loot.length ? `<p style="margin-top:22px"><strong>Spoils:</strong> ${s.loot.filter(l => l.item).map(l => esc(l.item) + (l.to ? ` (${esc(l.to)})` : "")).join(", ")}</p>` : ""}
       ${present.length ? `<p style="margin-top:8px;color:var(--faint)">At the table: ${present.map(m => esc(m.character || m.player)).join(", ")}${mvp ? ` · MVP: ${esc(mvp.character || mvp.player)}` : ""}</p>` : ""}
       ${s.cliff ? `<div class="ch-cliff">${esc(s.cliff)}</div>` : ""}`;
@@ -242,7 +242,7 @@ export function createChronicle(el, App) {
     const meta = [s.ingame, s.date].filter(Boolean).join(" · "); if (meta) out.push(`*${meta}*`);
     if (s.recap) out.push("", "## Previously on…", strip(s.recap));
     if (s.beats.length) { out.push("", "## What happened"); for (const b of s.beats) if (b.text) out.push(`- **${(BEATS[b.type] || BEATS.social).label}:** ${strip(b.text)}${b.star ? " ⭐" : ""}`); }
-    const qs = s.quotes.filter(q => q.line); if (qs.length) { out.push("", "## Said at the table"); for (const q of qs) out.push(`> "${q.line}" — ${q.who || "someone"}`); }
+    const qs = s.quotes.filter(q => q.line); if (qs.length) { out.push("", "## Said at the table"); for (const q of qs) out.push(`> "${q.line}" (${q.who || "someone"})`); }
     const loot = s.loot.filter(l => l.item); if (loot.length) out.push("", `**Loot:** ${loot.map(l => l.item + (l.to ? ` → ${l.to}` : "")).join(", ")}`);
     if (s.xp) out.push(`**XP:** ${s.xp}`);
     const mvp = c.party.find(m => m.id === s.mvp); if (mvp) out.push(`**MVP:** ${mvp.character || mvp.player} 🏆`);

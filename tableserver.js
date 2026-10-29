@@ -14,10 +14,10 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
 // only the app's own code, its libraries and fonts are served without the key
 const PUBLIC = [/^app\/[\w./-]+$/, /^node_modules\/(three|cannon-es|@fontsource)\/[\w./@-]+$/];
 
-let server = null, port = 0, key = "", desk = null, mediaDir = null;
+let server = null, port = 0, key = "", gmKey = "", desk = null, mediaDir = null;
 const clients = new Set(); // { res, role, member, only, dice }
 let primary = null; // the OBS dice source that throws the physics when no stream window is open
-const last = { overlay: {}, show: null, players: null, inbox: {}, mine: {} }; // mine: per-player private state (journal)
+const last = { overlay: {}, show: null, players: null, inbox: {}, mine: {}, gm: null }; // mine: per-player private state (journal)
 let stageOpen = () => false;
 
 function lanAddresses() {
@@ -31,7 +31,7 @@ function lanAddresses() {
   return out.sort((a, b) => b.score - a.score).map(a => a.ip);
 }
 const base = () => `http://${lanAddresses()[0] || "localhost"}:${port}`;
-const info = () => ({ on: !!server, port, key, url: server ? `${base()}/?k=${key}` : null, tunnel: tunnel.status(), publicUrl: server && tunnel.status().state === "on" ? `${tunnel.status().url}/?k=${key}` : null, local: server ? `http://localhost:${port}` : null, players: [...clients].filter(c => c.role === "player").map(c => c.member).filter(Boolean), obs: [...clients].filter(c => c.role === "obs").length });
+const info = () => ({ on: !!server, port, key, url: server ? `${base()}/?k=${key}` : null, tunnel: tunnel.status(), publicUrl: server && tunnel.status().state === "on" ? `${tunnel.status().url}/?k=${key}` : null, gmUrl: server && gmKey ? `${base()}/gm?g=${gmKey}` : null, gmPublicUrl: server && gmKey && tunnel.status().state === "on" ? `${tunnel.status().url}/gm?g=${gmKey}` : null, local: server ? `http://localhost:${port}` : null, players: [...clients].filter(c => c.role === "player").map(c => c.member).filter(Boolean), obs: [...clients].filter(c => c.role === "obs").length });
 const tellDesk = () => desk && !desk.isDestroyed() && desk.webContents.send("table:status", info());
 
 // pictures in the app live at codexmedia://media/<file>; phones fetch them from /media/<file>
@@ -40,6 +40,7 @@ const remap = v => JSON.parse(JSON.stringify(v ?? null).replace(/codexmedia:\/\/
 function send(c, t, v) { try { c.res.write(`data: ${JSON.stringify({ t, v: remap(v) })}\n\n`); } catch {} }
 function wants(c, t, v) {
   if (c.role === "player") return ["overlay", "show", "hide", "players", "inbox", "result", "you", "journal"].includes(t);
+  if (c.role === "gm") return ["gm", "result"].includes(t);
   if (!c.only) return true;
   if (t === "overlay") return c.only.has(v.kind) || (v.kind === "mapstate" && c.only.has("map"));
   if (["roll", "rollShow", "clear"].includes(t)) return c.only.has("dice");
@@ -69,14 +70,15 @@ function body(req) { return new Promise(r => { let s = ""; req.on("data", d => {
 // wrong keys: each address gets a short cooldown, so the link can't be guessed by brute force
 const misses = new Map();
 const who = req => String(req.headers["cf-connecting-ip"] || req.socket.remoteAddress || "?");
-const sameKey = k => typeof k === "string" && k.length === key.length && crypto.timingSafeEqual(Buffer.from(k), Buffer.from(key));
+const same = (k, want) => typeof k === "string" && !!want && k.length === want.length && crypto.timingSafeEqual(Buffer.from(k), Buffer.from(want));
 async function handle(req, res) {
-  const u = new URL(req.url, "http://x"), given = u.searchParams.get("k");
-  let ok = false;
-  if (given != null) {
+  // k: the players' key. g: the GM remote's own key, never shown to players
+  const u = new URL(req.url, "http://x"), given = u.searchParams.get("k"), givenGm = u.searchParams.get("g");
+  let ok = false, gm = false;
+  if (given != null || givenGm != null) {
     const ip = who(req), m = misses.get(ip);
     if (m && m.n >= 5 && Date.now() - m.t < 60000) { res.writeHead(429); return res.end("Too many wrong links. Wait a minute."); }
-    ok = sameKey(given);
+    gm = givenGm != null && same(givenGm, gmKey); ok = gm || (given != null && same(given, key));
     if (!ok) misses.set(ip, { n: (m && Date.now() - m.t < 60000 ? m.n : 0) + 1, t: Date.now() }); else misses.delete(ip);
     if (misses.size > 5000) misses.clear();
   }
@@ -85,15 +87,20 @@ async function handle(req, res) {
     if (!ok) { res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" }); return res.end(`<!doctype html><meta name=viewport content="width=device-width"><body style="font:18px sans-serif;background:#1a1517;color:#eee;padding:40px">Ask your GM for the table link or QR code.<br><br><span style="color:#aaa">Oyun yöneticinden masa bağlantısını ya da QR kodunu iste.</span></body>`); }
     return serveFile(res, path.join(ROOT, "app", "player.html"), false);
   }
+  if (p === "gm") {
+    if (!gm) { res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" }); return res.end(`<!doctype html><meta name=viewport content="width=device-width"><body style="font:18px sans-serif;background:#1a1517;color:#eee;padding:40px">This is the GM's remote. Open it from Settings → Connections → GM remote on the GM's computer.`); }
+    return serveFile(res, path.join(ROOT, "app", "gm.html"), false);
+  }
   // the stream page loads its scripts and styles relative to app/, so send OBS there
   if (p === "obs") { if (!ok) { res.writeHead(403); return res.end("Wrong key"); } res.writeHead(302, { Location: `/app/stage.html${u.search}` }); return res.end(); }
   if (p === "events") {
     if (!ok) { res.writeHead(403); return res.end(); }
     res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", Connection: "keep-alive", "Access-Control-Allow-Origin": "*" });
     const only = u.searchParams.get("only");
-    const c = { res, role: u.searchParams.get("role") === "obs" ? "obs" : "player", member: u.searchParams.get("member") || null, only: only ? new Set(only.split(",")) : null };
+    const c = { res, role: gm ? "gm" : u.searchParams.get("role") === "obs" ? "obs" : "player", member: u.searchParams.get("member") || null, only: only ? new Set(only.split(",")) : null };
     c.dice = c.role === "obs" && (!c.only || c.only.has("dice"));
     clients.add(c); res.write(": hi\n\n");
+    if (c.role === "gm") { if (last.gm) send(c, "gm", last.gm); desk && desk.webContents.send("table:gm", { type: "hello" }); }
     // catch the newcomer up
     for (const v of Object.values(last.overlay)) if (!v.secs || Date.now() - v._at < v.secs * 1000) if (wants(c, "overlay", v)) send(c, "overlay", v);
     if (c.role === "player") { if (last.players) send(c, "players", last.players); if (last.show) send(c, "show", last.show); if (c.member && last.inbox[c.member]) send(c, "inbox", last.inbox[c.member]); if (c.member) for (const [t, v] of Object.entries(last.mine[c.member] || {})) send(c, t, v); }
@@ -106,6 +113,7 @@ async function handle(req, res) {
     if (!ok) { res.writeHead(403); return res.end(); }
     const a = await body(req); res.writeHead(204); res.end();
     if (!a) return;
+    if (gm) { desk && desk.webContents.send("table:gm", a); return; }
     if (a.type === "result") { desk && desk.webContents.send("stage:result", a.r); broadcast("rollShow", a.r, c => c.role === "obs" && c !== primary); return; }
     desk && desk.webContents.send("table:act", a);
     return;
@@ -118,10 +126,10 @@ async function handle(req, res) {
   res.writeHead(404); res.end("Not found");
 }
 
-function start(wantPort, wantKey) {
+function start(wantPort, wantKey, wantGm) {
   return new Promise(resolve => {
     stop();
-    key = wantKey || crypto.randomBytes(4).toString("hex");
+    key = wantKey || crypto.randomBytes(4).toString("hex"); gmKey = wantGm || "";
     const s = http.createServer((q, r) => handle(q, r).catch(() => { try { r.writeHead(500); r.end(); } catch {} }));
     let tryPort = wantPort || 7420;
     s.on("error", e => { if (e.code === "EADDRINUSE" && tryPort < (wantPort || 7420) + 20) s.listen(++tryPort, "0.0.0.0"); else { server = null; resolve({ ...info(), error: String(e.message) }); } });
@@ -152,7 +160,10 @@ const mirror = {
 
 function setup(getDesk, getMediaDir, isStageOpen) {
   mediaDir = getMediaDir; stageOpen = isStageOpen;
-  ipcMain.handle("table:start", async (_e, o = {}) => { desk = getDesk(); return start(o.port, o.key); });
+  ipcMain.handle("table:start", async (_e, o = {}) => { desk = getDesk(); return start(o.port, o.key, o.gmKey); });
+  // the GM remote's state, and who is connected to it
+  ipcMain.on("table:gmstate", (_e, v) => { last.gm = v; broadcast("gm", v, c => c.role === "gm"); });
+  ipcMain.on("table:gmresult", (_e, v) => broadcast("result", v, c => c.role === "gm"));
   ipcMain.handle("table:stop", () => { stop(); return info(); });
   // share over the internet: a Cloudflare quick tunnel in front of the table server
   tunnel.onChange(() => tellDesk());
@@ -166,5 +177,6 @@ function setup(getDesk, getMediaDir, isStageOpen) {
   ipcMain.on("table:mine", (_e, { member, t, v }) => { (last.mine[member] ||= {})[t] = v; broadcast(t, v, c => c.role === "player" && c.member === member); });
   ipcMain.on("table:to", (_e, { member, t, v }) => broadcast(t, v, c => c.role === "player" && (!member || c.member === member)));
   ipcMain.handle("table:online", () => [...clients].filter(c => c.role === "player").map(c => c.member).filter(Boolean));
+  ipcMain.handle("table:gmOnline", () => [...clients].filter(c => c.role === "gm").length);
 }
 module.exports = { setup, mirror, stop, info };

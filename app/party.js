@@ -7,7 +7,7 @@ import { Stage } from "./bridge.js";
 import { shrinkImage } from "./board.js";
 import { renderStash } from "./stash.js";
 
-const PALETTE = ["#ef7f8f", "#c39bd3", "#a7cf9e", "#8fc3d9", "#f0c35a", "#ff9a66", "#e2e2e2"];
+const PALETTE = ["#d9776f", "#a98fb6", "#8fb07f", "#7fa8bd", "#d4a54a", "#e08a55", "#cfc8bf"];
 export function sheetLayout(c = C()) {
   return (c.sheet ||= { stats: [...(c.statTemplate || ["Might", "Agility", "Wits", "Will"]).filter(s => !/^(hp|defense|speed)$/i.test(s))], resources: ["HP"], roll: "1d20+{value}", fields: ["Abilities", "Inventory", "Notes"] });
 }

@@ -5,7 +5,7 @@ import { $, $$, esc, h, icon, toast, uid, debounce } from "./util.js";
 import { C, save } from "./store.js";
 import { shrinkImage } from "./board.js";
 
-export const CATS = { Locations: "#b8d8a8", NPCs: "#f39da8", Factions: "#a8d3e4", Quests: "#f2c75c", Items: "#cfb2e2", Spells: "#9fb8f5", Lore: "#efe4cf", Other: "#8a7d78" };
+export const CATS = { Locations: "#9bb08a", NPCs: "#cf8577", Factions: "#8daebe", Quests: "#d4a54a", Items: "#a98fb6", Spells: "#8f9fd0", Lore: "#d8c9a8", Other: "#8a7d78" };
 
 // Markdown-lite: # headings, **bold**, *italic*, - lists, > quotes, [[wiki links]]
 export function md(src, notes, { rolls = false } = {}) {

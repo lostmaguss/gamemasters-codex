@@ -47,6 +47,10 @@ contextBridge.exposeInMainWorld("codex", {
     online: () => ipcRenderer.invoke("table:online"),
     onStatus: fn => on("table:status", fn),
     onAct: fn => on("table:act", fn),
+    gmState: v => ipcRenderer.send("table:gmstate", v),
+    gmResult: v => ipcRenderer.send("table:gmresult", v),
+    gmOnline: () => ipcRenderer.invoke("table:gmOnline"),
+    onGm: fn => on("table:gm", fn),
   },
   update: {
     check: () => ipcRenderer.invoke("update:check"),

@@ -10,7 +10,7 @@ import { nextPlanned } from "./bestiary.js";
 import * as Discord from "./discord.js";
 
 export const CONDITIONS = ["Stunned", "Prone", "Bleeding", "Poisoned", "Blinded", "Frightened", "Grappled", "Burning", "Invisible", "Concentrating", "Hidden", "Slowed", "Hasted", "Marked", "Restrained", "Unconscious"];
-const KIND = { pc: { label: "Player", color: "#a8d3e4" }, ally: { label: "Ally", color: "#b8d8a8" }, foe: { label: "Foe", color: "#f39da8" } };
+const KIND = { pc: { label: "Player", color: "#8daebe" }, ally: { label: "Ally", color: "#9bb08a" }, foe: { label: "Foe", color: "#cf8577" } };
 
 export function combat(c = C()) { return (c.combat ||= { active: false, round: 1, turn: 0, list: [], log: [], showOnStream: true, autoSkip: true }); }
 // "14 (+2)" reads as +2; "+3" or "3" as-is. D&D and PF use DEX/Perception, others their own stat.

@@ -23,6 +23,8 @@ export function openPalette(App, VIEWS) {
     cmd("Settings", "gear", () => App.settings(), "preferences options config");
     cmd("Rules reference", "book", () => App.rules(), "conditions srd rules prone grapple actions death");
     cmd("Homebrew packs: share or load", "plus", () => App.packs(), "pack share export import homebrew community");
+    cmd("GM remote on your phone", "dice", () => App.gmRemote?.(), "phone remote control gm mobile");
+    cmd("Make a handout: letter, wanted poster, newspaper…", "image", () => import("./handoutmaker.js").then(x => x.handoutMaker(App)), "handout letter wanted poster newspaper decree datapad chat");
     cmd("Theme & appearance", "image", () => App.settings("look"), "theme dark light colour color look skin");
     cmd("Accessibility", "fit", () => App.settings("a11y"), "contrast motion font colourblind colorblind");
     cmd("Rules & genre settings", "gear", () => App.rulesModal(), "settings crit initiative system");

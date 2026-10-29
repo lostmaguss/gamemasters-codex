@@ -3,11 +3,11 @@ import { draggable, dropZone } from "./dnd.js";
 import { $, $$, esc, h, icon, toast, uid, ls, debounce } from "./util.js";
 import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
-import { drawMap, loadImg, loadFresh, mapSrc, fitView, drawArea, drawRuler } from "./maprender.js";
+import { drawMap, loadImg, loadFresh, mapSrc, fitView, drawArea, drawRuler, snapPoint, gridDistance } from "./maprender.js";
 import { shrinkImage } from "./board.js";
 import { combat } from "./combat.js";
 
-const TOKEN_COLORS = ["#f39da8", "#a8d3e4", "#b8d8a8", "#f2c75c", "#cfb2e2", "#ff9a66", "#e8e1d6", "#7a6f73"];
+const TOKEN_COLORS = ["#cf8577", "#8daebe", "#9bb08a", "#f2c75c", "#cfb2e2", "#ff9a66", "#e8e1d6", "#7a6f73"];
 
 export function createMap(el, App) {
   const st = { tool: "move", brush: ls.get("map.brush", 60), img: null, fog: null, drag: null, sel: null, box: null };
@@ -109,9 +109,9 @@ export function createMap(el, App) {
 
   // ---------- coordinates & tools ----------
   function rulerLabel(m, a, b) {
-    const g = m.grid || {}, cells = Math.hypot(b.x - a.x, b.y - a.y) / (g.size || 70);
+    const g = m.grid || {}, cells = gridDistance({ size: 70, ...g }, a, b);
     const per = Number(g.per) || 5, unit = g.unit ?? "ft";
-    return `${cells.toFixed(1)} cells${unit ? ` · ${Math.round(cells * per * 10) / 10} ${unit}` : ""}`;
+    return `${g.type === "hex" || g.type === "hexflat" ? `${cells} hex${cells === 1 ? "" : "es"}` : `${cells.toFixed(1)} cells`}${unit ? ` · ${Math.round(cells * per * 10) / 10} ${unit}` : ""}`;
   }
   const toMap = (cx, cy) => { const r = canvas.getBoundingClientRect(), v = M().view; return { x: (cx - r.left - v.x) / v.z, y: (cy - r.top - v.y) / v.z }; };
   const tokenAt = p => { const m = M(), cell = m.grid?.size || 70; return [...(m.tokens || [])].reverse().find(t => Math.hypot(t.x - p.x, t.y - p.y) <= (t.size || 1) * cell * .46); };
@@ -122,10 +122,18 @@ export function createMap(el, App) {
   }
   function paintLine(a, b, mode) { const d = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.ceil(d / (st.brush / 4))); for (let i = 1; i <= n; i++) paint({ x: a.x + (b.x - a.x) * i / n, y: a.y + (b.y - a.y) * i / n }, mode); }
   function snap(t) {
-    const m = M(), g = m.grid; if (!g?.show || !g.size) return;
-    const odd = (t.size || 1) % 2 === 1, ox = g.ox || 0, oy = g.oy || 0;
-    const f = v => odd ? Math.floor(v / g.size) * g.size + g.size / 2 : Math.round(v / g.size) * g.size;
-    t.x = f(t.x - ox) + ox; t.y = f(t.y - oy) + oy;
+    const m = M(), g = m.grid; if (!g?.size || (g.snap ?? g.show) === false || (!g.show && g.snap == null)) return;
+    const p = snapPoint(g, t.x, t.y, t.size || 1); t.x = p.x; t.y = p.y;
+    reveal(t);
+  }
+  // a token with light clears the fog around it as it moves (no walls: it lights a circle)
+  function reveal(t) {
+    const m = M(); if (!m?.litReveal || !t.light || !st.fog) return;
+    const f = st.fog, s = f._s, g = f.getContext("2d"), r = t.light * (m.grid?.size || 70) * s;
+    const gr = g.createRadialGradient(t.x * s, t.y * s, r * .7, t.x * s, t.y * s, r);
+    gr.addColorStop(0, "rgba(0,0,0,1)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+    g.globalCompositeOperation = "destination-out"; g.fillStyle = gr; g.beginPath(); g.arc(t.x * s, t.y * s, r, 0, 7); g.fill(); g.globalCompositeOperation = "source-over";
+    saveFog();
   }
   canvas.addEventListener("contextmenu", e => e.preventDefault());
   canvas.addEventListener("pointerdown", e => {
@@ -145,7 +153,7 @@ export function createMap(el, App) {
     if (!d) { if (st.tool === "reveal" || st.tool === "hide") render(); return; }
     const p = toMap(e.clientX, e.clientY);
     if (d.t === "pan") { m.view.x = d.vx + e.clientX - d.sx; m.view.y = d.vy + e.clientY - d.sy; render(); if (ui().follow) pushState(); }
-    if (d.t === "token") { d.tok.x = p.x + d.dx; d.tok.y = p.y + d.dy; render(); pushState(); }
+    if (d.t === "token") { d.tok.x = p.x + d.dx; d.tok.y = p.y + d.dy; reveal(d.tok); render(); pushState(); }
     if (d.t === "paint") { paintLine(d.last, p, st.tool); d.last = p; render(); pushState(); }
     if (d.t === "ruler") { st.ruler.p2 = p; render(); }
     if (d.t === "area") { st.area.x2 = p.x; st.area.y2 = p.y; render(); }
@@ -177,7 +185,7 @@ export function createMap(el, App) {
   dropZone(stage, { accept: p => p.kind === "creature" && !!M(), label: p => `Place ${p.name}`, drop: async (p, e) => {
     const x = C().bestiary.find(y => y.id === p.id), m = M(); if (!x || !m) return;
     const at = toMap(e.clientX, e.clientY), n = m.tokens.filter(t => t.name.startsWith(x.name)).length;
-    const t = { id: uid(), name: n ? `${x.name} ${n + 1}` : x.name, color: "#f39da8", size: 1, img: x.img || null, x: at.x, y: at.y }; snap(t);
+    const t = { id: uid(), name: n ? `${x.name} ${n + 1}` : x.name, color: "#cf8577", size: 1, img: x.img || null, x: at.x, y: at.y }; snap(t);
     if (t.img) t._img = await loadImg(t.img);
     m.tokens.push(t); st.sel = t.id; save(); renderSide(); render(); pushState(); toast(`${t.name} placed`);
   } });
@@ -207,14 +215,17 @@ export function createMap(el, App) {
         <ul class="tk-list">${m.tokens.map(t => `<li class="${t.id === st.sel ? "on" : ""}" data-id="${t.id}"><i style="background:${esc(t.color)}"></i><span>${esc(t.name)}</span><button class="tb" data-hide title="${t.hidden ? "Hidden from players" : "Visible to players"}">${icon(t.hidden ? "lock" : "stream")}</button><button class="tb" data-rm title="Remove">${icon("x")}</button></li>`).join("") || `<li class="none">No tokens yet.</li>`}</ul>
         ${sel ? `<div class="tk-edit"><label class="f"><span>Name</span><input type="text" id="tkN" value="${esc(sel.name)}"></label>
           <div class="row" style="gap:6px">${TOKEN_COLORS.map(c => `<button class="sw ${c === sel.color ? "on" : ""}" data-c="${c}" style="background:${c}"></button>`).join("")}</div>
-          <label class="f"><span>Size (cells)</span><div class="stepper sm"><button data-sz="-1">−</button><output>${sel.size || 1}</output><button data-sz="1">+</button></div></label></div>` : ""}
+          <div class="row" style="gap:10px"><label class="f"><span>Size (cells)</span><div class="stepper sm"><button data-sz="-1">−</button><output>${sel.size || 1}</output><button data-sz="1">+</button></div></label>
+          <label class="f" title="Clears the fog around the token when 'Lit tokens clear the fog' is on"><span>Light (cells)</span><div class="stepper sm"><button data-li="-1">−</button><output>${sel.light || 0}</output><button data-li="1">+</button></div></label></div></div>` : ""}
       </section>
       <section><div class="sec-h"><h3>Grid</h3><div class="line"></div></div>
-        <label class="toggle"><input type="checkbox" id="gShow" ${g.show ? "checked" : ""}> Show grid and snap tokens</label>
+        <label class="f"><span>Grid</span><select id="gType"><option value="square">Squares</option><option value="hex">Hexes, pointy tops (rows)</option><option value="hexflat">Hexes, flat tops (columns)</option></select></label>
+        <div class="row" style="gap:14px;margin-top:6px"><label class="toggle"><input type="checkbox" id="gShow" ${g.show ? "checked" : ""}> Show the grid</label><label class="toggle"><input type="checkbox" id="gSnap" ${(g.snap ?? g.show) ? "checked" : ""}> Snap tokens</label></div>
         <div class="row" style="margin-top:8px;gap:8px"><label class="f" style="width:84px"><span>Cell px</span><input type="number" id="gSize" value="${g.size}"></label><label class="f" style="width:70px"><span>Offset X</span><input type="number" id="gOx" value="${g.ox || 0}"></label><label class="f" style="width:70px"><span>Offset Y</span><input type="number" id="gOy" value="${g.oy || 0}"></label></div>
         <div class="row" style="margin-top:8px;gap:8px"><label class="f" style="width:84px"><span>One cell =</span><input type="number" id="gPer" value="${g.per ?? 5}" step="0.5"></label><label class="f" style="width:70px"><span>Unit</span><input type="text" id="gUnit" value="${esc(g.unit ?? "ft")}"></label></div>
-        <p class="md-help">Match the cell size to the squares drawn on your map, then nudge the offset until the lines sit on them.</p>
+        <p class="md-help">Match the cell size to the squares or hexes drawn on your map (centre to centre), then nudge the offset until the lines sit on them.</p>
         <label class="toggle"><input type="checkbox" id="fOn" ${m.fogOn !== false ? "checked" : ""}> Fog of war</label>
+        <label class="toggle" title="Give a token light (select it, then Light) and moving it reveals the map around it"><input type="checkbox" id="fLit" ${m.litReveal ? "checked" : ""}> Lit tokens clear the fog as they move</label>
       </section>
       <section><div class="sec-h"><h3>Map</h3><div class="line"></div></div>
         <label class="f"><span>Name</span><input type="text" id="mName" value="${esc(m.name)}"></label>
@@ -228,7 +239,7 @@ export function createMap(el, App) {
       for (const x of cb.list) {
         if (m.tokens.some(t => t.ref === x.id)) continue;
         const cr = x.ref && c.bestiary.find(y => y.id === x.ref), pm = x.ref && c.party.find(y => y.id === x.ref);
-        const t = { id: uid(), ref: x.id, name: x.name, color: x.color || (x.kind === "foe" ? "#f39da8" : x.kind === "ally" ? "#b8d8a8" : "#a8d3e4"), size: 1, hidden: x.hidden || false, img: cr?.img || pm?.portrait || null, x: cx + ((i % 6) - 2.5) * cell, y: cy + (Math.floor(i / 6) - .5) * cell };
+        const t = { id: uid(), ref: x.id, name: x.name, color: x.color || (x.kind === "foe" ? "#cf8577" : x.kind === "ally" ? "#9bb08a" : "#8daebe"), size: 1, hidden: x.hidden || false, img: cr?.img || pm?.portrait || null, x: cx + ((i % 6) - 2.5) * cell, y: cy + (Math.floor(i / 6) - .5) * cell };
         snap(t); m.tokens.push(t); i++;
       }
       Promise.all(m.tokens.map(async t => { if (t.img && !t._img) t._img = await loadImg(t.img); })).then(() => { render(); pushState(); });
@@ -245,8 +256,13 @@ export function createMap(el, App) {
       $("#tkN", b).oninput = e => { sel.name = e.target.value; render(); pushState(); saveView(); };
       $$("[data-c]", b).forEach(s => s.onclick = () => { sel.color = s.dataset.c; save(); renderSide(); render(); pushState(); });
       $$("[data-sz]", b).forEach(s => s.onclick = () => { sel.size = Math.max(1, Math.min(6, (sel.size || 1) + +s.dataset.sz)); snap(sel); save(); renderSide(); render(); pushState(); });
+      $$("[data-li]", b).forEach(s => s.onclick = () => { sel.light = Math.max(0, Math.min(24, (sel.light || 0) + +s.dataset.li)); reveal(sel); save(); renderSide(); render(); pushState(); if (sel.light && !m.litReveal) toast("Turn on \"Lit tokens clear the fog\" below to use light"); });
     }
     $("#gShow", b).onchange = e => { g.show = e.target.checked; save(); render(); pushMap(); };
+    $("#gSnap", b).onchange = e => { g.snap = e.target.checked; save(); };
+    $("#gType", b).value = g.type || "square";
+    $("#gType", b).onchange = e => { g.type = e.target.value; m.tokens.forEach(snap); save(); render(); pushMap(); pushState(); };
+    $("#fLit", b).onchange = e => { m.litReveal = e.target.checked; save(); if (m.litReveal) { m.tokens.forEach(reveal); render(); pushState(); } };
     const num = (id, k) => $(id, b).oninput = e => { g[k] = Math.max(k === "size" ? 8 : -9999, Number(e.target.value) || 0); render(); saveView(); pushMap(); };
     num("#gSize", "size"); num("#gOx", "ox"); num("#gOy", "oy");
     $("#gPer", b).oninput = e => { g.per = Number(e.target.value) || 5; saveView(); };

@@ -24,6 +24,8 @@ export function initChecklist(App) {
   A_ = App;
   App.checklist = force => { if (force) { S.data.prefs.checklistHidden = false; setOpen(true); } render(); };
   onSaved(s => { if (s === "saved") render(); });
+  // a click anywhere else folds the drop-down
+  addEventListener("pointerdown", e => { if (el && isOpen() && !el.contains(e.target)) { setOpen(false); render(); } }, true);
   render();
 }
 function render() {
@@ -32,7 +34,8 @@ function render() {
   if (hidden) { el?.remove(); el = null; return; }
   const rows = STEPS.map(s => ({ ...s, ok: !!s.done(c) }));
   const need = rows.filter(r => !r.optional), n = need.filter(r => r.ok).length;
-  if (!el) { el = h(`<aside class="checklist" aria-label="Setup checklist"></aside>`); document.body.append(el); }
+  // folded: a small chip in the title bar; open: a panel that drops down from it
+  if (!el) { el = h(`<aside class="checklist" aria-label="Setup checklist"></aside>`); const tb = document.getElementById("saveState"); tb ? tb.before(el) : document.body.append(el); }
   const all = n === need.length;
   if (S.data.prefs.checklistOpen == null && n >= 3) S.data.prefs.checklistOpen = false;
   const open = isOpen();
