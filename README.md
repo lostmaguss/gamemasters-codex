@@ -24,7 +24,7 @@ Prep the session, run it, stream it, remember it. Any system, including your own
 
 <br>
 
-## 🎲 Dice that actually roll
+## Dice that actually roll
 
 <img src="docs/media/dice.gif" align="right" width="420" alt="3D dice rolling on the stream window">
 
@@ -32,13 +32,53 @@ Real 3D dice with physics: they tumble, collide and land, and the result is read
 
 - **Every notation:** `2d20kh1`, `4d6dl1`, exploding `3d6!`, rerolls `4d6r1`, Fate `4dF`, dice pools `8d6>=5`, roll-under `1d100<=45`
 - **Your crit rules:** natural 20s, natural 1s, or low-is-good systems
-- **Custom dice:** put symbols, words or emoji on the faces (⚔ ✦ ☠), roll `3d[Boon]` and get a tally
+- **Fate dice** with bold + and − faces that read from any angle, and results off the ladder (+2 Fair, +3 Good)
+- **Custom dice:** put symbols or words on the faces, roll `3d[Boon]` and get a tally
 - **Player colors:** each character's dice roll in their own color, with their name on the result
 - **Secret rolls** stay on your screen; everything else lands on stream
 
 <br clear="right">
 
-## 📺 Built for streaming
+## Game night on one screen
+
+**Tonight** puts what you need while you play in three columns: the turn order with a big *Next turn* button (or Space), tonight's strong start, scenes and secrets to tick off, a log line, and the party's health with quick rolls. A clock shows how long you've played, *Break* puts the break screen on stream, and focus mode hides the sidebar.
+
+<img src="docs/media/tonight.jpg" alt="The Tonight screen during a fight: turn order, scenes and secrets, party health" width="100%">
+
+### Run it from your phone
+
+The **GM remote** is your own secret link (not the players' one). Scan its QR code and your phone can advance turns, apply damage, nudge party HP, roll (in secret if you like), tick off scenes and secrets, log what happened, show and hide handouts and put up the break screen. *Settings → Connections → GM remote.*
+
+<img src="docs/media/gm-remote.jpg" alt="The GM remote on a phone: turn order with damage boxes, and the handouts tab" width="440">
+
+## Any system, with its monsters and rules
+
+Pick your game when you create a campaign and the Codex sets up the dice rules, the party sheet, the bestiary's stat block, quick rolls and the genre (generators, sounds, look). Change systems later in *Settings → Game & rules*, or just borrow a sheet in *Party → Sheet layout → Start from a system*. Everything stays editable.
+
+Each system also has a **Library**: ready-made creatures for the Bestiary (with clickable attack and damage rolls) and spells, powers or gear for the Codex, about 300 entries in all. Tick *Fill from the library* when you create the campaign, or open it later from the book button in the Bestiary and the Codex. Write `` `8d6` `` in any Codex page and it becomes a roll button.
+
+Where the entries come from:
+
+| System | Source |
+|---|---|
+| D&D 5e | System Reference Document 5.1, Wizards of the Coast, [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/). Checked against the SRD |
+| Pathfinder 2e | Paizo's Monster Core (ORC) and Bestiary (OGL), Player Core spells, from the open Pathfinder data. Checked against it |
+| Pathfinder 1e | Core Rulebook and Bestiary, Open Game Content (OGL). Spells checked against the open rules, monsters rebuilt from their Hit Dice, armor and attacks |
+| Daggerheart | Daggerheart SRD 1.0, © Critical Role, LLC, under the Darrington Press Community Gaming License (DPCGL). Taken from the SRD |
+| Fate Core, Fate Accelerated | Fate SRDs, Evil Hat Productions, CC-BY 3.0. Stunts, NPC tiers and rules from the SRD; named NPCs are examples |
+| Blades in the Dark | Blades SRD, John Harper / One Seven Design, CC-BY 3.0. Abilities and rolls from the SRD; Blades has no monster stats, so threats are examples |
+| Everything else | Written for the Codex in the style of the game, not taken from its books. Check numbers against your copy |
+
+D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Daggerheart · Call of Cthulhu 7e · Powered by the Apocalypse · Blades in the Dark · Vampire V5 · Savage Worlds · Fate Core · Fate Accelerated · Cyberpunk RED · Shadowrun 6e · Mothership · Traveller · Space opera d6 · Homebrew d20
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="docs/media/library.jpg" alt="The Library with D&D 5e SRD creatures"><br><b>Library.</b> Creatures go to the Bestiary with their attacks as roll buttons; spells and powers go to the Codex.</td>
+<td width="50%" valign="top"><img src="docs/media/rules.jpg" alt="The rules reference panel open beside combat"><br><b>Rules reference (F2).</b> Conditions and core rules for your system in a side panel, searchable. Text comes from the open SRDs for D&D 5e, Daggerheart and Fate, and short summaries for the rest. The combat tracker offers your system's conditions and shows their rules on hover.</td>
+</tr>
+</table>
+
+## Built for streaming
 
 Open the **stream window** and share it in Discord (or load the overlays in OBS). Your notes stay private. Players only see what you choose to show.
 
@@ -50,28 +90,28 @@ Open the **stream window** and share it in Discord (or load the overlays in OBS)
 <td width="50%" valign="top">
 
 **On stream, one click away:**
-- 🎲 Dice with results and roll history
-- ⚔️ Turn order and party health
-- 🗺️ Battle maps with fog of war
-- 📜 Handouts, letters and pictures
-- 🏷️ TV-style name cards for NPCs
-- 💎 Glowing loot reveals
-- 🌧️ Weather: rain, snow, storms, neon glitch
-- 🎬 Full-screen scenes: *Starting soon*, *Previously on…*, *Break*
-- ⏱️ Countdowns and progress clocks
-- 🔊 Soundboard, ambience and music
+- Dice with results and roll history
+- Turn order and party health
+- Battle maps with fog of war
+- Handouts, letters and pictures
+- TV-style name cards for NPCs
+- Glowing loot reveals
+- Weather: rain, snow, storms, neon glitch
+- Full-screen scenes: *Starting soon*, *Previously on…*, *Break*
+- Countdowns and progress clocks
+- Soundboard, ambience and music
 
 </td>
 </tr>
 </table>
 
-## 📱 Players' phones
+## Players' phones
 
 Turn on the **table link** and players scan a QR code. Each picks their character and gets their sheet, handouts, the map, turn order and votes on their phone. **Tapping a stat rolls the dice on your table**, and whispers land in their private *Secrets* tab. Works at the table on your Wi-Fi, or **from anywhere** over a secure Cloudflare link for your Discord players. No app to install.
 
 <img src="docs/media/phones.jpg" alt="Player phones and the table link QR code" width="100%">
 
-## 🧙 Everything a GM juggles
+## Everything a GM juggles
 
 <table>
 <tr>
@@ -79,12 +119,12 @@ Turn on the **table link** and players scan a QR code. Each picks their characte
 <td width="50%" valign="top"><img src="docs/media/forge.jpg" alt="Forge"><br><b>Forge.</b> Deal NPCs, places, missions, items, loot and encounters, with names in seconds. Genre-aware.</td>
 </tr>
 <tr>
-<td valign="top"><img src="docs/media/combat.jpg" alt="Combat tracker"><br><b>Combat.</b> Initiative, HP, conditions that count down, damage straight from rolls, and the turn order on stream.</td>
-<td valign="top"><img src="docs/media/map.jpg" alt="Battle map"><br><b>Battle maps.</b> Grid, tokens, fog you paint away, measuring and area templates.</td>
+<td valign="top"><img src="docs/media/combat.jpg" alt="Combat tracker"><br><b>Combat.</b> Initiative, HP, your system's conditions that count down, damage straight from rolls, and the turn order on stream.</td>
+<td valign="top"><img src="docs/media/map.jpg" alt="Battle map with fog of war and a ruler"><br><b>Battle maps.</b> Grid, tokens, fog you paint or box away, measuring and area templates.</td>
 </tr>
 <tr>
 <td valign="top"><img src="docs/media/board.jpg" alt="Corkboard"><br><b>Corkboard.</b> Pin clues and suspects, tie red string. <i>World web</i> builds one from your notes.</td>
-<td valign="top"><img src="docs/media/codex.jpg" alt="Codex wiki"><br><b>Codex.</b> A wiki of your world with <code>[[links]]</code>, backlinks, templates and pictures.</td>
+<td valign="top"><img src="docs/media/codex.jpg" alt="Codex wiki"><br><b>Codex.</b> A wiki of your world with <code>[[links]]</code>, backlinks, templates and pictures. Write <code>`2d6`</code> and it becomes a roll button.</td>
 </tr>
 <tr>
 <td valign="top"><img src="docs/media/party.jpg" alt="Party sheets"><br><b>Party.</b> Character sheets shaped like <i>your</i> system, one-click stat rolls, and a shared stash for money and loot.</td>
@@ -96,15 +136,59 @@ Turn on the **table link** and players scan a QR code. Each picks their characte
 </tr>
 </table>
 
-Also inside: import your Obsidian vault or Markdown notes · players' private journals · Turkish for everything players see · random tables that roll other tables · world clocks, calendar and faction reputation · `Ctrl+K` to find anything · printable NPC cards, handouts and character sheets · daily backups · auto-updates.
+Also inside: import your Obsidian vault or Markdown notes · players' private journals · random tables that roll other tables · world clocks, calendar and faction reputation · `Ctrl+K` to find anything · printable NPC cards, handouts and character sheets · daily backups · auto-updates.
 
-## 🌌 Fantasy, sci-fi or cyberpunk
+### Hex maps and light
+
+Pick squares, pointy-top hexes or flat-top hexes to match the map you load. Snapping is its own switch, the ruler counts hexes, and a token can carry light: with *Lit tokens clear the fog* on, moving it reveals the map around it, so the party explores as they walk.
+
+<img src="docs/media/hexmap.jpg" alt="A dungeon map with a hex grid, tokens and a ruler measuring 11 hexes" width="100%">
+
+### Handout maker
+
+Make the handout instead of hunting for one: a letter sealed in wax, a wanted poster, a newspaper front page, a royal decree, a sci-fi data pad or a cyberpunk chat log. Fill in the words (and a portrait if you like), and it's saved as a picture you can show on stream, send to phones or post to Discord. *Live → Handouts → Make one.*
+
+<img src="docs/media/handout.jpg" alt="The handout maker with a wanted poster" width="100%">
+
+### Drag and drop
+
+Drag a creature from the Bestiary into Combat, Tonight or onto the Map (hover over a sidebar section to switch to it on the way). Drop pictures straight onto Codex pages, creatures, character portraits and handouts. Drop a `.codexpack` file anywhere on the window to open it.
+
+## Make it yours
+
+<img src="docs/media/themes.jpg" alt="The Tonight screen in eight of the fifteen themes" width="100%">
+
+**15 themes**, dark and light: Lantern, Neon, Void, Tavern, Grove, Moonlit, Frost, Nightshade, Rosewood, Abyss (true black for OLED), Parchment, Daylight, Solar, Sakura and High contrast. Each campaign can have its own, or *Match the genre* picks one for you.
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="docs/media/settings.jpg" alt="Settings, Appearance tab with theme cards"><br><b>One Settings window (Ctrl+,).</b> General, game & rules, appearance, accessibility, connections, backups & data, legal & credits.</td>
+<td width="50%" valign="top"><img src="docs/media/a11y.jpg" alt="Settings, Accessibility tab"><br><b>Accessibility.</b> Reduce motion, colour-blind safe colours (blue, orange and yellow instead of green and red), readable fonts, a strong focus outline, underlined links, interface size.</td>
+</tr>
+<tr>
+<td valign="top"><img src="docs/media/turkish.jpg" alt="The combat tracker with the GM interface in Turkish"><br><b>Türkçe.</b> The GM interface can be in Turkish (<i>Settings → General</i>), and so can everything players see (phones, the stream window, Discord) with <i>Players' language</i>. Your own notes and names are never touched.</td>
+<td valign="top"><img src="docs/media/packs.jpg" alt="Making a homebrew pack"><br><b>Homebrew packs.</b> Share your sheet layout and dice rules, monsters, spells, tables, custom dice and Codex pages as one <code>.codexpack</code> file with the pictures inside. Opening one shows what's in it and adds only what you don't already have.</td>
+</tr>
+</table>
+
+## Safety nets
+
+<img src="docs/media/checklist.jpg" align="right" width="340" alt="The setup checklist opened from the title bar">
+
+- **Undo everything.** `Ctrl+Z` and `Ctrl+Shift+Z` outside text boxes, and an *Undo* button on the message after every delete. Deleting a whole campaign can be undone until you close the app.
+- **Setup checklist.** A new campaign shows a small ring in the title bar: pick a system, add the party, plan a session, add monsters, open the stream window, let players join. It ticks itself off as you go and gets out of the way when you're done.
+- **Daily backups** for 14 days, and an export that carries every picture.
+- **Private by design.** No accounts, no tracking, no analytics. See the [privacy policy](PRIVACY.md) for exactly what leaves your computer and when.
+
+<br clear="right">
+
+## Fantasy, sci-fi or cyberpunk
 
 Pick a genre and the whole app follows: generators, starter tables, sounds, dice and the look of the interface.
 
 <img src="docs/media/genres.jpg" alt="Fantasy, sci-fi and cyberpunk looks" width="100%">
 
-## 🤖 Discord, all the way
+## Discord, all the way
 
 | | |
 |---|---|
@@ -115,7 +199,7 @@ Pick a genre and the whole app follows: generators, starter tables, sounds, dice
 
 <br>
 
-## ⬇️ Get started
+## Get started
 
 1. **[Download](https://github.com/lostmaguss/gamemasters-codex/releases/latest)** the file for your computer:
 
@@ -132,7 +216,7 @@ Pick a genre and the whole app follows: generators, starter tables, sounds, dice
 3. Press **F1** any time for every keyboard shortcut.
 
 <details>
-<summary><b>📺 Streaming on Discord, step by step</b></summary>
+<summary><b>Streaming on Discord, step by step</b></summary>
 
 1. Click **Stream window** in the top bar. A second window opens with just the table.
 2. In Discord: *Share Screen → Applications → Codex Dice (stream)*. Turn on **Sound** if you use the soundboard.
@@ -145,13 +229,13 @@ For an in-person table, **Player display on a second screen** puts it fullscreen
 </details>
 
 <details>
-<summary><b>🎥 OBS browser sources</b></summary>
+<summary><b>OBS browser sources</b></summary>
 
 Campaign menu → **Table link: phones & OBS** → *OBS browser sources*. Copy a link, add it in OBS as a **Browser** source at 1920 × 1080. The background is see-through. There are links for everything, dice only, turn order, party bar, map, popups and scenes. While an OBS dice source is open, rolls happen there, and you don't need the stream window.
 </details>
 
 <details>
-<summary><b>📱 Setting up players' phones</b></summary>
+<summary><b>Setting up players' phones</b></summary>
 
 Campaign menu → **Table link: phones & OBS** → turn it on, then pick:
 
@@ -162,13 +246,13 @@ Only people with the link can open it, and wrong guesses are slowed down. *New k
 </details>
 
 <details>
-<summary><b>🔗 Posting to a Discord channel (webhook)</b></summary>
+<summary><b>Posting to a Discord channel (webhook)</b></summary>
 
-*Campaign menu → Connect Discord*. In Discord: *channel settings → Integrations → Webhooks → New Webhook → Copy Webhook URL*, then paste it. Post rolls, handouts, turn order and session recaps automatically or with the Post buttons.
+*Settings → Connections → Discord*. In Discord: *channel settings → Integrations → Webhooks → New Webhook → Copy Webhook URL*, then paste it. Post rolls, handouts, turn order and session recaps automatically or with the Post buttons.
 </details>
 
 <details>
-<summary><b>🤖 Player dice bot</b></summary>
+<summary><b>Player dice bot</b></summary>
 
 1. [discord.com/developers/applications](https://discord.com/developers/applications) → **New Application**.
 2. **Bot → Reset Token**, copy it, and paste it in *Campaign menu → Discord → Player dice bot*. Press **Connect**.
@@ -187,7 +271,7 @@ The bot only answers while the app is open.
 </details>
 
 <details>
-<summary><b>🎲 Dice notation</b></summary>
+<summary><b>Dice notation</b></summary>
 
 | Write | Means |
 |---|---|
@@ -200,43 +284,23 @@ The bot only answers while the app is open.
 | `1d100<=45` | Roll-under target: Success or Failure |
 | `8d6>=5` | Dice pool: count the hits |
 
-Which die makes a critical, whether high or low is good, and initiative order are set in *Campaign menu → Rules & genre*.
-
-### Game system templates
-
-Pick your game when you create a campaign and the Codex sets up the dice rules, the party sheet, the bestiary's stat block, quick rolls and the genre (generators, sounds, look). Change systems later in *Rules & genre*, or just borrow a sheet in *Party → Sheet layout → Start from a system*. Everything stays editable.
-
-Each system also has a **Library**: ready-made creatures for the Bestiary (with clickable attack and damage rolls) and spells, powers or gear for the Codex, about 300 entries in all. Tick *Fill from the library* when you create the campaign, or open it later from the book button in the Bestiary and the Codex. Write `` `8d6` `` in any Codex page and it becomes a roll button.
-
-Where the entries come from:
-
-| System | Source |
-|---|---|
-| D&D 5e | System Reference Document 5.1, Wizards of the Coast, [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/). Checked against the SRD |
-| Pathfinder 2e | Paizo's Monster Core (ORC) and Bestiary (OGL), Player Core spells, from the open Pathfinder data. Checked against it |
-| Pathfinder 1e | Core Rulebook and Bestiary, Open Game Content (OGL). Spells checked against the open rules, monsters rebuilt from their Hit Dice, armor and attacks |
-| Daggerheart | Daggerheart SRD 1.0, © Critical Role, LLC, under the Darrington Press Community Gaming License (DPCGL). Taken from the SRD |
-| Fate Core, Fate Accelerated | Fate SRDs, Evil Hat Productions, CC-BY 3.0. Stunts, NPC tiers and rules from the SRD; named NPCs are examples |
-| Blades in the Dark | Blades SRD, John Harper / One Seven Design, CC-BY 3.0. Abilities and rolls from the SRD; Blades has no monster stats, so threats are examples |
-| Everything else | Written for the Codex in the style of the game, not taken from its books. Check numbers against your copy |
-
-D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Daggerheart · Call of Cthulhu 7e · Powered by the Apocalypse · Blades in the Dark · Vampire V5 · Savage Worlds · Fate Core · Fate Accelerated · Cyberpunk RED · Shadowrun 6e · Mothership · Traveller · Space opera d6 · Homebrew d20
+Which die makes a critical, whether high or low is good, and initiative order are set in *Settings → Game & rules*.
 </details>
 
 <details>
-<summary><b>⌨️ Keyboard</b></summary>
+<summary><b>Keyboard</b></summary>
 
-`Ctrl+K` search & commands · `Ctrl+L` log a moment · `Ctrl+1…0` sections · `Ctrl +/−` interface size · `Space` next turn in combat · `F1` all shortcuts
+`Ctrl+K` search & commands · `Ctrl+,` settings · `Ctrl+Z` undo · `F2` rules reference · `Ctrl+L` log a moment · `Ctrl+1…0` sections · `Ctrl +/−` interface size · `Space` next turn · `F1` all shortcuts
 </details>
 
 <details>
-<summary><b>💾 Your data</b></summary>
+<summary><b>Your data</b></summary>
 
-Everything stays on your computer: `%APPDATA%\Gamemasters Codex\` on Windows, `~/Library/Application Support/Gamemasters Codex/` on macOS, `~/.config/Gamemasters Codex/` on Linux. A dated backup is kept every day for 14 days (*Campaign menu → Restore a backup*). *Export backup* writes one file with all pictures included, so it works on any computer.
+Everything stays on your computer: `%APPDATA%\Gamemasters Codex\` on Windows, `~/Library/Application Support/Gamemasters Codex/` on macOS, `~/.config/Gamemasters Codex/` on Linux. A dated backup is kept every day for 14 days (*Settings → Backups & data*). *Export backup* writes one file with all pictures included, so it works on any computer.
 </details>
 
 <details>
-<summary><b>🛠️ Develop</b></summary>
+<summary><b>Develop</b></summary>
 
 ```
 npm install
@@ -258,4 +322,4 @@ Electron · three.js + cannon-es for the dice · discord.js for the bot. Pushing
 
 ## Legal
 
-Gamemaster's Codex is an unofficial fan tool, not affiliated with or endorsed by any game publisher. Game names are used only to say which rules a template works with. The library includes open content under the CC-BY-4.0 (D&D SRD 5.1), ORC (Pathfinder 2e), OGL 1.0a (Pathfinder 1e), DPCGL (Daggerheart) and CC-BY 3.0 (Fate, Blades in the Dark) licenses; everything else is original writing. Full notices, attributions, trademarks and software licenses: [app/LEGAL.md](app/LEGAL.md), also in the app under *Campaign menu → Legal & credits*.
+Gamemaster's Codex is an unofficial fan tool, not affiliated with or endorsed by any game publisher. Game names are used only to say which rules a template works with. The library includes open content under the CC-BY-4.0 (D&D SRD 5.1), ORC (Pathfinder 2e), OGL 1.0a (Pathfinder 1e), DPCGL (Daggerheart) and CC-BY 3.0 (Fate, Blades in the Dark) licenses; everything else is original writing. Full notices, attributions, trademarks and software licenses: [app/LEGAL.md](app/LEGAL.md), also in the app under *Settings → Legal & credits*. Privacy: [PRIVACY.md](PRIVACY.md).

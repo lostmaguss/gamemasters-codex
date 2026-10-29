@@ -7,6 +7,7 @@ import { DEFAULT_RULES } from "./roll.js";
 import { LANGS } from "./i18n.js";
 import { THEMES as DICE, FELTS } from "./dice3d.js";
 import { md } from "./codex.js";
+import { setDeskLang } from "./deski18n.js";
 
 // app themes: palette preview [background, sidebar, surface, accent, text]
 export const LOOKS = [
@@ -38,6 +39,7 @@ const A11Y = [
   ["under", "Underline links", "Links and [[wiki links]] are underlined, not only coloured."],
 ];
 export function applyPrefs() {
+  setDeskLang(S.data.prefs.deskLang || "en");
   const a = S.data.prefs.a11y || {}, r = document.documentElement;
   for (const [k] of A11Y) r.classList.toggle("a11y-" + k, !!a[k]);
 }
@@ -61,11 +63,14 @@ export function openSettings(App, ctx, tab = "general") {
           <div class="grp"><label class="f"><span>Campaign name</span><input type="text" id="sName" value="${esc(c.name)}"></label>
           <label class="f"><span>Tagline</span><input type="text" id="sTag" value="${esc(c.tagline || "")}" placeholder="Grim frontier fantasy · Fridays on Discord"></label></div>
           <div class="grp"><div class="set-row"><div><b>Interface size</b><small>Also ${esc(ctx.keys("Ctrl + / −"))}. For every campaign.</small></div><div class="row" style="gap:8px;align-items:center"><input type="range" id="sZoom" min="70" max="150" step="10" value="${Math.round((S.data.prefs.zoom || 1) * 100)}"><b id="sZoomV" class="mono" style="width:48px">${Math.round((S.data.prefs.zoom || 1) * 100)}%</b></div></div></div>
+          <div class="grp"><div class="set-row"><div><b>GM interface language</b><small>The language of your own screens. Players' language is in Game & rules.</small></div><select id="sDeskLang" style="width:auto"><option value="en">English</option><option value="tr">Türkçe</option></select></div></div>
           <div class="grp"><div class="set-row"><div><b>Help</b><small>Shortcuts, the guide and what changed lately.</small></div><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm" id="sKeys">${icon("type")} Shortcuts (F1)</button><button class="btn sm" id="sNews">${icon("star")} What's new</button><button class="btn sm" id="sGuide">${icon("book")} User guide</button>${window.codex ? `<button class="btn sm" id="sUpd">${icon("reroll")} Check for updates</button>` : ""}</div></div>
           <div class="set-row"><div><b>Setup checklist</b><small>The first-launch steps, in case you hid them.</small></div><button class="btn sm" id="sCheck">${icon("check")} Show it</button></div></div>`;
         $("#sName", el).oninput = e => { c.name = e.target.value.trim() || "Untitled campaign"; save(); ctx.renderCampName(); };
         $("#sTag", el).oninput = e => { c.tagline = e.target.value.trim(); save(); };
         $("#sZoom", el).oninput = e => { const z = +e.target.value / 100; $("#sZoomV", el).textContent = e.target.value + "%"; ctx.setZoom(z); };
+        $("#sDeskLang", el).value = S.data.prefs.deskLang || "en";
+        $("#sDeskLang", el).onchange = e => { S.data.prefs.deskLang = e.target.value; save(); if (e.target.value === "en") flush().then(() => location.reload()); else setDeskLang(e.target.value); };
         $("#sKeys", el).onclick = () => { done(); ctx.helpSheet(); };
         $("#sNews", el).onclick = () => { done(); ctx.showNews(); };
         $("#sGuide", el).onclick = () => window.open("https://github.com/lostmaguss/gamemasters-codex#readme");

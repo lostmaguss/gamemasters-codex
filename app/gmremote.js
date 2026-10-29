@@ -1,7 +1,7 @@
 // GM remote: run the table from your own phone. It has its own secret link (not the players' one),
 // sees the turn order, scene, party and handouts, and can advance turns, apply damage, roll and show things.
 import { $, esc, icon, toast, uid } from "./util.js";
-import { C, save, onSaved } from "./store.js";
+import { S, C, save, onSaved } from "./store.js";
 import { combat, advanceTurn, applyDamage, combatChanged } from "./combat.js";
 import { res, pushParty } from "./party.js";
 import { nextPlanned } from "./bestiary.js";
@@ -23,7 +23,7 @@ function state() {
     plan: { start: P.start || "", scenes: (P.scenes || []).map(x => ({ id: x.id, text: x.text, done: !!x.done })), secrets: (P.secrets || []).map(x => ({ id: x.id, text: x.text, done: !!x.done })) },
     presets: (c.presets || []).slice(0, 16).map(p => ({ name: p.name, expr: p.expr })),
     handouts: c.handouts.map(h => ({ id: h.id, title: h.title || "Untitled", type: h.type })), onAir: App.onAir?.id || null,
-    stream: !!App.streamLive,
+    stream: !!App.streamLive, lang: S.data.prefs.deskLang || "en",
   };
 }
 export function pushGm() { clearTimeout(timer); timer = setTimeout(() => T()?.gmState(state()), 120); }

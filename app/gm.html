@@ -19,7 +19,7 @@
   .card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: 10px; padding: 10px 12px; }
   .who { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
   .who.cur { border-color: var(--ember); background: color-mix(in srgb, var(--ember) 14%, var(--surface)); }
-  .who.down { opacity: .5; } .who b { font-size: 16px; } .who .hp { font: 600 15px var(--mono); } .who .hp small { color: var(--faint); }
+  .who.down { opacity: .5; } .who b { font-size: 16px; } .who .hp { font: 600 15px var(--mono); display: block; border: 0; border-radius: 0; background: none; } .who .hp small { color: var(--faint); }
   .who .bar { grid-column: 1 / -1; height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; } .who .bar i { display: block; height: 100%; background: var(--good); }
   .who .ctl { grid-column: 1 / -1; display: flex; gap: 6px; } .who .ctl input { flex: 1; height: 40px; font-size: 16px; }
   .who .ctl button, .pm button { min-width: 48px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 700 18px var(--body); }
@@ -48,6 +48,6 @@
   <button data-tab="show"><svg viewBox="0 0 24 24"><path d="M3 5h18v12H3zM8 21h8M12 17v4"/></svg>Show</button>
   <button data-tab="roll"><svg viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7zM12 22V12M3 7l9 5 9-5"/></svg>Roll</button>
 </nav>
-<div class="off" id="off">Lost the connection to the GM's computer.<br>Trying again…</div>
+<div class="off" id="off"><span id="offMsg">Lost the connection to the GM's computer.<br>Trying again…</span></div>
 <script type="module" src="/app/gm.js"></script>
 </body></html>

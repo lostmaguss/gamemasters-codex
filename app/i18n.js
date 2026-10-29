@@ -1,5 +1,5 @@
 // Players' language: what players see (phones, the stream window, Discord) can be in Turkish.
-// The GM's own screens stay in English. Add a language by adding a dictionary below.
+// The GM's own screens have their own language setting (deski18n.js). Add a language by adding a dictionary below.
 const TR = {
   // phone
   "At the table": "Masada",
