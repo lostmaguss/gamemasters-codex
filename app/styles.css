@@ -1043,3 +1043,123 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .legal h2 { font-size: 22px; margin: 18px 0 4px; }
 .legal h3 { font-size: 16px; margin: 14px 0 2px; }
 .legal p, .legal li { font-size: 13.5px; line-height: 1.5; }
+.toast.has-act { pointer-events: auto; display: flex; align-items: center; gap: 14px; padding-right: 8px; }
+.toast-act { border: 0; background: var(--ember); color: var(--ember-ink); font-weight: 700; padding: 4px 12px; border-radius: 6px; cursor: pointer; }
+.toast-act:hover { filter: brightness(1.1); }
+
+/* ---------- THEMES ----------
+   Each theme only swaps the palette (and sometimes the heading font). Pick one in Settings → Appearance. */
+:root[data-look="parchment"] { color-scheme: light;
+  --bg: #f4ecdc; --bg-2: #efe5d1; --surface: #fbf6ea; --surface-2: #f1e7d3; --surface-3: #e6d8bd; --line: #cdb994; --line-soft: #e0d2b6;
+  --ink: #2b2018; --dim: #6a5646; --faint: #97836d; --ember: #b4432a; --ember-2: #cc5a3f; --ember-ink: #fff6ec;
+  --good: #2f7d3b; --bad: #b3261e; --crit: #a86d00; --paper: #fffaf0; --card-ink: #2a1d17; --c-ink: #2f2529; }
+:root[data-look="daylight"] { color-scheme: light;
+  --bg: #f5f6f8; --bg-2: #eceef2; --surface: #ffffff; --surface-2: #f0f2f5; --surface-3: #e3e6ec; --line: #ccd2dc; --line-soft: #e1e5eb;
+  --ink: #1d2330; --dim: #545e70; --faint: #868fa0; --ember: #3b6ef5; --ember-2: #5b86f7; --ember-ink: #ffffff;
+  --good: #1f8a4c; --bad: #d03b3b; --crit: #b7791f; --paper: #fffdf7; --card-ink: #1d2330; --c-ink: #1d2330;
+  --display: "Oxanium", "Segoe UI", sans-serif; --hand: "IBM Plex Sans Condensed", sans-serif; }
+:root[data-look="solar"] { color-scheme: light;
+  --bg: #fdf6e3; --bg-2: #f5eed8; --surface: #fffbef; --surface-2: #eee8d5; --surface-3: #e4dcc4; --line: #cbc2a7; --line-soft: #e0d8c0;
+  --ink: #073642; --dim: #4f666d; --faint: #8b9898; --ember: #cb4b16; --ember-2: #dc6a3a; --ember-ink: #fff8ee;
+  --good: #6b7f00; --bad: #dc322f; --crit: #b58900; --paper: #fffdf6; --card-ink: #073642; --c-ink: #073642;
+  --display: "Oxanium", sans-serif; --hand: "IM Fell English", serif; }
+:root[data-look="sakura"] { color-scheme: light;
+  --bg: #fbf1f3; --bg-2: #f6e6ea; --surface: #fffafb; --surface-2: #f8eaee; --surface-3: #efd9df; --line: #e0bfc8; --line-soft: #eed6dc;
+  --ink: #3a2429; --dim: #7a5a62; --faint: #a5838b; --ember: #d6457a; --ember-2: #e2678f; --ember-ink: #fff3f7;
+  --good: #3c8f55; --bad: #c43a3a; --crit: #b9781e; --paper: #fffdf8; --card-ink: #3a2429; --c-ink: #3a2429;
+  --display: "IM Fell English", Georgia, serif; }
+:root[data-look="frost"] {
+  --bg: #242933; --bg-2: #2b303b; --surface: #313744; --surface-2: #3b4252; --surface-3: #434c5e; --line: #4c566a; --line-soft: #3b4252;
+  --ink: #eceff4; --dim: #c0c8d6; --faint: #8691a5; --ember: #88c0d0; --ember-2: #a3d0dc; --ember-ink: #1d2733;
+  --good: #a3be8c; --bad: #bf616a; --crit: #ebcb8b; --paper: #eceff4; --card-ink: #2e3440; --c-ink: #2e3440;
+  --display: "Oxanium", sans-serif; --hand: "Oxanium", sans-serif; }
+:root[data-look="grove"] {
+  --bg: #141a15; --bg-2: #19211a; --surface: #202a21; --surface-2: #29352a; --surface-3: #334234; --line: #3e5140; --line-soft: #2b382c;
+  --ink: #ecf0e4; --dim: #b3bea6; --faint: #78866f; --ember: #d9b44a; --ember-2: #e6c86c; --ember-ink: #241b03;
+  --good: #9fd07a; --bad: #e0715a; --crit: #f2d675; --paper: #f1ecd9; --card-ink: #1f2a1c; --c-ink: #1f2a1c;
+  --display: "IM Fell English", Georgia, serif; }
+:root[data-look="nightshade"] {
+  --bg: #1b1923; --bg-2: #211e2b; --surface: #282a36; --surface-2: #31313f; --surface-3: #3c3c4d; --line: #4a4a60; --line-soft: #34344a;
+  --ink: #f8f8f2; --dim: #c3c0d6; --faint: #8a87a3; --ember: #ff79c6; --ember-2: #ff95d3; --ember-ink: #2a0b1f;
+  --good: #50fa7b; --bad: #ff5555; --crit: #f1fa8c; --paper: #f4f1fb; --card-ink: #1e1b29; --c-ink: #1e1b29;
+  --display: "Oxanium", sans-serif; }
+:root[data-look="tavern"] {
+  --bg: #1d2021; --bg-2: #232625; --surface: #282828; --surface-2: #32302f; --surface-3: #3c3836; --line: #504945; --line-soft: #3c3836;
+  --ink: #ebdbb2; --dim: #bdae93; --faint: #8a7f6e; --ember: #fe8019; --ember-2: #fe9a44; --ember-ink: #2a1404;
+  --good: #b8bb26; --bad: #fb4934; --crit: #fabd2f; --paper: #f2e5bc; --card-ink: #282828; --c-ink: #282828; }
+:root[data-look="moonlit"] {
+  --bg: #0f1424; --bg-2: #131a2d; --surface: #192238; --surface-2: #212c46; --surface-3: #2a3754; --line: #34436a; --line-soft: #232f4a;
+  --ink: #e8ecf8; --dim: #aab4d0; --faint: #6f7a9a; --ember: #b9c6ff; --ember-2: #d4dcff; --ember-ink: #121834;
+  --good: #8fd6b0; --bad: #ff8a8a; --crit: #ffd98a; --paper: #eef1fb; --card-ink: #161d33; --c-ink: #161d33;
+  --display: "IM Fell English", Georgia, serif; }
+:root[data-look="rosewood"] {
+  --bg: #1c1216; --bg-2: #23171c; --surface: #2c1d23; --surface-2: #37252c; --surface-3: #432e37; --line: #563b46; --line-soft: #3a2830;
+  --ink: #f7e9ee; --dim: #cfb0bb; --faint: #93727e; --ember: #f27aa0; --ember-2: #f698b6; --ember-ink: #2b0a16;
+  --good: #a8d8a0; --bad: #ff6b6b; --crit: #ffd27a; --paper: #fbeff3; --card-ink: #2a171e; --c-ink: #2a171e; }
+:root[data-look="abyss"] {
+  --bg: #000000; --bg-2: #050505; --surface: #0d0d0f; --surface-2: #151518; --surface-3: #1f1f24; --line: #2a2a30; --line-soft: #18181c;
+  --ink: #f2f2f2; --dim: #a6a6ad; --faint: #6b6b73; --ember: #2ee6c5; --ember-2: #63f0d6; --ember-ink: #00231d;
+  --good: #6ee7a0; --bad: #ff5f6d; --crit: #ffd166; --paper: #f0f0f0; --card-ink: #0d0d0f; --c-ink: #0d0d0f;
+  --display: "Oxanium", sans-serif; --hand: "Oxanium", sans-serif; }
+:root[data-look="contrast"] {
+  --bg: #000000; --bg-2: #000000; --surface: #0a0a0a; --surface-2: #161616; --surface-3: #262626; --line: #ffffff; --line-soft: #a0a0a0;
+  --ink: #ffffff; --dim: #f2f2f2; --faint: #d6d6d6; --ember: #ffd400; --ember-2: #ffe14d; --ember-ink: #000000;
+  --good: #5cff7a; --bad: #ff6b6b; --crit: #ffd400; --paper: #ffffff; --card-ink: #000000; --c-ink: #000000;
+  --display: "IBM Plex Sans Condensed", sans-serif; --hand: "IBM Plex Sans Condensed", sans-serif; }
+:root[data-look="contrast"] .btn, :root[data-look="contrast"] input, :root[data-look="contrast"] select, :root[data-look="contrast"] textarea { border-color: #fff !important; }
+:root[data-look="contrast"] :focus-visible { outline: 3px solid #ffd400; outline-offset: 3px; }
+:root:is([data-look="parchment"], [data-look="daylight"], [data-look="solar"], [data-look="sakura"]) .rollchip:hover { background: var(--ember); }
+:root:is([data-look="parchment"], [data-look="daylight"], [data-look="solar"], [data-look="sakura"]) .toast { background: var(--card-ink); color: #fff; }
+:root:is([data-look="daylight"], [data-look="solar"], [data-look="frost"], [data-look="nightshade"], [data-look="abyss"], [data-look="contrast"]) .prose > p:first-of-type::first-letter { font-size: 1em; float: none; margin: 0; color: inherit; }
+
+/* ---------- ACCESSIBILITY (Settings → Accessibility) ---------- */
+:root.a11y-motion *, :root.a11y-motion *::before, :root.a11y-motion *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+:root.a11y-cb { --good: #3d9bff !important; --bad: #ff9a1f !important; --crit: #f5e663 !important; }
+:root.a11y-font { --display: "IBM Plex Sans Condensed", "Segoe UI", sans-serif !important; --hand: "IBM Plex Sans Condensed", sans-serif !important; }
+:root.a11y-font body { line-height: 1.62; letter-spacing: .012em; }
+:root.a11y-font .prose > p:first-of-type::first-letter { font-size: 1em; float: none; margin: 0; color: inherit; }
+:root.a11y-focus :focus-visible { outline: 3px solid var(--ember) !important; outline-offset: 3px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--ember) 30%, transparent); }
+:root.a11y-under a, :root.a11y-under .wl { text-decoration: underline !important; }
+
+/* ---------- SETTINGS ---------- */
+.modal.settings { width: min(980px, 100%); height: min(720px, 90vh); padding: 0; flex-direction: row; gap: 0; overflow: hidden; }
+.set-nav { width: 210px; flex: none; background: var(--bg-2); border-right: 1px solid var(--line-soft); padding: 20px 10px; display: flex; flex-direction: column; gap: 2px; }
+.set-nav h2 { font-size: 28px; padding: 0 10px 14px; }
+.set-nav button { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; color: var(--dim); text-align: left; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-weight: 500; }
+.set-nav button:hover { background: var(--surface); color: var(--ink); }
+.set-nav button.on { background: var(--surface-2); color: var(--ink); box-shadow: inset 3px 0 0 var(--ember); }
+.set-nav .grow { flex: 1; }
+.set-body { flex: 1; min-width: 0; overflow: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
+.set-body h3 { font-size: 24px; }
+.set-body .grp { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--bg-2); }
+.set-row { display: flex; align-items: center; gap: 14px; justify-content: space-between; }
+.set-row > div { min-width: 0; } .set-row b { display: block; font-weight: 600; } .set-row small { color: var(--dim); font-size: 13px; }
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; }
+.theme-card { border: 2px solid var(--line-soft); border-radius: 12px; padding: 0; overflow: hidden; cursor: pointer; background: transparent; text-align: left; color: var(--ink); }
+.theme-card:hover { border-color: var(--line); }
+.theme-card.on { border-color: var(--ember); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ember) 35%, transparent); }
+.theme-card .tp { height: 74px; display: grid; grid-template-columns: 28px 1fr; }
+.theme-card .tp i { display: block; }
+.theme-card .tp .side { border-right: 1px solid rgba(127,127,127,.25); }
+.theme-card .tp .main { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.theme-card .tp .bar { height: 8px; border-radius: 4px; }
+.theme-card .tp .btnp { width: 46px; height: 14px; border-radius: 4px; }
+.theme-card .tn { padding: 8px 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-weight: 600; background: var(--surface); }
+.theme-card .tn small { color: var(--faint); font-weight: 500; font-size: 11px; }
+
+/* ---------- setup checklist ---------- */
+.checklist { position: fixed; left: 96px; bottom: 16px; width: 330px; z-index: 60; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.45); overflow: hidden; }
+.checklist header { display: flex; align-items: center; }
+.checklist .cl-toggle { flex: 1; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 0; background: transparent; text-align: left; cursor: pointer; color: var(--ink); }
+.checklist .cl-toggle b { display: block; font-weight: 700; } .checklist small { display: block; color: var(--dim); font-size: 12px; line-height: 1.35; }
+.cl-ring { width: 42px; height: 42px; flex: none; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--ember) calc(var(--p) * 1%), var(--surface-3) 0); }
+.cl-ring b { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font: 700 11px var(--mono); }
+.checklist .cl-x { border: 0; background: transparent; color: var(--faint); padding: 10px 12px; cursor: pointer; } .checklist .cl-x:hover { color: var(--ink); }
+.checklist ol { list-style: none; margin: 0; padding: 0 8px 10px; display: flex; flex-direction: column; gap: 2px; max-height: 52vh; overflow: auto; }
+.checklist li button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 7px 8px; border: 0; border-radius: 8px; background: transparent; text-align: left; cursor: pointer; color: var(--ink); }
+.checklist li button:hover { background: var(--surface-2); }
+.checklist li b { font-weight: 600; font-size: 13.5px; } .checklist li em { margin-left: auto; font-style: normal; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.cl-box { width: 20px; height: 20px; flex: none; border-radius: 6px; border: 2px solid var(--line); display: grid; place-items: center; }
+.checklist li.ok .cl-box { background: var(--good); border-color: var(--good); color: var(--bg); } .checklist li.ok .cl-box .ic { width: 14px; height: 14px; stroke-width: 3; }
+.checklist li.ok b { color: var(--dim); text-decoration: line-through; text-decoration-color: var(--faint); }
+.checklist.closed { width: auto; border-radius: 999px; } .checklist.closed .cl-toggle { padding: 6px 14px 6px 6px; } .checklist.closed .cl-toggle small { display: none; } .checklist.closed .cl-ring { width: 34px; height: 34px; } .checklist.closed .cl-ring b { width: 26px; height: 26px; font-size: 10px; } .checklist.closed .cl-x { padding: 6px 12px 6px 4px; }

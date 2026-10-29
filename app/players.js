@@ -86,6 +86,7 @@ const newKey = () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.
 export async function startTable() {
   const P = prefs(); P.key ||= newKey();
   const r = await T().start({ port: P.port, key: P.key });
+  if (r?.on) import("./checklist.js").then(m => m.markSeen("table"));
   if (r.error) { toast(`Couldn't start the table link: ${r.error}`); return r; }
   status = r; P.on = true; save(); push();
   for (const m of C().party) { const l = C().ui.inbox?.[m.id]; if (l?.length) T().inbox(m.id, l); if (m.journal) sendJournal(m); }

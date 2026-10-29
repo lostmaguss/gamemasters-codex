@@ -20,7 +20,10 @@ export function openPalette(App, VIEWS) {
     const cmd = (label, ic, run, kw = "") => out.push({ kind: "Do", label, icon: ic, run, kw });
     cmd("Open the stream window", "stream", () => App.stage.open(), "stream discord share");
     cmd("New note in the Codex", "codex", () => App.go("codex", { title: "New page " + new Date().toLocaleTimeString() }), "page write");
-    cmd("Rules & genre settings", "gear", () => App.rulesModal(), "settings crit initiative");
+    cmd("Settings", "gear", () => App.settings(), "preferences options config");
+    cmd("Theme & appearance", "image", () => App.settings("look"), "theme dark light colour color look skin");
+    cmd("Accessibility", "fit", () => App.settings("a11y"), "contrast motion font colourblind colorblind");
+    cmd("Rules & genre settings", "gear", () => App.rulesModal(), "settings crit initiative system");
     cmd("Legal & credits", "book", () => App.legalModal(), "license copyright srd ogl orc attribution trademark");
     cmd("Discord settings", "discord", () => App.discord.discordModal(App), "webhook");
     cmd("Whisper to a player (Discord DM)", "lock", () => App.whisperPicker({ ask: true }), "secret private dm message");

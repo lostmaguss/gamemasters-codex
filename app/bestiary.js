@@ -36,6 +36,7 @@ export function createBestiary(el, App) {
   }
   function rollAbility(x, a) { if (!a.roll) return; App.roll(a.roll, `${x.name}: ${a.name}`, { secret: st.secret }); }
   function renderCard() {
+    if (!cur() && B().length) { st.sel = [...B()].sort((a, b) => a.name.localeCompare(b.name))[0].id; C().ui.creature = st.sel; renderList(); }
     const box = $("#bStage", el), x = cur(), tpl = C().statTemplate;
     if (!x) { box.innerHTML = `<div class="empty"><h3>A bestiary for your system</h3><p>Pull ready-made creatures for your game from the Library, or set your own stat block (the gear button) and make them. Ability rolls become one-click buttons.</p><div class="row" style="gap:8px;justify-content:center"><button class="btn primary" id="bL">${icon("book")} Open the Library</button><button class="btn" id="bE">${icon("plus")} First creature</button></div></div>`; $("#bE", box).onclick = newCreature; $("#bL", box).onclick = () => $("#bLib", el).click(); return; }
     x.stats ||= {}; x.abilities ||= [];

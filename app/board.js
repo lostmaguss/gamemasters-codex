@@ -218,7 +218,7 @@ export function createBoard(el, App) {
     const b = B(); if (!st.sel) return;
     if (st.sel.kind === "card") { b.cards = b.cards.filter(k => k.id !== st.sel.id); b.links = b.links.filter(l => l.a !== st.sel.id && l.b !== st.sel.id); }
     else b.links = b.links.filter(l => l.id !== st.sel.id);
-    st.sel = null; save(); renderCards(); renderLinks(); drawMini();
+    st.sel = null; save(); renderCards(); renderLinks(); drawMini(); App.undoToast?.("Removed from the board");
   }
   function duplicateSel() {
     if (st.sel?.kind !== "card") return; const k = B().cards.find(x => x.id === st.sel.id); if (!k) return;

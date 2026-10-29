@@ -132,8 +132,42 @@ export async function loadData() {
   if (!d || !Array.isArray(d.campaigns) || !d.campaigns.length) { const c = sampleCampaign(); d = { version: 1, campaigns: [c], currentId: c.id }; }
   for (const c of d.campaigns) { const b = blankCampaign(); for (const k in b) if (c[k] == null) c[k] = b[k]; }
   d.prefs ||= {};
-  S.data = d;
+  S.data = d; hist.last = snap();
   return d;
+}
+
+// Undo: a snapshot of the campaigns after each save, without view state (ui) or app preferences
+const UNDO_MAX = 60;
+const hist = { back: [], fwd: [], last: null, restoring: false, restoredAt: -1e9 };
+const snap = () => JSON.stringify(S.data.campaigns, (k, v) => k === "ui" ? undefined : v);
+function checkpoint() {
+  if (hist.restoring) return;
+  const now = snap();
+  // views rebuilt after an undo fill in defaults (empty sheet fields and such): not a new step
+  if (performance.now() - hist.restoredAt < 1500) { hist.last = now; return; }
+  if (hist.last != null && now !== hist.last) { hist.back.push(hist.last); if (hist.back.length > UNDO_MAX) hist.back.shift(); hist.fwd.length = 0; }
+  hist.last = now;
+}
+export const canUndo = () => hist.back.length > 0 || pending, canRedo = () => hist.fwd.length > 0;
+const restoreListeners = new Set();
+export const onRestore = fn => restoreListeners.add(fn);
+function restore(json) {
+  const ui = Object.fromEntries(S.data.campaigns.map(c => [c.id, c.ui]));
+  const list = JSON.parse(json);
+  for (const c of list) { c.ui = ui[c.id] || {}; const b = blankCampaign(); for (const k in b) if (c[k] == null) c[k] = b[k]; }
+  S.data.campaigns = list;
+  if (!list.some(c => c.id === S.data.currentId)) S.data.currentId = list[0].id;
+  hist.last = json; hist.restoredAt = performance.now(); hist.restoring = true; save(); hist.restoring = false;
+  restoreListeners.forEach(f => f());
+}
+export async function undo() {
+  clearTimeout(timer); if (pending) { checkpoint(); await flush(); }
+  if (!hist.back.length) return false;
+  hist.fwd.push(hist.last); restore(hist.back.pop()); return true;
+}
+export async function redo() {
+  if (!hist.fwd.length) return false;
+  hist.back.push(hist.last); restore(hist.fwd.pop()); return true;
 }
 
 let timer = null, pending = false;
@@ -144,6 +178,7 @@ export function save() {
 }
 export async function flush() {
   clearTimeout(timer); if (!pending) return; pending = false;
+  checkpoint();
   const txt = JSON.stringify(S.data);
   try {
     if (window.codex) await window.codex.save(txt); else localStorage.setItem("codex-data", txt);

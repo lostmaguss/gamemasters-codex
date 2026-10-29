@@ -2,11 +2,13 @@ import { stashSummary, UNIT as STASH_UNIT } from "./stash.js";
 import { t, setLang, LANGS } from "./i18n.js";
 import { initPoll } from "./poll.js";
 import { SYSTEMS, systemById, applySystem } from "./systems.js";
+import { openSettings, applyPrefs, LOOKS, lookFor } from "./settings.js";
+import { initChecklist, markSeen } from "./checklist.js";
 import { loadLibrary, toCreature, toSpell } from "./library.js";
 import { syncCustomDice } from "./customdice.js";
 import { initPlayers, tableModal, phoneWhisper, playersOnline } from "./players.js";
 import { $, $$, esc, h, icon, toast, uid, keys, isMac } from "./util.js";
-import { S, C, loadData, save, flush, onSaved, blankCampaign } from "./store.js";
+import { S, C, loadData, save, flush, onSaved, blankCampaign, undo, redo, onRestore } from "./store.js";
 import { Stage } from "./bridge.js";
 import { createForge } from "./forge.js";
 import { createBoard } from "./board.js";
@@ -33,10 +35,9 @@ import { rnd, ls, storeImage, toDataURL, mapStrings } from "./util.js";
 import { setGenre } from "./gen.js";
 import { starterTables } from "./store.js";
 
-const LOOK_OF = { fantasy: "lantern", cyberpunk: "neon", scifi: "void" };
 export function applyGenre(c = C()) {
   setGenre(c.genre || "fantasy"); setLang(c.playerLang || "en");
-  const look = !c.look || c.look === "auto" ? LOOK_OF[c.genre || "fantasy"] : c.look;
+  const look = lookFor(c);
   if (look === "lantern") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = look;
   ls.set("look", look);
 }
@@ -274,12 +275,7 @@ export function newCampaignModal() {
   });
 }
 // licenses and credits for the game content, trademarks and software (app/LEGAL.md)
-export async function legalModal() {
-  let txt = "";
-  try { txt = window.codex?.legal ? await window.codex.legal() : await (await fetch("LEGAL.md")).text(); } catch {}
-  if (!txt) txt = "# Legal notices\n\nThe notices file is missing from this build. See LEGAL.md in the app's source.";
-  App.modal(`<div class="prose nocap legal">${md(txt, [])}</div><div class="foot"><button class="btn primary" data-x>Close</button></div>`, (m, close) => { $("[data-x]", m).onclick = close; m.classList.add("wide"); setTimeout(() => m.scrollTop = 0); });
-}
+export function legalModal() { settings("legal"); }
 App.legalModal = legalModal;
 function renameModal(c) {
   App.modal(`<h2>Campaign</h2>
@@ -315,36 +311,7 @@ export function partyModal() {
     draw();
   });
 }
-export function rulesModal() {
-  const c = C(); const R = { ...DEFAULT_RULES, ...(c.rules || {}) };
-  App.modal(`<h2>Rules & genre</h2>
-    <label class="f"><span>Game system</span><select id="rgS"><option value="">${c.system && systemById(c.system) ? `${esc(systemById(c.system).name)} (current)` : "Keep what I have"}</option>${SYSTEMS.filter(s => s.id !== c.system).map(s => `<option value="${s.id}">${esc(s.name)}: ${esc(s.blurb)}</option>`).join("")}</select></label>
-    <p class="md-help" style="margin:-6px 0 0">Picking another system resets the dice rules, the party sheet layout, the bestiary's stat block and adds its quick rolls. Characters keep their numbers.</p>
-    <label class="f"><span>Genre</span><select id="rgG"><option value="fantasy">Fantasy</option><option value="scifi">Sci-fi</option><option value="cyberpunk">Cyberpunk</option></select></label>
-    <p class="md-help" style="margin:-6px 0 0">Changes what the Forge generates, the built-in sounds, starter tables, dice and the app's look.</p>
-    <label class="f"><span>Players' language</span><select id="rgLang">${Object.entries(LANGS).map(([k, n]) => `<option value="${k}">${n}</option>`).join("")}</select></label>
-    <p class="md-help" style="margin:-6px 0 0">For what players see: their phones, the stream window and Discord. Your own screens stay in English.</p>
-    <label class="f"><span>App look</span><select id="rgL"><option value="auto">Match the genre</option><option value="lantern">Lantern (warm, blackletter)</option><option value="neon">Neon (cyberpunk)</option><option value="void">Void (sci-fi)</option></select></label>
-    <div class="two">
-      <label class="f"><span>Critical die</span><select id="rgD"><option value="20">d20</option><option value="100">d100 (percentile)</option><option value="10">d10</option><option value="12">d12</option><option value="6">d6</option><option value="any">Any single die</option></select></label>
-      <label class="f"><span>What's good</span><select id="rgM"><option value="high">High rolls (max = critical, 1 = fumble)</option><option value="low">Low rolls (1 = critical, max = fumble)</option><option value="none">No criticals</option></select></label>
-    </div>
-    <label class="f"><span>Initiative order</span><select id="rgI"><option value="high">Highest goes first</option><option value="low">Lowest goes first</option></select></label>
-    <p class="md-help" style="margin:0">For roll-under systems, roll against a target: <code>1d100&lt;=45</code> shows Success or Failure. For dice pools, count hits: <code>8d6&gt;=5</code>.</p>
-    <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save</button></div>`, (m, close) => {
-    $("#rgG", m).value = c.genre || "fantasy"; $("#rgLang", m).value = c.playerLang || "en"; $("#rgL", m).value = c.look || "auto"; $("#rgD", m).value = String(R.critDie); $("#rgM", m).value = R.critMode; $("#rgI", m).value = R.initHigh ? "high" : "low";
-    $("#rgS", m).onchange = e => { const s = systemById(e.target.value); if (!s) return; $("#rgD", m).value = String(s.rules.critDie); $("#rgM", m).value = s.rules.critMode; $("#rgI", m).value = s.rules.initHigh ? "high" : "low"; $("#rgG", m).value = s.genre; };
-    $("[data-x]", m).onclick = close;
-    $("[data-ok]", m).onclick = () => {
-      const d = $("#rgD", m).value; const g = $("#rgG", m).value;
-      if ($("#rgS", m).value) applySystem(c, $("#rgS", m).value, uid);
-      c.rules = { critDie: d === "any" ? "any" : Number(d), critMode: $("#rgM", m).value, initHigh: $("#rgI", m).value === "high" };
-      const changedGenre = (c.genre || "fantasy") !== g; c.genre = g; c.look = $("#rgL", m).value; c.playerLang = $("#rgLang", m).value;
-      save(); ls.set("rules", c.rules); close(); applyGenre(c); App.botConfig?.(); if (changedGenre) App.genreChanged?.(c); else toast("Rules saved");
-      for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; } $("#views").innerHTML = ""; const v = current; current = null; show(v);
-    };
-  });
-}
+export function rulesModal() { settings("rules"); }
 App.rulesModal = rulesModal;
 App.genreChanged = (c, quiet) => {
   if (c.stash && ["gold", "credits", "eddies"].includes(c.stash.unit)) c.stash.unit = STASH_UNIT[c.genre] || c.stash.unit;
@@ -359,36 +326,35 @@ App.genreChanged = (c, quiet) => {
 
 function confirmModal(title, text, okText, run) {
   App.modal(`<h2>${esc(title)}</h2><p style="margin:0;color:var(--dim)">${esc(text)}</p><div class="foot"><button class="btn ghost" data-x>Keep it</button><button class="btn primary" data-ok style="background:var(--bad);border-color:var(--bad)">${esc(okText)}</button></div>`,
-    (m, close) => { $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = () => { close(); run(); }; });
+    (m, close) => { $("[data-x]", m).onclick = close; $("[data-ok]", m).onclick = async () => { close(); await flush(); await run(); if (/^delete/i.test(okText)) undoToast("Deleted"); else if (/^remove/i.test(okText)) undoToast("Removed"); }; });
 }
+// "Deleted · Undo": every change is in the undo history, so a delete can always come back
+export function undoToast(msg) { toast(msg, { action: "Undo", run: doUndo }); }
+App.undoToast = undoToast;
+async function doUndo() { if (await undo()) toast("Undone", { action: "Redo", run: doRedo }); else toast("Nothing to undo"); }
+async function doRedo() { if (await redo()) toast("Redone", { action: "Undo", run: doUndo }); else toast("Nothing to redo"); }
+App.undo = doUndo; App.redo = doRedo;
+// after undo/redo the data under every view changed: rebuild them
+onRestore(() => {
+  syncCustomDice(); setLang(C().playerLang || "en"); ls.set("rules", C().rules); applyGenre(C()); App.botConfig?.();
+  const v = current; for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; }
+  $("#views").innerHTML = ""; current = null; renderCampName(); show(v || C().ui.view || "prep");
+  import("./combat.js").then(m => m.pushCombat?.()).catch(() => {});
+});
 App.confirm = confirmModal;
 App.partyModal = () => App.go("party");
 App.stage = Stage;
 
-function campaignMenu() {
+async function exportBackup() {
   const c = C();
-  App.menu($("#campBtn"), [
-    { label: "Campaigns" },
-    ...S.data.campaigns.map(x => ({ text: x.name, cur: x.id === c.id, icon: x.id === c.id ? "book" : "", run: () => switchCampaign(x.id) })),
-    { text: "New campaign", icon: "plus", run: newCampaignModal },
-    "-",
-    { text: "Rename campaign", icon: "type", run: () => renameModal(c) },
-    { text: "Party & sheets", icon: "social", run: () => App.go("party") },
-    { text: "Rules & genre", icon: "gear", run: rulesModal },
-    { text: Discord.connected() ? "Discord (connected)" : "Connect Discord…", icon: "discord", run: () => Discord.discordModal(App) },
-    { text: "Table link: phones & OBS…", icon: "stream", run: () => tableModal() },
-    { text: "Print…", icon: "book", run: () => import("./print.js").then(x => x.printModal(App)) },
-    { text: "Legal & credits", icon: "book", run: legalModal },
-    "-",
-    { text: "Export backup…", icon: "save", run: async () => {
       const name = `${c.name.replace(/[^\w\- ]+/g, "").trim() || "campaign"}-${new Date().toISOString().slice(0, 10)}.json`;
       // exports carry their images inside, so a backup works on any computer
       const copy = await mapStrings(JSON.parse(JSON.stringify({ version: 1, campaigns: [c], currentId: c.id })), v => v.startsWith("codexmedia://media/") && !/\.(mp3|ogg|wav|m4a|flac|webm|opus)$/i.test(v) ? toDataURL(v).catch(() => v) : v);
       const txt = JSON.stringify(copy, null, 1);
       if (window.codex) { const p = await window.codex.exportData(txt, name); if (p) toast("Backup saved"); }
       else toast("Export works in the desktop app");
-    } },
-    { text: "Import backup…", icon: "copy", run: async () => {
+}
+async function importBackup() {
       if (!window.codex) return toast("Import works in the desktop app");
       const txt = await window.codex.importData(); if (!txt) return;
       try {
@@ -396,19 +362,46 @@ function campaignMenu() {
         for (const x of list) { if (!x || !x.name) continue; if (S.data.campaigns.some(y => y.id === x.id)) x.id = uid(); const b = blankCampaign(); for (const k in b) if (x[k] == null) x[k] = b[k]; S.data.campaigns.push(x); }
         save(); switchCampaign(list[list.length - 1].id); toast("Imported " + list.length + " campaign" + (list.length > 1 ? "s" : ""));
       } catch { toast("That file isn't a Codex backup"); }
-    } },
-    ...(window.codex ? [{ text: "Restore a backup…", icon: "clock", run: restoreModal }, { text: "Open save folder", icon: "book", run: () => window.codex.openFolder() }, { text: "Check for updates", icon: "reroll", run: checkUpdates }] : []),
+}
+function deleteCampaign() {
+  const c = C();
+  if (S.data.campaigns.length < 2) return toast("Make another campaign first; you need at least one");
+  confirmModal(`Delete ${c.name}?`, "Every note, board, session and roll in it is removed. Ctrl+Z brings it back until you close the app.", "Delete campaign", () => {
+    S.data.campaigns = S.data.campaigns.filter(x => x.id !== c.id); switchCampaign(S.data.campaigns[0].id);
+  });
+}
+function setZoom(z) {
+  z = Math.round(Math.max(.7, Math.min(1.5, z)) * 10) / 10; S.data.prefs.zoom = z; save();
+  if (window.codex?.zoom) window.codex.zoom(z); else document.body.style.zoom = z;
+}
+async function legalText() {
+  let txt = "";
+  try { txt = window.codex?.legal ? await window.codex.legal() : await (await fetch("LEGAL.md")).text(); } catch {}
+  return txt || "# Legal notices\n\nThe notices file is missing from this build. See LEGAL.md in the app's source.";
+}
+const settingsCtx = {
+  keys, renderCampName: () => renderCampName(), setZoom, helpSheet: () => helpSheet(), showNews: () => showNews(NEWS), checkUpdates: () => checkUpdates(),
+  applyGenre: c => applyGenre(c), remount: () => { for (const k in mounted) { mounted[k].destroy?.(); delete mounted[k]; } $("#views").innerHTML = ""; const v = current; current = null; show(v || "prep"); },
+  discordConnected: () => Discord.connected(), discordModal: () => Discord.discordModal(App), tableModal: () => tableModal(), printModal: () => import("./print.js").then(x => x.printModal(App)),
+  exportBackup, importBackup, restoreModal: () => restoreModal(), deleteCampaign, legalText,
+};
+export function settings(tab) { openSettings(App, settingsCtx, tab); }
+App.settings = settings; App.tableModal = () => tableModal(); App.discordConnected = () => Discord.connected();
+function campaignMenu() {
+  const c = C();
+  App.menu($("#campBtn"), [
+    { label: "Campaigns" },
+    ...S.data.campaigns.map(x => ({ text: x.name, cur: x.id === c.id, icon: x.id === c.id ? "book" : "", run: () => switchCampaign(x.id) })),
+    { text: "New campaign", icon: "plus", run: newCampaignModal },
+    "-",
+    { text: `Settings (${keys("Ctrl+,")})`, icon: "gear", run: () => settings() },
+    { text: "Party & sheets", icon: "social", run: () => App.go("party") },
+    { text: Discord.connected() ? "Discord (connected)" : "Connect Discord…", icon: "discord", run: () => Discord.discordModal(App) },
+    { text: "Table link: phones & OBS…", icon: "stream", run: () => tableModal() },
+    { text: "Print…", icon: "book", run: () => import("./print.js").then(x => x.printModal(App)) },
+    "-",
     { text: "What's new", icon: "star", run: () => showNews(NEWS) },
     { text: "Keyboard shortcuts (F1)", icon: "type", run: helpSheet },
-    { text: "User guide (opens in browser)", icon: "book", run: () => window.open("https://github.com/lostmaguss/gamemasters-codex#readme") },
-    { text: `Interface size: ${Math.round((S.data.prefs.zoom || 1) * 100)}% (${keys("Ctrl + / −")})`, icon: "fit", run: () => { S.data.prefs.zoom = 1.1; zoomBy(-.1); } },
-    "-",
-    { text: "Delete this campaign", icon: "trash", run: () => {
-      if (S.data.campaigns.length < 2) return toast("Make another campaign first; you need at least one");
-      confirmModal(`Delete ${c.name}?`, "Every note, board, session and roll in it is removed. Export a backup first if you might want it back.", "Delete campaign", () => {
-        S.data.campaigns = S.data.campaigns.filter(x => x.id !== c.id); switchCampaign(S.data.campaigns[0].id); toast("Campaign deleted");
-      });
-    } },
   ]);
 }
 
@@ -426,6 +419,7 @@ function wireChrome() {
   const sb = $("#streamBtn");
   const setLive = on => {
     const was = !!App.streamLive;
+    if (on) markSeen("stage");
     sb.classList.toggle("live", on); $("#streamLbl").textContent = on ? "Stream window live" : "Stream window"; App.streamLive = on; mounted.dice?.streamState?.(on);
     if (was !== on) App.sound.streamChanged(on);
     if (!on && App.onAir) { App.onAir = null; App._air.forEach(f => f()); }
@@ -465,6 +459,14 @@ function wireChrome() {
     if (e.key === "F1") { e.preventDefault(); helpSheet(); }
     if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+" || e.key === "-")) { e.preventDefault(); zoomBy(e.key === "-" ? -.1 : .1); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); flush(); toast("Saved"); }
+    if ((e.ctrlKey || e.metaKey) && e.key === ",") { e.preventDefault(); settings(); }
+    // text fields keep their own undo; everywhere else Ctrl+Z steps back through the campaign
+    const typing = e.target.closest?.("input, textarea, select, [contenteditable=true]") && e.target.type !== "checkbox" && e.target.type !== "range";
+    if ((e.ctrlKey || e.metaKey) && !typing && !document.querySelector(".modal-back")) {
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); doUndo(); }
+      else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); doRedo(); }
+    }
   });
 }
 
@@ -486,7 +488,7 @@ async function restoreModal() {
   });
 }
 function helpSheet() {
-  const rows = [["Anywhere", [["Ctrl+K", "Search everything, run commands, type a roll"], ["Ctrl+L", "Log what just happened (live session)"], ["Ctrl+1…9, Ctrl+0", "Jump to a section"], ["Ctrl+S", "Save now"], ["Ctrl + / Ctrl −", "Bigger / smaller interface"], ["F1", "This sheet"]]],
+  const rows = [["Anywhere", [["Ctrl+K", "Search everything, run commands, type a roll"], ["Ctrl+L", "Log what just happened (live session)"], ["Ctrl+1…9, Ctrl+0", "Jump to a section"], ["Ctrl+S", "Save now"], ["Ctrl+,", "Settings"], ["Ctrl+Z · Ctrl+Shift+Z", "Undo · redo (outside text boxes)"], ["Ctrl + / Ctrl −", "Bigger / smaller interface"], ["F1", "This sheet"]]],
     ["Dice", [["Enter", "Throw"], ["Shift+Enter", "Secret roll"], ["Shift-click a die", "Throw it right away"], ["Right-click a die", "Take it out of the pool"], ["2d20kh1 · 4d6dl1", "Keep highest / drop lowest"], ["3d6! · 4d6r1 · 4dF", "Exploding · reroll 1s · Fate"], ["1d100<=45 · 8d6>=5", "Roll-under target · count hits"]]],
     ["Combat", [["Space", "Next turn (or start)"], ["7 · +5 · =20 in HP box", "Damage · heal · set"]]],
     ["Map", [["M R H B", "Move · Reveal · Hide · Box"], ["Right-drag", "Pan"], ["Delete", "Remove the selected token"]]],
@@ -629,6 +631,7 @@ async function checkUpdates() {
   await loadData();
   try { await Promise.all([document.fonts.load('700 40px "Grenze Gotisch"'), document.fonts.load('400 15px "IBM Plex Sans Condensed"')]); } catch {}
   applyGenre();
+  applyPrefs(); setTimeout(() => initChecklist(App), 400);
   if (S.data.prefs.zoom && S.data.prefs.zoom !== 1) { if (window.codex?.zoom) window.codex.zoom(S.data.prefs.zoom); else document.body.style.zoom = S.data.prefs.zoom; }
   try { await document.fonts.load(`700 40px ${getComputedStyle(document.documentElement).getPropertyValue("--display")}`); } catch {}
   buildRail(); wireChrome(); renderCampName(); ls.set("rules", C().rules);

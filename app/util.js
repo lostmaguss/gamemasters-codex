@@ -11,10 +11,17 @@ export const ls = {
   get(k, d) { try { const v = localStorage.getItem("codex:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem("codex:" + k, JSON.stringify(v)); } catch {} },
 };
-export function toast(msg) {
+// toast("Saved") or toast("Page deleted", { action: "Undo", run: () => … })
+export function toast(msg, opts = {}) {
   let t = $("#toast");
   if (!t) { t = h(`<div id="toast" class="toast" role="status"></div>`); document.body.append(t); }
-  t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2000);
+  t.textContent = msg;
+  if (opts.action) {
+    const b = h(`<button class="toast-act">${esc(opts.action)}</button>`);
+    b.onclick = () => { t.classList.remove("show"); opts.run?.(); }; t.append(b);
+  }
+  t.classList.toggle("has-act", !!opts.action);
+  t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), opts.action ? 6000 : 2000);
 }
 export async function copyText(text, msg = "Copied") {
   try { await navigator.clipboard.writeText(text); toast(msg); } catch { toast("Couldn't reach the clipboard"); }
