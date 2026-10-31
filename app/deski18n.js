@@ -2,6 +2,13 @@
 // Works on the rendered page: a MutationObserver swaps known English text nodes and placeholder/title/aria-label
 // attributes for their translation. User content (notes, names, prose) is left alone.
 const TR = {
+  "Nothing matches.": "Eşleşen bir şey yok.",
+  "Summaries of Cairn by Yochai Gal (CC-BY-SA 4.0).": "Yochai Gal'in Cairn'inden özetler (CC-BY-SA 4.0).",
+  "Short notes written for the app, not taken from the game's books. Check your own copy for the full rules.": "Uygulama için yazılmış kısa notlar; oyunun kitaplarından alınmadı. Kuralların tamamı için kendi kitabına bak.",
+  "Summaries written for the app, checked against Pathfinder Player Core (ORC).": "Uygulama için yazılmış özetler, Pathfinder Player Core (ORC) ile karşılaştırıldı.",
+  "Summaries of the Pathfinder Core Rulebook (Open Game Content).": "Pathfinder Core Rulebook özetleri (Açık Oyun İçeriği).",
+  "Summaries of the Blades in the Dark SRD (CC-BY 3.0).": "Blades in the Dark SRD özetleri (CC-BY 3.0).",
+  "Core rules": "Temel kurallar",
   "Start with a ready-to-play adventure:": "Hazır bir maceraya başla:",
   "Add this game system's random tables": "Bu oyun sisteminin rastgele tablolarını ekle",
   "Network": "Ağ",
@@ -912,6 +919,7 @@ const TR = {
 };
 // strings with numbers or names inside them; the function gets the regex groups and the dictionary lookup
 const PATTERNS = [
+  [/^(.+) \(this campaign\)$/, m => `${m[1]} (bu kampanya)`],
   [/^Session (\d+)$/, m => `${m[1]}. oturum`],
   [/^Round (\d+)$/, m => `${m[1]}. tur`],
   [/^Start session (\d+)$/, m => `${m[1]}. oturumu başlat`],

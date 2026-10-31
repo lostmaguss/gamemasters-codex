@@ -5,6 +5,8 @@ import { C } from "./store.js";
 import { SYSTEMS, systemById } from "./systems.js";
 import SRD from "./rules-srd.js";
 import NOTES from "./rules-notes.js";
+import NOTES_TR, { CATS as CATS_TR } from "./rules-notes-tr.js";
+import { deskLang } from "./deski18n.js";
 import { md } from "./codex.js";
 
 const SOURCE = {
@@ -16,10 +18,17 @@ const SOURCE = {
   blades: "Summaries of the Blades in the Dark SRD (CC-BY 3.0).",
   cairn: "Summaries of Cairn by Yochai Gal (CC-BY-SA 4.0).",
 };
-export const rulesFor = id => [...(SRD[id] || []), ...(NOTES[id] || [])];
-export const conditionsFor = id => { const L = rulesFor(id).filter(r => r.cat === "Conditions").map(r => r.name); return L.length ? L : null; };
+// in the Turkish GM interface our own summaries come in Turkish; open-SRD text stays in its original English
+const notesFor = id => {
+  const L = NOTES[id] || [], T = deskLang() === "tr" && NOTES_TR[id];
+  return T ? L.map(r => T[r.name] ? { cat: CATS_TR[r.cat] || r.cat, name: T[r.name][0], text: T[r.name][1], en: r.name } : r) : L;
+};
+export const rulesFor = id => [...(SRD[id] || []), ...notesFor(id)];
+export const conditionsFor = id => { const L = rulesFor(id).filter(r => r.cat === "Conditions" || r.cat === CATS_TR.Conditions).map(r => r.name); return L.length ? L : null; };
 export function ruleText(id, name) {
-  const r = rulesFor(id).find(x => x.name.toLowerCase() === String(name).toLowerCase());
+  const n = String(name).toLowerCase(), tr = NOTES_TR[id] || {};
+  const r = rulesFor(id).find(x => x.name.toLowerCase() === n || x.en?.toLowerCase() === n)
+    || (NOTES[id] || []).find(x => x.name.toLowerCase() === n || tr[x.name]?.[0].toLowerCase() === n);
   return r ? r.text.replace(/^- /gm, "").replace(/[`*_]/g, "").replace(/\s+/g, " ").trim() : "";
 }
 
@@ -39,7 +48,7 @@ export function openRules(App, { q = "", sys } = {}) {
       <input type="search" id="rrQ" placeholder="Search: prone, grapple, death…" value="${esc(st.q)}">
       <div class="chips">${cats.map(c => `<button class="chip ${c === st.cat ? "on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div></header>
       <div class="rr-list">${list.map(r => `<section class="rr-item ${st.open.has(r.name) ? "open" : ""}"><button class="rr-h" data-n="${esc(r.name)}"><b>${esc(r.name)}</b><span class="eyebrow">${esc(r.cat)}</span></button>${st.open.has(r.name) ? `<div class="prose nocap">${md(r.text, [], { rolls: true })}</div>` : ""}</section>`).join("") || `<p class="md-help" style="padding:12px">Nothing matches.</p>`}</div>
-      <p class="md-help rr-src">${esc(SOURCE[st.sys] || "Short notes written for the app, not taken from the game's books. Check your own copy for the full rules.")}</p>`;
+      <p class="md-help rr-src">${esc(SOURCE[st.sys] || "Short notes written for the app, not taken from the game's books. Check your own copy for the full rules.")}${deskLang() === "tr" && SRD[st.sys] ? " Açık SRD metni orijinal İngilizcesiyle gösterilir." : ""}</p>`;
     $("#rrSys", panel).value = st.sys;
     $("#rrSys", panel).onchange = e => { st.sys = e.target.value; st.cat = "All"; st.open.clear(); draw(); };
     $("#rrQ", panel).oninput = e => { st.q = e.target.value; const pos = e.target.selectionStart; draw(); const i = $("#rrQ", panel); i.focus(); i.setSelectionRange(pos, pos); };
