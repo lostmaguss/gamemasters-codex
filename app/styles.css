@@ -834,6 +834,24 @@ label.f > span { font: 600 11px var(--body); letter-spacing: .12em; text-transfo
 .cstat .sroll { border: 0; background: var(--surface-2); padding: 4px; cursor: pointer; font: 600 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
 .cstat .sroll:hover { background: var(--mc); color: #1a1517; }
 .cstat input { border: 0; border-radius: 0; text-align: center; font: 700 20px var(--display); padding: 4px; background: var(--bg-2); }
+.cstat.mx .sv { display: flex; align-items: center; justify-content: center; background: var(--bg-2); padding: 0 4px; }
+.cstat.mx .sv input { flex: 1; min-width: 0; padding: 4px 1px; }
+.cstat.mx .sv input[data-statm] { font-size: 15px; color: var(--dim); font-weight: 600; }
+.cstat.mx .sv span { color: var(--faint); font: 600 13px var(--mono); }
+.slots { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: var(--bg-2); border: 1px solid var(--line-soft); border-radius: 8px; }
+.slots.full { border-color: var(--danger); }
+.slots-h { display: flex; align-items: center; gap: 6px; font: 600 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.slots-h b { color: var(--ink); }
+.slot-grp { display: flex; flex-direction: column; gap: 4px; }
+.slot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.slot { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line-soft); border-radius: 5px; min-height: 28px; overflow: hidden; }
+.slot input { border: 0; background: none; padding: 4px 7px; font-size: 12.5px; flex: 1; min-width: 0; }
+.slot .sb, .slot .sx { border: 0; border-left: 1px solid var(--line-soft); background: none; color: var(--faint); width: 22px; height: 28px; cursor: pointer; font: 600 11px var(--mono); padding: 0; }
+.slot .sb.on { background: var(--surface-3); color: var(--ink); }
+.slot .sb:hover, .slot .sx:hover { color: var(--ink); }
+.slot.cont { padding: 4px 8px; font-size: 12px; color: var(--dim); font-style: italic; background: var(--bg); border-style: dashed; }
+.slot.fat { background: rgba(217, 119, 111, .12); border-color: rgba(217, 119, 111, .4); color: var(--danger); font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; padding-left: 8px; justify-content: space-between; }
+.slots-warn { font-size: 12px; color: var(--danger); font-weight: 600; }
 .conds-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .cond-in { width: 120px !important; height: 24px; padding: 2px 8px !important; font-size: 12px; border-radius: 999px !important; }
 .tabs-row { display: flex; gap: 2px; border-bottom: 1px solid var(--line-soft); }

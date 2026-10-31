@@ -67,9 +67,10 @@ Where the entries come from:
 | Daggerheart | Daggerheart SRD 1.0, © Critical Role, LLC, under the Darrington Press Community Gaming License (DPCGL). Taken from the SRD |
 | Fate Core, Fate Accelerated | Fate SRDs, Evil Hat Productions, CC-BY 3.0. Stunts, NPC tiers and rules from the SRD; named NPCs are examples |
 | Blades in the Dark | Blades SRD, John Harper / One Seven Design, CC-BY 3.0. Abilities and rolls from the SRD; Blades has no monster stats, so threats are examples |
+| Cairn | Cairn by Yochai Gal, CC-BY-SA 4.0. Creatures, spellbooks and relics written for the app using Cairn's rules |
 | Everything else | Written for the Codex in the style of the game, not taken from its books. Check numbers against your copy |
 
-D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Daggerheart · Call of Cthulhu 7e · Powered by the Apocalypse · Blades in the Dark · Vampire V5 · Savage Worlds · Fate Core · Fate Accelerated · Cyberpunk RED · Shadowrun 6e · Mothership · Traveller · Space opera d6 · Homebrew d20
+D&D 5e · Pathfinder 2e · Pathfinder 1e / 3.5 · OSR (B/X, OSE, Knave) · Cairn · Daggerheart · Call of Cthulhu 7e · Powered by the Apocalypse · Blades in the Dark · Vampire V5 · Savage Worlds · Fate Core · Fate Accelerated · Cyberpunk RED · Shadowrun 6e · Mothership · Traveller · Space opera d6 · Homebrew d20
 
 <table>
 <tr>
@@ -86,6 +87,7 @@ Pick **D&D 5e**, **Pathfinder 2e**, **Daggerheart**, **Call of Cthulhu** or **Cy
 - **The Silence at Ashby Falls** (Call of Cthulhu, 1925, three sessions). A reporter is missing, the church bell won't ring, and the mill's night shift keeps getting smaller. Four investigators, a cult, and ghouls beneath the falls.
 - **The Lantern Road** (Pathfinder 2e, levels 1 to 3, four sessions). Guard a caravan on a moor road whose lantern-shrines are going dark: paid-off goblins, a haunted waystation, a troll under the Weeping Bridge. Creatures from Monster Core.
 - **The Hungry Root** (Daggerheart, level 1, four sessions). Bandits raid an orchard village, the Great Tree weeps black sap, and a demon bound in its roots is waking. Adversaries, classes and domain cards from the SRD, a Fear tracker and a countdown.
+- **The Weeping Cairn** (Cairn, new characters, four sessions). A charcoal burner robbed a barrow, the river runs ice-cold in summer, the churchyard dead scratch at their coffins, and a bog hag has the crown the barrow lord wants back. Ten-slot sheets, spellbooks, relics and a one-click character roller.
 - **Dead Air** (Cyberpunk RED, a starting crew, three sessions). Pull a braindance editor out of a gang-held tower before a corp kill team does, then decide what to do with the recording everyone wants.
 
 <img src="docs/media/adventure-prep.jpg" alt="The Ashby Falls adventure open in Prep: strong start, scenes, secrets, cast and handouts" width="100%">

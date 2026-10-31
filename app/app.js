@@ -28,7 +28,7 @@ import { createSoundEngine } from "./sound.js";
 import { parseRoll, diceGroups, buildResult, breakdown, critLabel, shownTotal, DEFAULT_RULES, customFor } from "./roll.js";
 import { createCombat } from "./combat.js";
 import { createMap } from "./map.js";
-import { createParty } from "./party.js";
+import { createParty, slotSummary } from "./party.js";
 import { openPalette } from "./palette.js";
 import { createBroadcast } from "./broadcast.js";
 import { createClocks } from "./clocks.js";
@@ -624,9 +624,11 @@ function wireBot() {
     if (req.cmd === "me") {
       if (!member) return fail(unlinked);
       const L = c.sheet || { stats: [], resources: [] };
-      const res = (L.resources || []).map(n => { const x = member.res?.[n] || {}; return `**${n}** ${x.cur ?? "?"}/${x.max ?? "?"}`; }).join("  ·  ");
-      const stats = (L.stats || []).map(n => `${n} **${member.stats?.[n] ?? "–"}**`).join("  ·  ");
-      B.reply({ id: req.id, ok: true, embed: { color: parseInt(String(member.color || "#ff7a3d").slice(1), 16) || 0xff7a3d, title: member.character || member.player, description: [member.role, res, stats, member.conds?.length ? `*${member.conds.join(", ")}*` : ""].filter(Boolean).join("\n\n") } });
+      const res = (L.resources || []).map(n => { const x = member.res?.[n] || {}; return `**${n}** ${x.cur ?? "?"}${x.max !== "" && x.max != null ? "/" + x.max : ""}`; }).join("  ·  ");
+      const stats = (L.stats || []).map(n => { const v = member.stats?.[n] ?? "–", mx = L.statMax ? member.statMax?.[n] : null; return `${n} **${v}${mx !== "" && mx != null && mx !== v ? "/" + mx : ""}**`; }).join("  ·  ");
+      const sl = L.slots?.n ? slotSummary(member, L) : null;
+      const slots = sl ? `**${t("Inventory")}** ${sl.used}/${sl.n}${sl.fatigue ? ` (${sl.fatigue} ${t("Fatigue")})` : ""}${sl.items.length ? ": " + sl.items.join(", ") : ""}` : "";
+      B.reply({ id: req.id, ok: true, embed: { color: parseInt(String(member.color || "#ff7a3d").slice(1), 16) || 0xff7a3d, title: member.character || member.player, description: [member.role, res, stats, slots, member.conds?.length ? `*${member.conds.join(", ")}*` : ""].filter(Boolean).join("\n\n") } });
       return;
     }
     try { parseRoll(req.expr); } catch (e) { return fail(t("Couldn't read \"{expr}\": {error}", { expr: req.expr, error: e.message })); }

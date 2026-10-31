@@ -6,6 +6,7 @@ import { C, save } from "./store.js";
 import { Stage } from "./bridge.js";
 import { shrinkImage } from "./board.js";
 import { renderStash } from "./stash.js";
+import { kitFor } from "./kits.js";
 
 const PALETTE = ["#d9776f", "#a98fb6", "#8fb07f", "#7fa8bd", "#d4a54a", "#e08a55", "#cfc8bf"];
 export function sheetLayout(c = C()) {
@@ -15,6 +16,23 @@ export function sheetLayout(c = C()) {
 export const SHEET_PRESETS = Object.fromEntries(SYSTEMS.map(s => [s.name, s.sheet]));
 export function member(c, id) { return c.party.find(m => m.id === id); }
 export function res(m, name) { m.res ||= {}; return (m.res[name] ||= { cur: "", max: "" }); }
+
+// Inventory slots (Cairn and other slot-based games). A slot holds an item, a Fatigue, or nothing;
+// a bulky item fills its own slot and the next one.
+export function slotsOf(m, L) { const n = L.slots?.n || 0; m.slots ||= []; while (m.slots.length < n) m.slots.push(null); return m.slots; }
+export function slotCells(m, L) {
+  const S = slotsOf(m, L), n = L.slots?.n || 0, out = [];
+  for (let i = 0; i < n; i++) {
+    const p = out[i - 1];
+    if (p && p.kind === "item" && p.s.b) { out.push({ i, kind: "cont", of: p.s }); continue; }
+    const s = S[i]; out.push({ i, kind: s?.f ? "fatigue" : s?.t?.trim() ? "item" : "empty", s: s || null });
+  }
+  return out;
+}
+export function slotSummary(m, L) {
+  const cells = slotCells(m, L);
+  return { n: cells.length, used: cells.filter(x => x.kind !== "empty").length, fatigue: cells.filter(x => x.kind === "fatigue").length, items: cells.filter(x => x.kind === "item").map(x => x.s.t.trim() + (x.s.b ? " (bulky)" : "")) };
+}
 
 export function partyStreamState(c = C()) {
   if (!c.ui.partyOnStream) return { kind: "party", show: false };
@@ -34,9 +52,10 @@ export function createParty(el, App) {
     const c = C(), L = sheetLayout(c);
     $("#ptHead", el).innerHTML = `<div><div class="eyebrow">${esc(c.name)}</div><h2>The party</h2></div><div style="flex:1"></div>
       <label class="toggle"><input type="checkbox" id="ptStream" ${c.ui.partyOnStream ? "checked" : ""}> ${icon("stream")} Party health on stream</label>
-      <button class="btn" id="ptTable" title="Players open their sheet on their phone">${icon("stream")} Phones</button><button class="btn" id="ptLayout">${icon("gear")} Sheet layout</button><button class="btn primary" id="ptAdd">${icon("plus")} Add character</button>`;
+      <button class="btn" id="ptTable" title="Players open their sheet on their phone">${icon("stream")} Phones</button><button class="btn" id="ptLayout">${icon("gear")} Sheet layout</button>${kitFor(c.system)?.character ? `<button class="btn" id="ptRollPc" title="Roll up a new character by the book: attributes, HP, background, traits and starting gear">${icon("dice")} Roll a character</button>` : ""}<button class="btn primary" id="ptAdd">${icon("plus")} Add character</button>`;
     $("#ptStream", el).onchange = e => { c.ui.partyOnStream = e.target.checked; save(); pushParty(); };
     $("#ptLayout", el).onclick = layoutModal;
+    if ($("#ptRollPc", el)) $("#ptRollPc", el).onclick = () => { const m = kitFor(c.system).character({ uid, color: PALETTE[c.party.length % PALETTE.length] }); c.party.push(m); st.sel = m.id; save(); render(); pushParty(); toast(`${m.character} the ${m.role.toLowerCase()} joins the party`); };
     $("#ptTable", el).onclick = () => import("./players.js").then(x => x.tableModal());
     $("#ptAdd", el).onclick = () => { const m = { id: uid(), player: "", character: "", role: "", color: PALETTE[c.party.length % PALETTE.length] }; c.party.push(m); st.sel = m.id; save(); render(); setTimeout(() => $(`[data-m="${m.id}"] [data-k=character]`, el)?.focus(), 30); };
     renderStash($("#ptStash", el), App);
@@ -57,11 +76,66 @@ export function createParty(el, App) {
       </header>
       <div class="resources">${L.resources.map(n => { const x = r(n), cur = Number(x.cur), max = Number(x.max), pct = max ? Math.max(0, Math.min(100, cur / max * 100)) : 0;
         return `<div class="resrc" data-res="${esc(n)}"><div class="rh"><span>${esc(n)}</span><span class="mono"><input type="number" data-cur value="${esc(x.cur)}">/<input type="number" data-max value="${esc(x.max)}"></span></div><div class="bar"><i style="width:${pct}%"></i></div><div class="rb"><button data-d="-5">−5</button><button data-d="-1">−1</button><button data-d="1">+1</button><button data-d="5">+5</button></div></div>`; }).join("")}</div>
-      <div class="cstats">${L.stats.map(sn => `<div class="cstat"><button class="sroll" data-stat="${esc(sn)}" title="Roll ${esc(sn)}">${esc(sn)}</button><input type="text" data-statv="${esc(sn)}" value="${esc(m.stats?.[sn] ?? "")}"></div>`).join("")}</div>
+      <div class="cstats">${L.stats.map(sn => L.statMax
+        ? `<div class="cstat mx"><button class="sroll" data-stat="${esc(sn)}" title="Roll ${esc(sn)}">${esc(sn)}</button><div class="sv"><input type="text" data-statv="${esc(sn)}" value="${esc(m.stats?.[sn] ?? "")}" title="Current ${esc(sn)}" aria-label="Current ${esc(sn)}"><span>/</span><input type="text" data-statm="${esc(sn)}" value="${esc(m.statMax?.[sn] ?? "")}" title="Maximum ${esc(sn)}" aria-label="Maximum ${esc(sn)}"></div></div>`
+        : `<div class="cstat"><button class="sroll" data-stat="${esc(sn)}" title="Roll ${esc(sn)}">${esc(sn)}</button><input type="text" data-statv="${esc(sn)}" value="${esc(m.stats?.[sn] ?? "")}"></div>`).join("")}</div>
       <div class="conds-row">${(m.conds || []).map((k, i) => `<button class="cond" data-cond="${i}" title="Remove">${esc(k)}</button>`).join("")}<input type="text" class="cond-in" placeholder="+ condition" aria-label="Add condition"></div>
+      ${slotsHtml(m, L)}
       <div class="tabs-row">${L.fields.map((f, i) => `<button class="${(m._tab ?? 0) === i ? "on" : ""}" data-tab="${i}">${esc(f)}</button>`).join("")}</div>
       <textarea class="ctext" rows="5" data-field="${esc(L.fields[m._tab ?? 0] || "Notes")}" placeholder="${esc(L.fields[m._tab ?? 0] || "Notes")}">${esc(m.text?.[L.fields[m._tab ?? 0]] || "")}</textarea>
     </article>`;
+  }
+  function slotsHtml(m, L) {
+    if (!L.slots?.n) return "";
+    const cells = slotCells(m, L), sum = slotSummary(m, L);
+    const groups = (L.slots.groups || []).filter(g => g[1] > 0);
+    let k = 0; const parts = groups.map(([name, n]) => { const p = [name, cells.slice(k, k + n)]; k += n; return p; });
+    if (k < cells.length) parts.push([groups.length ? "More" : "Inventory", cells.slice(k)]);
+    const cell = x => x.kind === "cont" ? `<div class="slot cont" title="Bulky: takes two slots">↳ ${esc(x.of.t)}</div>`
+      : x.kind === "fatigue" ? `<div class="slot fat" title="Fatigue fills a slot until a full night's rest"><span>Fatigue</span><button class="sx" data-sx="${x.i}" title="Remove this Fatigue">×</button></div>`
+      : `<div class="slot ${x.s?.b ? "bulky" : ""}"><input type="text" data-slot="${x.i}" value="${esc(x.s?.t || "")}" placeholder="${x.i + 1}" aria-label="Slot ${x.i + 1}"><button class="sb ${x.s?.b ? "on" : ""}" data-bulky="${x.i}" title="${x.s?.b ? "Bulky (two slots). Click for one slot" : "Make it bulky: takes two slots"}">2</button></div>`;
+    return `<div class="slots ${sum.used >= sum.n ? "full" : ""}">
+      <div class="slots-h"><span>Inventory <b class="mono" data-slotcount>${sum.used}/${sum.n}</b>${sum.fatigue ? ` · Fatigue <b class="mono">${sum.fatigue}</b>` : ""}</span><span style="flex:1"></span><button class="btn sm" data-fat title="Add a Fatigue to the first free slot">+ Fatigue</button><button class="btn sm ghost" data-rest title="A full night's rest in safety clears every Fatigue">Rest</button></div>
+      ${parts.map(([name, list]) => `<div class="slot-grp"><div class="eyebrow">${esc(name)}</div><div class="slot-grid">${list.map(cell).join("")}</div></div>`).join("")}
+      <div class="slots-warn" ${sum.used >= sum.n ? "" : "hidden"}>Every slot is full: HP drops to 0.</div></div>`;
+  }
+  function bindSlots(card, m, L) {
+    if (!L.slots?.n) return;
+    const S = slotsOf(m, L);
+    const recount = () => { const sum = slotSummary(m, L), b = $("[data-slotcount]", card); if (b) b.textContent = `${sum.used}/${sum.n}`; $(".slots", card).classList.toggle("full", sum.used >= sum.n); $(".slots-warn", card).hidden = sum.used < sum.n; };
+    $$("[data-slot]", card).forEach(i => {
+      const k = +i.dataset.slot;
+      i.oninput = () => { if (i.value.trim()) (S[k] ||= { t: "" }).t = i.value; else if (S[k]) S[k].t = ""; recount(); touch(); };
+      // emptying a bulky item frees the slot it was spilling into
+      i.onchange = () => { if (!i.value.trim() && S[k]) { const was = S[k].b; S[k] = null; save(); if (was) render(); } };
+    });
+    $$("[data-bulky]", card).forEach(b => b.onclick = () => {
+      const k = +b.dataset.bulky, s = S[k];
+      if (!s?.t?.trim()) return toast("Write the item in the slot first");
+      if (s.b) s.b = false;
+      else {
+        if (k + 1 >= S.length) return toast("A bulky item needs the slot after it: put it higher up");
+        const next = S[k + 1];
+        if (next && (next.t?.trim() || next.f)) {
+          if (next.b) return toast("The next slot holds another bulky item: move one of them first");
+          const cells = slotCells(m, L), free = cells.find(x => x.kind === "empty" && x.i > k + 1);
+          if (!free) return toast("No room: a bulky item takes two slots");
+          S[free.i] = next;
+        }
+        S[k + 1] = null; s.b = true;
+      }
+      save(); render();
+    });
+    $("[data-fat]", card).onclick = () => {
+      const free = slotCells(m, L).find(x => x.kind === "empty");
+      if (!free) return toast("No free slot for the Fatigue: with every slot full, HP drops to 0");
+      S[free.i] = { t: "", f: true }; save(); render(); pushParty();
+    };
+    $$("[data-sx]", card).forEach(b => b.onclick = () => { S[+b.dataset.sx] = null; save(); render(); pushParty(); });
+    $("[data-rest]", card).onclick = () => {
+      const n = S.filter(s => s?.f).length; if (!n) return toast("No Fatigue to clear");
+      S.forEach((s, i) => { if (s?.f) S[i] = null; }); save(); render(); pushParty(); toast(`${m.character || m.player || "They"} rested: ${n} Fatigue cleared`);
+    };
   }
   function bind(card, m, L) {
     $$("[data-k]", card).forEach(i => i.oninput = () => { m[i.dataset.k] = i.value; if (i.dataset.k === "color") card.style.setProperty("--mc", i.value); touch(); });
@@ -90,6 +164,12 @@ export function createParty(el, App) {
       $$("[data-d]", rd).forEach(b => b.onclick = () => { x.cur = (Number(x.cur) || 0) + Number(b.dataset.d); if (x.max !== "" && x.cur > Number(x.max)) x.cur = Number(x.max); upd(); });
     });
     $$("[data-statv]", card).forEach(i => i.oninput = () => { (m.stats ||= {})[i.dataset.statv] = i.value; touch(); });
+    $$("[data-statm]", card).forEach(i => {
+      i.oninput = () => { (m.statMax ||= {})[i.dataset.statm] = i.value; touch(); };
+      // a fresh maximum fills an empty current value
+      i.onchange = () => { const sn = i.dataset.statm; if ((m.stats?.[sn] ?? "") === "" && i.value.trim()) { (m.stats ||= {})[sn] = i.value.trim(); save(); render(); } };
+    });
+    bindSlots(card, m, L);
     $$("[data-stat]", card).forEach(b => b.onclick = e => {
       const v = m.stats?.[b.dataset.stat]; const num = parseInt(v);
       if (isNaN(num)) return toast(`Give ${b.dataset.stat} a number first`);
@@ -115,14 +195,20 @@ export function createParty(el, App) {
         <label class="f"><span>Text tabs</span><textarea id="lF" rows="8">${esc(L.fields.join("\n"))}</textarea></label>
       </div>
       <label class="f"><span>Stat roll</span><input type="text" id="lRoll" class="mono" value="${esc(L.roll)}"></label>
+      <div class="grid3" style="grid-template-columns:160px 1fr;align-items:end"><label class="f"><span>Inventory slots</span><input type="number" id="lSlots" min="0" max="40" value="${L.slots?.n || 0}" title="0 turns the slot grid off"></label>
+        <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="lMax" ${L.statMax ? "checked" : ""}> Stats have a maximum (they take damage, like Cairn's STR, DEX and WIL)</label></div>
       <label class="f"><span>Start from a system</span><select id="lPre"><option value="">Pick one to fill the layout…</option>${Object.keys(SHEET_PRESETS).map(k => `<option>${esc(k)}</option>`).join("")}</select></label>
       <p class="md-help" style="margin:0"><code>{value}</code> is the stat. Examples: <code>1d20+{value}</code> (add the stat), <code>{value}d6&gt;=5</code> (dice pool, count 5s and 6s), <code>1d100&lt;={value}</code> (roll under the stat), <code>2d6+{value}</code>, <code>4dF+{value}</code> (Fate: results read off the ladder, +2 Fair, +3 Good…). Shift-click a stat for a secret roll. Name a resource <b>HP</b> to link it to the combat tracker.</p>
       <div class="foot"><button class="btn ghost" data-x>Cancel</button><button class="btn primary" data-ok>Save layout</button></div>`, (mm, close) => {
       $("[data-x]", mm).onclick = close;
-      $("#lPre", mm).onchange = e => { const k = e.target.value, P = SHEET_PRESETS[k]; if (!P) return; $("#lS", mm).value = P.stats.join("\n"); $("#lR", mm).value = P.resources.join("\n"); $("#lF", mm).value = P.fields.join("\n"); $("#lRoll", mm).value = P.roll; toast(`${k} layout filled in. Save to use it`); };
+      let preSlots = L.slots || null;
+      $("#lPre", mm).onchange = e => { const k = e.target.value, P = SHEET_PRESETS[k]; if (!P) return; $("#lS", mm).value = P.stats.join("\n"); $("#lR", mm).value = P.resources.join("\n"); $("#lF", mm).value = P.fields.join("\n"); $("#lRoll", mm).value = P.roll; preSlots = P.slots || null; $("#lSlots", mm).value = P.slots?.n || 0; $("#lMax", mm).checked = !!P.statMax; toast(`${k} layout filled in. Save to use it`); };
       $("[data-ok]", mm).onclick = () => {
         const lines = id => $(id, mm).value.split("\n").map(s => s.trim()).filter(Boolean);
         Object.assign(L, { stats: lines("#lS"), resources: lines("#lR"), fields: lines("#lF").length ? lines("#lF") : ["Notes"], roll: $("#lRoll", mm).value.trim() || "1d20+{value}" });
+        const n = Math.max(0, Math.min(40, parseInt($("#lSlots", mm).value) || 0));
+        if (n) L.slots = { n, groups: preSlots?.n === n ? JSON.parse(JSON.stringify(preSlots.groups || [])) : [] }; else delete L.slots;
+        if ($("#lMax", mm).checked) L.statMax = true; else delete L.statMax;
         save(); close(); render(); App.botConfig?.();
       };
     });

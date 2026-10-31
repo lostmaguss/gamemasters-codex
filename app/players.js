@@ -4,7 +4,7 @@ import { $, $$, esc, icon, toast, uid, debounce, copyText } from "./util.js";
 import { C, S, save, onSaved } from "./store.js";
 import { parseRoll, breakdown, critLabel, shownTotal } from "./roll.js";
 import { t, getLang } from "./i18n.js";
-import { sheetLayout } from "./party.js";
+import { sheetLayout, slotCells } from "./party.js";
 import { stashSummary } from "./stash.js";
 import { pollCounts } from "./poll.js";
 
@@ -21,7 +21,8 @@ function state() {
     party: c.party.map(m => ({
       id: m.id, name: m.character || m.player || "?", player: m.player || "", role: m.role || "", color: m.color, portrait: m.portrait || null,
       res: L.resources.map(n => ({ name: n, cur: m.res?.[n]?.cur ?? "", max: m.res?.[n]?.max ?? "" })),
-      stats: L.stats.map(n => ({ name: n, value: m.stats?.[n] ?? "" })), conds: m.conds || [],
+      stats: L.stats.map(n => ({ name: n, value: m.stats?.[n] ?? "", max: L.statMax ? (m.statMax?.[n] ?? "") : "" })), conds: m.conds || [],
+      slots: L.slots?.n ? slotCells(m, L).map(x => ({ i: x.i + 1, kind: x.kind, text: x.kind === "cont" ? x.of.t : x.kind === "item" ? x.s.t + (x.s.b ? " (bulky)" : "") : "" })) : null,
       text: L.fields.map(f => ({ name: f, body: m.text?.[f] || "" })).filter(x => x.body),
     })),
     poll: p ? { id: p.id, q: p.q, opts: pollCounts(p).map(o => ({ text: o.text, n: o.n })), open: p.open, mine: Object.fromEntries(Object.entries(p.phone || {}).map(([k, v]) => [k, v.idx])) } : null,

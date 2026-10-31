@@ -33,6 +33,7 @@ const TR = {
   "Delete this entry?": "Bu kayıt silinsin mi?",
   "Rolling on the table": "Masada atılıyor",
   "Table": "Masa", "Me": "Ben", "Secrets": "Sırlar",
+  "Inventory": "Envanter", "Fatigue": "Yorgunluk",
   "{stat} has no number yet": "{stat} için henüz bir değer yok",
   // stream window
   "Round": "Tur",

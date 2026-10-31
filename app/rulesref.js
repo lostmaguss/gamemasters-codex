@@ -14,6 +14,7 @@ const SOURCE = {
   pf2e: "Summaries written for the app, checked against Pathfinder Player Core (ORC).",
   pf1e: "Summaries of the Pathfinder Core Rulebook (Open Game Content).",
   blades: "Summaries of the Blades in the Dark SRD (CC-BY 3.0).",
+  cairn: "Summaries of Cairn by Yochai Gal (CC-BY-SA 4.0).",
 };
 export const rulesFor = id => [...(SRD[id] || []), ...(NOTES[id] || [])];
 export const conditionsFor = id => { const L = rulesFor(id).filter(r => r.cat === "Conditions").map(r => r.name); return L.length ? L : null; };

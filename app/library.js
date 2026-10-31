@@ -36,6 +36,7 @@ const CREDIT = {
   fate: "Fate Core SRD by Evil Hat Productions, CC-BY 3.0: nameless NPC tiers, stunts and the ladder are taken from it; the named NPCs are examples built with its guidelines. ",
   fae: "Fate Accelerated SRD by Evil Hat Productions, CC-BY 3.0: stunts and rules are taken from it; the NPCs are examples. ",
   blades: "Abilities and roll rules from the Blades in the Dark SRD by John Harper (One Seven Design), CC-BY 3.0. Blades has no monster stat blocks, so the threats are examples. ",
+  cairn: "Cairn is by Yochai Gal, licensed under CC-BY-SA 4.0 (into the Odd mechanics by Chris McDowall). These creatures, spellbooks and relics are written for the app using Cairn's rules. ",
   daggerheart: "Includes materials from the Daggerheart System Reference Document 1.0, © Critical Role, LLC, under the Darrington Press Community Gaming (DPCGL) License. Taken from the SRD. ",
 };
 export async function libraryModal(App, { tab = "creatures", onAdd } = {}) {

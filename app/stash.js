@@ -76,9 +76,13 @@ export function renderStash(host, App) {
   $("#shSplit", host).onclick = () => {
     const n = c.party.length, each = Math.floor((Number(S.money) || 0) / n), left = (Number(S.money) || 0) - each * n;
     if (each <= 0) return toast("Not enough to split");
-    App.confirm(`Split ${fmt(S.money)} ${S.unit}?`, `${fmt(each)} ${S.unit} each for ${n} characters${left ? `, ${fmt(left)} stays in the stash` : ""}. Each share is added to their Inventory tab.`, "Split", () => {
+    App.confirm(`Split ${fmt(S.money)} ${S.unit}?`, `${fmt(each)} ${S.unit} each for ${n} characters${left ? `, ${fmt(left)} stays in the stash` : ""}.`, "Split", () => {
+      const mRes = (c.sheet?.resources || []).find(r => /^(gold|coin|money|credits)$/i.test(r));
       const tab = (c.sheet?.fields || []).find(f => /inv|gear|equip/i.test(f)) || (c.sheet?.fields || ["Notes"])[0];
-      c.party.forEach(m => { (m.text ||= {})[tab] = ((m.text[tab] || "").trimEnd() + `\n+${fmt(each)} ${S.unit} (split)`).trimStart(); });
+      c.party.forEach(m => {
+        if (mRes) { const r = ((m.res ||= {})[mRes] ||= { cur: "", max: "" }); r.cur = (Number(r.cur) || 0) + each; }
+        else (m.text ||= {})[tab] = ((m.text[tab] || "").trimEnd() + `\n+${fmt(each)} ${S.unit} (split)`).trimStart();
+      });
       S.money = left; logIt(S, `Split ${fmt(each)} ${S.unit} each among ${n}`); save(); App.refreshAll?.(); redraw();
     });
   };

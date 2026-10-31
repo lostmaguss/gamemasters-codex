@@ -2,7 +2,7 @@
 import { $, $$, esc, icon, toast } from "./util.js";
 import { C } from "./store.js";
 import { nextPlanned } from "./bestiary.js";
-import { sheetLayout } from "./party.js";
+import { sheetLayout, slotCells } from "./party.js";
 import { creatureHP } from "./difficulty.js";
 
 const md = t => esc(String(t || "").replace(/^#+\s*(.*)$/gm, "**$1**").replace(/\[\[([^\]]+)\]\]/g, "$1")).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
@@ -84,12 +84,14 @@ function charSheets(c) {
   const L = sheetLayout(c);
   const pg = m => `<div class="pg">
     <div class="eb">${esc(c.name)}</div><h1>${esc(m.character || "Character")}</h1><div style="margin:-1mm 0 5mm;color:#6a585b">${esc([m.role, m.player && "played by " + m.player].filter(Boolean).join(" · "))}</div>
-    <div class="cols"><div><h2>Stats</h2><div class="stats">${L.stats.map(x => `<div><span class="eb">${esc(x)}</span><b>${esc(m.stats?.[x] ?? "")}</b></div>`).join("")}</div><div class="eb" style="margin-top:2mm">Roll: ${esc(L.roll)}</div></div>
-      <div><h2>Resources</h2>${L.resources.map(r => `<div style="margin-bottom:3mm"><b>${esc(r)}</b> <span class="eb">max ${esc(m.res?.[r]?.max ?? "")}</span><br>${boxes(Number(m.res?.[r]?.max) || 10)}</div>`).join("")}${m.conds?.length ? `<div class="eb">Conditions: ${esc(m.conds.join(", "))}</div>` : ""}</div>
+    <div class="cols"><div><h2>Stats</h2><div class="stats">${L.stats.map(x => { const v = m.stats?.[x] ?? "", mx = L.statMax ? (m.statMax?.[x] ?? "") : ""; return `<div><span class="eb">${esc(x)}</span><b>${esc(v)}${mx !== "" && mx !== v ? `<small style="font-size:11pt;color:#6a585b">/${esc(mx)}</small>` : ""}</b></div>`; }).join("")}</div><div class="eb" style="margin-top:2mm">Roll: ${esc(L.roll)}</div></div>
+      <div><h2>Resources</h2>${L.resources.map(r => { const cur = m.res?.[r]?.cur ?? "", mx = m.res?.[r]?.max ?? ""; return `<div style="margin-bottom:3mm"><b>${esc(r)}</b> <span class="eb">${mx !== "" ? `max ${esc(mx)}` : esc(cur)}</span><br>${boxes(Number(mx || cur) || 6)}</div>`; }).join("")}${m.conds?.length ? `<div class="eb">Conditions: ${esc(m.conds.join(", "))}</div>` : ""}</div>
+      ${L.slots?.n ? `<div class="full"><h2>Inventory (${L.slots.n} slots)</h2><div class="pslots">${slotCells(m, L).map(x => `<div><span class="eb">${x.i + 1}</span> ${x.kind === "fatigue" ? "<b>Fatigue</b>" : x.kind === "cont" ? `<i>↳ ${esc(x.of.t)}</i>` : esc(x.s?.t || "") + (x.s?.b ? " <i>(bulky)</i>" : "")}</div>`).join("")}</div></div>` : ""}
       ${L.fields.map(f => `<div class="full"><h2>${esc(f)}</h2><div class="lined">${md(m.text?.[f] || "")}</div></div>`).join("")}
     </div><div class="foot"><span>Gamemaster's Codex</span><span>${esc(m.character || "")}</span></div></div>`;
   return { html: page("Character sheets", c.party.map(pg).join(""), `.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(19mm, 1fr)); gap: 2mm; } .stats div { border: 1px solid #1b1416; border-radius: 2mm; text-align: center; padding: 1.5mm; } .stats b { display: block; font: 700 18pt var(--display); min-height: 8mm; }
-    .lined { min-height: 32mm; font-size: 10pt; background: repeating-linear-gradient(transparent 0 6.2mm, #e3d6cc 6.2mm 6.5mm); line-height: 6.5mm; }`), name: `${c.name} - Character sheets` };
+    .pslots { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm 4mm; } .pslots div { border-bottom: 1px solid #cbb9ad; padding: 1mm 1.5mm; min-height: 5.5mm; font-size: 9.5pt; }
+    .lined { min-height: 26mm; font-size: 10pt; background: repeating-linear-gradient(transparent 0 6.2mm, #e3d6cc 6.2mm 6.5mm); line-height: 6.5mm; }`), name: `${c.name} - Character sheets` };
 }
 
 export const PRINTS = {

@@ -1,14 +1,15 @@
 // System kits: a game system's own Forge content, random tables and ready-to-play adventure
-// (D&D 5e, Pathfinder 2e, Daggerheart, Call of Cthulhu, Cyberpunk RED).
+// (D&D 5e, Pathfinder 2e, Cairn, Daggerheart, Call of Cthulhu, Cyberpunk RED).
 // Systems without a kit use their genre's Forge and starter tables.
 import * as dnd5e from "./kit-dnd5e.js";
 import * as coc from "./kit-coc.js";
 import * as pf2e from "./kit-pf2e.js";
+import * as cairn from "./kit-cairn.js";
 import * as daggerheart from "./kit-daggerheart.js";
 import * as cpred from "./kit-cpred.js";
 import { uid } from "./util.js";
 
-export const KITS = { dnd5e, pf2e, daggerheart, coc, cpred };
+export const KITS = { dnd5e, pf2e, cairn, daggerheart, coc, cpred };
 // CoC has its own period tables in place of the fantasy starters
 const OWN_STARTERS = new Set(["coc"]);
 export const kitFor = id => KITS[id] || null;
